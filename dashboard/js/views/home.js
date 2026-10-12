@@ -162,7 +162,7 @@
   }
 
   // Banner: Geburtstage/Jahrestage (ganztägige Termine, nächste 14 Tage) und Wetterwarnungen
-  var BDAY_RE = /geburtstag|gebib|birthday|bday|🎂|🎈/i, ANNIV_RE = /jahrestag|hochzeit|anniversary|💍|❤/i;
+  var BDAY_RE = /geburtstag|\bgebi\b|birthday|bday|🎂|🎈/i, ANNIV_RE = /jahrestag|hochzeit|anniversary|💍|❤/i;
   function occasions() {
     var now = App.now(), today = App.dayStart(now), out = [];
     App.events().forEach(function (e) {
