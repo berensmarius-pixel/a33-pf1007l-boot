@@ -13,3 +13,6 @@ __pycache__/
 *.partial
 *.HEIC
 *.heic
+
+# Screenshots / lokale Artefakte
+/dashboard_*.png

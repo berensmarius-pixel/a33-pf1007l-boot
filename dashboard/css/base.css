@@ -309,3 +309,82 @@ button.card:active, .h-hero:active, .h-photo:active { transform: scale(.985); }
 }
 .diag b { color: #fff; }
 .diag u { text-decoration: none; color: #aaa; }
+
+/* ---------------------------------------------------------------- rail timer */
+.rail-timer-btn { margin-top: auto; }
+.rail-timer-pill {
+  margin: 6px 6px 10px; padding: 6px 2px;
+  background: #ea580c; color: #fff;
+  border-radius: 12px; border: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, .4);
+  animation: pulse-timer 1.6s infinite ease-in-out;
+}
+.rail-timer-pill b { font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
+@keyframes pulse-timer {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+/* ---------------------------------------------------------------- timer alarm takeover */
+.timer-alarm-card {
+  position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+  background: #7c2d12; color: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 40px; z-index: 100;
+  animation: alarm-glow 1s infinite alternate;
+}
+@keyframes alarm-glow {
+  from { background: #7c2d12; }
+  to { background: #9a3412; }
+}
+.alarm-emoji { font-size: 120px; line-height: 1; margin-bottom: 20px; animation: bounce 0.6s infinite alternate; }
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-16px); } }
+.alarm-title { font-size: 64px; font-weight: 900; line-height: 1.1; margin-bottom: 12px; }
+.alarm-sub { font-size: 24px; opacity: .85; margin-bottom: 36px; }
+.alarm-actions { display: flex; gap: 20px; }
+.btn-alarm-stop { padding: 20px 48px; border-radius: 999px; background: #fff; color: #7c2d12; border: none; font-size: 24px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
+.btn-alarm-snooze { padding: 20px 36px; border-radius: 999px; background: rgba(255,255,255,.2); color: #fff; border: 2px solid #fff; font-size: 22px; font-weight: 800; cursor: pointer; }
+
+/* ---------------------------------------------------------------- timer & fuel sheets */
+.timer-sheet, .fuel-sheet { padding: 28px 32px; max-width: 600px; width: 100%; }
+.t-sheet-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
+.t-sheet-head b { font-size: 32px; display: block; line-height: 1.1; }
+.t-sheet-head small { font-size: 16px; color: var(--mute); }
+.t-sheet-head .btn-close { width: 44px; height: 44px; border-radius: 50%; border: none; background: rgba(0,0,0,.08); font-size: 18px; cursor: pointer; display: grid; place-items: center; }
+
+.t-active-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.t-active-item { display: flex; align-items: center; gap: 14px; background: var(--paper-2); padding: 14px 18px; border-radius: 16px; }
+.t-a-emoji { font-size: 28px; }
+.t-a-info { flex: 1; }
+.t-a-info b { font-size: 18px; display: block; margin-bottom: 4px; }
+.t-bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; width: 100%; }
+.t-bar-fill { height: 100%; background: #ea580c; border-radius: 3px; transition: width 0.3s; }
+.t-a-time { font-size: 24px; font-weight: 800; margin-left: 8px; }
+.t-btn-add { padding: 6px 12px; border-radius: 8px; background: var(--ink); color: #fff; border: none; font-weight: 700; cursor: pointer; }
+.t-btn-del { width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,.08); border: none; font-size: 14px; cursor: pointer; }
+.t-none { padding: 12px 0 20px; color: var(--mute); font-size: 16px; font-style: italic; }
+
+.t-presets-title { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--mute); margin-bottom: 10px; }
+.t-presets-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.t-pre-btn { display: flex; align-items: center; gap: 10px; background: var(--paper-2); padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); text-align: left; cursor: pointer; }
+.t-pre-btn:active { background: var(--ink); color: #fff; }
+.t-pre-emoji { font-size: 26px; }
+.t-pre-text b { font-size: 16px; display: block; }
+.t-pre-text small { font-size: 13px; color: var(--mute); }
+.t-custom-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.t-cust-btn { flex: 1; padding: 10px; border-radius: 10px; background: var(--paper-2); border: 1px solid var(--line); font-weight: 700; font-size: 14px; cursor: pointer; }
+
+/* Fuel sheet list */
+.f-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.f-item { display: flex; align-items: center; gap: 14px; background: var(--paper-2); padding: 14px 18px; border-radius: 14px; }
+.f-item.is-best { border: 2px solid #22c55e; background: rgba(34, 197, 94, .08); }
+.f-pos { width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 14px; }
+.f-item.is-best .f-pos { background: #22c55e; }
+.f-name { flex: 1; }
+.f-name b { font-size: 18px; display: block; }
+.f-name span { font-size: 14px; color: var(--mute); }
+.f-price { font-size: 26px; font-weight: 900; }
+.f-hint { font-size: 13px; color: var(--mute); background: var(--paper-2); padding: 10px 14px; border-radius: 10px; margin-top: 8px; }
+

@@ -13,7 +13,7 @@
     var hit = D.catalog.filter(function (c) { return c[0].toLowerCase() === n; })[0] ||
       D.catalog.filter(function (c) { var a = c[0].toLowerCase(); return a.indexOf(n) > -1 || n.indexOf(a) > -1; })[0] ||
       D.catalog.filter(function (c) { return n.split(/\s+/).some(function (w) { return w.length > 3 && c[0].toLowerCase().indexOf(w) > -1; }); })[0];
-    return hit ? hit[1] : 'Other';
+    return hit ? hit[1] : 'Sonstiges';
   }
   function find(name, isDone) {
     return D.groceries.filter(function (g) { return !!g.done === isDone && g.name.toLowerCase() === name.toLowerCase(); })[0];
@@ -24,24 +24,24 @@
       '<button class="s-hit" data-check="' + g.id + '">' +
       '<span class="s-box">' + App.icon('check', 22) + '</span>' +
       '<span class="s-name"><b>' + App.esc(g.name) + '</b>' + (g.note ? '<small>' + App.esc(g.note) + '</small>' : '') + '</span>' +
-      (V.store === 'all' && g.store === 'costco' ? '<span class="s-store">Costco</span>' : '') +
+      (V.store === 'all' && g.store !== 'rewe' ? '<span class="s-store">' + storeName(g.store) + '</span>' : '') +
       '</button>' +
-      '<div class="s-qty"><button data-qty="-1" data-id="' + g.id + '" aria-label="Less">' + App.icon('minus', 22) + '</button><span class="num">' + g.qty + '</span><button data-qty="1" data-id="' + g.id + '" aria-label="More">' + App.icon('plus', 22) + '</button></div>' +
+      '<div class="s-qty"><button data-qty="-1" data-id="' + g.id + '" aria-label="Weniger">' + App.icon('minus', 22) + '</button><span class="num">' + g.qty + '</span><button data-qty="1" data-id="' + g.id + '" aria-label="Mehr">' + App.icon('plus', 22) + '</button></div>' +
       '</div>';
   }
 
   function listHTML() {
-    var items = open(), order = D.catOrder[V.store].concat(['Other']);
+    var items = open(), order = D.catOrder[V.store].concat(['Sonstiges']);
     var groups = order.map(function (cat) { return { cat: cat, items: items.filter(function (g) { return g.cat === cat; }) }; }).filter(function (x) { return x.items.length; });
     var d = done();
     return (items.length ? groups.map(function (gr) {
       return '<div class="s-cat" data-cat="' + gr.cat + '"><div class="s-cat-h"><span class="label">' + gr.cat + '</span><span class="label" data-cat-count>' + gr.items.length + '</span></div>' + gr.items.map(row).join('') + '</div>';
-    }).join('') : '<div class="s-empty serif">All stocked up.<br><i>Nothing left to buy.</i></div>') +
+    }).join('') : '<div class="s-empty serif">Alles erledigt.<br><i>Nichts mehr einzukaufen.</i></div>') +
       (d.length ? '<div class="s-drawer' + (V.drawer ? ' is-open' : '') + '">' +
-        '<button class="s-drawer-h" data-drawer><span>' + App.icon('check', 22) + ' Got it <b class="num">(' + d.length + ')</b></span><span class="label">' + (V.drawer ? 'Hide' : 'Show') + '</span></button>' +
+        '<button class="s-drawer-h" data-drawer><span>' + App.icon('check', 22) + ' Erledigt <b class="num">(' + d.length + ')</b></span><span class="label">' + (V.drawer ? 'Ausblenden' : 'Anzeigen') + '</span></button>' +
         (V.drawer ? '<div class="s-drawer-list">' + d.map(function (g) {
-          return '<button class="s-got" data-revive="' + g.id + '">' + App.esc(g.name) + '<span class="label">Add back</span></button>';
-        }).join('') + '<button class="btn btn--ghost s-clear" data-clear>Clear ' + d.length + ' checked items</button></div>' : '') +
+          return '<button class="s-got" data-revive="' + g.id + '">' + App.esc(g.name) + '<span class="label">Wiederherstellen</span></button>';
+        }).join('') + '<button class="btn btn--ghost s-clear" data-clear>' + d.length + ' erledigte Artikel löschen</button></div>' : '') +
         '</div>' : '');
   }
 
@@ -51,17 +51,17 @@
       var matches = D.catalog.filter(function (c) { return c[0].toLowerCase().indexOf(q) === 0; })
         .concat(D.catalog.filter(function (c) { var i = c[0].toLowerCase().indexOf(q); return i > 0; })).slice(0, 5);
       var exact = matches.some(function (m) { return m[0].toLowerCase() === q; });
-      return '<div class="label">Suggestions</div><div class="s-ac">' + matches.map(function (m) {
+      return '<div class="label">Vorschläge</div><div class="s-ac">' + matches.map(function (m) {
         var on = find(m[0], false);
-        return '<button class="s-ac-row" data-add="' + App.esc(m[0]) + '"><b>' + App.esc(m[0]) + '</b><span class="label">' + (on ? 'On list · ×' + on.qty : m[1]) + '</span>' + App.icon('plus', 26) + '</button>';
-      }).join('') + (exact ? '' : '<button class="s-ac-row s-ac-row--new" data-add="' + App.esc(V.query.trim()) + '"><b>Add “' + App.esc(V.query.trim()) + '”</b><span class="label">' + categorize(V.query) + '</span>' + App.icon('plus', 26) + '</button>') + '</div>';
+        return '<button class="s-ac-row" data-add="' + App.esc(m[0]) + '"><b>' + App.esc(m[0]) + '</b><span class="label">' + (on ? 'Auf der Liste · ×' + on.qty : m[1]) + '</span>' + App.icon('plus', 26) + '</button>';
+      }).join('') + (exact ? '' : '<button class="s-ac-row s-ac-row--new" data-add="' + App.esc(V.query.trim()) + '"><b>Hinzufügen: “' + App.esc(V.query.trim()) + '”</b><span class="label">' + categorize(V.query) + '</span>' + App.icon('plus', 26) + '</button>') + '</div>';
     }
-    return '<div class="label">Usuals · tap to add</div><div class="s-usuals">' + D.usuals.map(usualTile).join('') + '</div>';
+    return '<div class="label">Häufig gekauft · Zum Hinzufügen tippen</div><div class="s-usuals">' + D.usuals.map(usualTile).join('') + '</div>';
   }
   function usualTile(name) {
     var on = find(name, false);
     return '<button class="s-tile' + (on ? ' is-on' : '') + '" data-add="' + App.esc(name) + '">' +
-      '<b>' + App.esc(name) + '</b><span>' + (on ? App.icon('check', 16) + 'On list' + (on.qty > 1 ? ' ×' + on.qty : '') : categorize(name)) + '</span></button>';
+      '<b>' + App.esc(name) + '</b><span>' + (on ? App.icon('check', 16) + 'Auf der Liste' + (on.qty > 1 ? ' ×' + on.qty : '') : categorize(name)) + '</span></button>';
   }
 
   // ---- granular updates (full list + usuals rebuild costs ~500ms on the wall tablet)
@@ -114,19 +114,19 @@
   function paintSuggest() { V.el.querySelector('.s-suggest').innerHTML = suggestHTML(); }
   function paintHead() {
     var all = D.groceries.filter(function (g) { return !g.done; });
-    V.el.querySelector('.s-count').innerHTML = '<span class="num">' + open().length + '</span> to get';
-    V.el.querySelector('.s-stores').innerHTML = [['all', 'All']].concat(D.stores.map(function (s) { return [s.id, s.name]; })).map(function (s) {
+    V.el.querySelector('.s-count').innerHTML = '<span class="num">' + open().length + '</span> offen';
+    V.el.querySelector('.s-stores').innerHTML = [['all', 'Alle']].concat(D.stores.map(function (s) { return [s.id, s.name]; })).map(function (s) {
       var n = s[0] === 'all' ? all.length : all.filter(function (g) { return g.store === s[0]; }).length;
       return '<button class="' + (V.store === s[0] ? 'is-on' : '') + '" data-store="' + s[0] + '">' + s[1] + ' <span class="num">' + n + '</span></button>';
     }).join('');
   }
   function render() {
     V.el.innerHTML = '<div class="shop">' +
-      '<header class="s-head"><div><div class="label">Shared list</div><h1 class="serif">Groceries</h1></div><div class="s-count"></div><div class="seg s-stores"></div></header>' +
+      '<header class="s-head"><div><div class="label">Gemeinsame Liste</div><h1 class="serif">Einkaufsliste</h1></div><div class="s-count"></div><div class="seg s-stores"></div></header>' +
       '<div class="s-list"></div>' +
       '<aside class="s-side">' +
       '  <div class="s-add">' +
-      '    <label class="s-input-wrap">' + App.icon('plus', 30) + '<input class="s-input" placeholder="Add an item…" autocomplete="off" enterkeyhint="done"></label>' +
+      '    <label class="s-input-wrap">' + App.icon('plus', 30) + '<input class="s-input" placeholder="Artikel hinzufügen…" autocomplete="off" enterkeyhint="done"></label>' +
       '  </div>' +
       '  <div class="s-suggest"></div>' +
       '</aside></div>';
@@ -142,18 +142,18 @@
     var g = find(name, false), msg;
     if (g) {
       g.qty++;
-      msg = 'Already on the list · now <b>×' + g.qty + '</b> ' + App.esc(g.name);
+      msg = 'Bereits auf der Liste · jetzt <b>×' + g.qty + '</b> ' + App.esc(g.name);
       var q = V.el.querySelector('.s-list [data-id="' + g.id + '"] .s-qty .num');
       if (q) q.textContent = g.qty;
     } else if ((g = find(name, true))) {
       g.done = false; g.qty = 1;
-      msg = 'Added back <b>' + App.esc(g.name) + '</b>';
+      msg = 'Wieder hinzugefügt: <b>' + App.esc(g.name) + '</b>';
       paintList();
     } else {
       var cat = D.catalog.filter(function (c) { return c[0].toLowerCase() === name.toLowerCase(); })[0];
-      g = { id: D._gid(), name: cat ? cat[0] : name.charAt(0).toUpperCase() + name.slice(1), cat: categorize(name), qty: 1, store: V.store === 'all' ? 'grocer' : V.store, done: false, note: '' };
+      g = { id: D._gid(), name: cat ? cat[0] : name.charAt(0).toUpperCase() + name.slice(1), cat: categorize(name), qty: 1, store: V.store === 'all' ? 'rewe' : V.store, done: false, note: '' };
       D.groceries.push(g);
-      msg = 'Added <b>' + App.esc(g.name) + '</b> to ' + g.cat;
+      msg = '<b>' + App.esc(g.name) + '</b> hinzugefügt zu ' + g.cat;
       insertRow(g);
     }
     var hadQuery = !!V.query.trim();
@@ -178,7 +178,7 @@
       refreshSuggestFor(g);
       App.emit('data');
     }, 1200);
-    App.toast('<b>' + App.esc(g.name) + '</b> checked off', {
+    App.toast('<b>' + App.esc(g.name) + '</b> abgehakt', {
       icon: 'check',
       undo: function () {
         var wasDone = g.done;
@@ -213,14 +213,14 @@
     if ((t = e.target.closest('[data-revive]'))) {
       var r = D.groceries.filter(function (x) { return x.id === t.dataset.revive; })[0];
       r.done = false; paintList(); paintSuggest(); App.emit('data');
-      return App.toast('Added back <b>' + App.esc(r.name) + '</b>', { icon: 'cart', ms: 2500 });
+      return App.toast('Wieder hinzugefügt: <b>' + App.esc(r.name) + '</b>', { icon: 'cart', ms: 2500 });
     }
     if ((t = e.target.closest('[data-clear]'))) {
       var gone = done();
       D.groceries = D.groceries.filter(function (x) { return gone.indexOf(x) < 0; });
       V.drawer = false;
       paintList();
-      App.toast('Cleared ' + gone.length + ' items', {
+      App.toast(gone.length + ' Artikel gelöscht', {
         icon: 'check', undo: function () { D.groceries = D.groceries.concat(gone); paintList(); }
       });
     }

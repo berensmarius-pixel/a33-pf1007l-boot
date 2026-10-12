@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var D = window.DATA;
-  var V = { el: null, loaded: Date.now(), synced: Date.now() - 2 * 60000 };
+  var V = { el: null, loaded: Date.now() };
 
   function pstyle(a) { return '--c:' + a.color + ';--c-rgb:' + a.rgb; }
   function minsLeft(m) { return Math.max(0, m.left - (Date.now() - V.loaded) / 60000); }
@@ -19,12 +19,17 @@
     var pace = Math.round((1 - left / m.win) * 100); // where even usage would be right now
     var diff = m.used - pace;
     var hot = m.used >= 85;
-    var paceText = Math.abs(diff) < 3 ? 'On pace' : diff > 0 ? diff + '% over pace' : -diff + '% under pace';
+    if (m.noBar) {
+      return '<div class="ag-meter"><div class="ag-meter-top"><span class="ag-label">' + m.label + '</span>' +
+        '<span class="ag-pct num">' + m.detail.replace(/ Mio\. Tokens/, '') + '<small>M</small></span></div>' +
+        '<div class="ag-meter-foot" data-meter="' + ai + ',' + mi + '"><span>Reset in <b data-reset>' + fmtLeft(left) + '</b></span></div></div>';
+    }
+    var paceText = Math.abs(diff) < 3 ? 'Im Plan' : diff > 0 ? diff + '% über Plan' : -diff + '% unter Plan';
     return '<div class="ag-meter' + (hot ? ' is-hot' : '') + '">' +
       '<div class="ag-meter-top"><span class="ag-label">' + m.label + '</span>' +
       '<span class="ag-pct num">' + m.used + '<small>%</small></span></div>' +
-      '<div class="ag-bar"><i style="width:' + m.used + '%"></i><em data-pace-mark style="left:' + pace + '%" title="Even pace"></em></div>' +
-      '<div class="ag-meter-foot" data-meter="' + ai + ',' + mi + '"><span>' + (m.detail ? m.detail + ' · ' : '') + 'Resets in <b data-reset>' + fmtLeft(left) + '</b></span>' +
+      '<div class="ag-bar"><i style="width:' + m.used + '%"></i><em data-pace-mark style="left:' + pace + '%" title="Gleichmäßiger Plan"></em></div>' +
+      '<div class="ag-meter-foot" data-meter="' + ai + ',' + mi + '"><span>' + (m.detail ? m.detail + ' · ' : '') + 'Reset in <b data-reset>' + fmtLeft(left) + '</b></span>' +
       '<span class="ag-pace' + (diff >= 3 ? ' is-over' : '') + '" data-pace>' + paceText + '</span></div>' +
       '</div>';
   }
@@ -40,14 +45,14 @@
   function card(a) {
     var hot = a.meters.some(function (m) { return m.used >= 85; });
     var status = a.status === 'ok'
-      ? '<span class="ag-status"><i></i>Operational</span>'
-      : '<span class="ag-status is-warn"><i></i>Degraded</span>';
+      ? '<span class="ag-status"><i></i>Betriebsbereit</span>'
+      : '<span class="ag-status is-warn"><i></i>Eingeschränkt</span>';
     return '<section class="ag-card" style="' + pstyle(a) + '">' +
       '<header class="ag-head"><div class="ag-id"><i class="ag-swatch"></i><b>' + a.name + '</b><span class="ag-plan">' + a.plan + '</span></div>' + status + '</header>' +
-      (a.incident ? '<div class="ag-incident">' + App.icon('bolt', 16) + a.incident + '</div>' : hot ? '<div class="ag-incident ag-incident--hot">' + App.icon('clock', 16) + 'Near the session limit</div>' : '') +
+      (a.incident ? '<div class="ag-incident">' + App.icon('bolt', 16) + a.incident + '</div>' : hot ? '<div class="ag-incident ag-incident--hot">' + App.icon('clock', 16) + 'Nahe am Sitzungslimit</div>' : '') +
       a.meters.map(function (m, mi) { return meter(m, D.agents.indexOf(a), mi); }).join('') +
-      '<footer class="ag-foot"><div><span class="num">' + fmtTokens(a.tokens) + '</span><small>tokens today</small></div>' +
-      '<div><span class="num">' + (a.cost ? '$' + a.cost.toFixed(2) : 'Incl.') + '</span><small>' + (a.cost ? 'API cost' : 'in plan') + '</small></div>' +
+      '<footer class="ag-foot"><div><span class="num">' + fmtTokens(a.tokens) + '</span><small>Tokens heute</small></div>' +
+      '<div><span class="num">' + (a.cost ? '$' + a.cost.toFixed(2) : 'Im Abo') + '</span><small>' + (a.cost ? 'API-Kosten' : 'im Plan') + '</small></div>' +
       spark(a.week) + '</footer>' +
       '</section>';
   }
@@ -57,19 +62,18 @@
     var totals = [0, 1, 2, 3, 4, 5, 6].map(function (i) {
       return D.agents.reduce(function (s, a) { return s + a.week[i]; }, 0);
     });
-    var max = Math.max.apply(null, totals);
+    var max = Math.max.apply(null, totals) || 1;
     var week = totals.reduce(function (s, v) { return s + v; }, 0);
-    var cost = D.agents.reduce(function (s, a) { return s + a.cost; }, 0);
     var bars = totals.map(function (t, i) {
       var d = App.addDays(now, i - 6);
       return '<div class="ag-col' + (i === 6 ? ' is-today' : '') + '"><div class="ag-stack" style="height:' + (t / max * 100) + '%">' +
         D.agents.map(function (a) { return '<i style="' + pstyle(a) + ';flex-grow:' + a.week[i] + '"></i>'; }).join('') +
-        '</div><span>' + (i === 6 ? 'Today' : App.fmt.dayShort(d)) + '</span></div>';
+        '</div><span>' + (i === 6 ? 'Heute' : App.fmt.dayShort(d)) + '</span></div>';
     }).join('');
     return '<section class="ag-card ag-sum">' +
-      '<header class="ag-head"><div class="ag-id"><b>All agents</b><span class="ag-plan">Last 7 days</span></div></header>' +
-      '<div class="ag-sum-stats"><div><span class="num">' + fmtTokens(week) + '</span><small>tokens</small></div>' +
-      '<div><span class="num">$' + cost.toFixed(0) + '</span><small>API cost today</small></div></div>' +
+      '<header class="ag-head"><div class="ag-id"><b>Alle Modelle</b><span class="ag-plan">Letzte 7 Tage</span></div></header>' +
+      '<div class="ag-sum-stats"><div><span class="num">' + fmtTokens(week) + '</span><small>Tokens</small></div>' +
+      '<div><span class="num">' + fmtTokens(totals[6]) + '</span><small>Heute</small></div></div>' +
       '<div class="ag-chart">' + bars + '</div>' +
       '<div class="ag-legend">' + D.agents.map(function (a) { return '<span style="' + pstyle(a) + '"><i></i>' + a.name + '</span>'; }).join('') + '</div>' +
       '</section>';
@@ -77,33 +81,39 @@
 
   function paceOf(m) {
     var left = minsLeft(m), pace = Math.round((1 - left / m.win) * 100), diff = m.used - pace;
-    return { left: left, pace: pace, diff: diff, text: Math.abs(diff) < 3 ? 'On pace' : diff > 0 ? diff + '% over pace' : -diff + '% under pace' };
+    return { left: left, pace: pace, diff: diff, text: Math.abs(diff) < 3 ? 'Im Plan' : diff > 0 ? diff + '% über Plan' : -diff + '% unter Plan' };
   }
   // Minute tick: update countdown + pace text in place (no rebuild, so switching here stays instant).
   function tick() {
     if (!V.el || !V.el.firstChild) return;
     App.$$('[data-meter]', V.el).forEach(function (foot) {
-      var ix = foot.dataset.meter.split(','), m = D.agents[+ix[0]].meters[+ix[1]], p = paceOf(m);
+      var ix = foot.dataset.meter.split(','), m = D.agents[+ix[0]].meters[+ix[1]];
+      if (!m) return;
+      var p = paceOf(m);
       foot.querySelector('[data-reset]').textContent = fmtLeft(p.left);
       var pe = foot.querySelector('[data-pace]');
+      if (!pe) return;
       pe.textContent = p.text;
       pe.classList.toggle('is-over', p.diff >= 3);
-      foot.parentNode.querySelector('[data-pace-mark]').style.left = p.pace + '%';
+      var pm = foot.parentNode.querySelector('[data-pace-mark]');
+      if (pm) pm.style.left = p.pace + '%';
     });
     var sync = V.el.querySelector('.ag-sync .label');
     if (sync) sync.textContent = synced();
   }
 
   function synced() {
-    var m = Math.round((Date.now() - V.synced) / 60000);
-    return m < 1 ? 'Updated just now' : 'Updated ' + m + ' min ago';
+    var a = D.agents[0];
+    if (!a.live) return 'Noch keine Daten · scripts/push-usage.js ausführen';
+    var m = Math.max(0, Math.round((Date.now() - Date.parse(a.updatedAt)) / 60000));
+    return m < 1 ? 'Gerade aktualisiert' : m < 90 ? 'Vor ' + m + ' Min aktualisiert' : 'Vor ' + Math.round(m / 60) + ' Std aktualisiert';
   }
 
   function render() {
     V.el.innerHTML = '<div class="agents">' +
-      '<header class="ag-top"><div><div class="label">AI plans · usage limits</div><h1 class="serif">Agents</h1></div>' +
+      '<header class="ag-top"><div><div class="label">KI-Pläne · Verbrauchslimits</div><h1 class="serif">System</h1></div>' +
       '<div class="ag-sync"><span class="label">' + synced() + '</span>' +
-      '<button class="icon-btn" data-refresh aria-label="Refresh">' + App.icon('undo', 26) + '</button></div></header>' +
+      '<button class="icon-btn" data-refresh aria-label="Aktualisieren">' + App.icon('undo', 26) + '</button></div></header>' +
       '<div class="ag-grid">' + D.agents.map(card).join('') + summary() + '</div>' +
       '</div>';
   }
@@ -115,8 +125,7 @@
         el.addEventListener('click', function (e) {
           var b = e.target.closest('[data-refresh]');
           if (!b) return;
-          V.synced = Date.now();
-          render();
+          if (window.LiveSync) window.LiveSync.updateUsage();
         });
       }
       render();

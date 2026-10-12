@@ -4,22 +4,27 @@
   var D = window.DATA;
 
   function src(p, big) {
+    if (p.url) return p.url;
     var w = p.o === 'p' ? 800 : 1600, h = p.o === 'p' ? 1200 : 1000;
     if (!big) { w = Math.round(w / 2); h = Math.round(h / 2); }
     return App.img(p.seed, w, h);
   }
   App.photoSrc = src;
 
-  function parseDate(p) { var a = p.date.split('-'); return new Date(+a[0], +a[1] - 1, +a[2]); }
+  function parseDate(p) {
+    if (!p.date) return new Date();
+    var a = p.date.split('-');
+    return new Date(+a[0], +a[1] - 1, +a[2] || 1);
+  }
   App.photoMeta = function (p) {
     var d = parseDate(p), now = App.now();
     var years = now.getFullYear() - d.getFullYear();
     var onThisDay = d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
-    var kicker = onThisDay ? years + (years === 1 ? ' year' : ' years') + ' ago today' : (years > 0 ? years + (years === 1 ? ' year ago' : ' years ago') : 'This year');
+    var kicker = onThisDay ? 'Heute vor ' + years + (years === 1 ? ' Jahr' : ' Jahren') : (years > 0 ? 'Vor ' + years + (years === 1 ? ' Jahr' : ' Jahren') : 'Dieses Jahr');
     return {
-      date: App.fmt.month(d) + ' ' + d.getDate() + ', ' + d.getFullYear(),
+      date: d.getDate() + '. ' + App.fmt.month(d) + ' ' + d.getFullYear(),
       monthYear: App.fmt.month(d) + ' ' + d.getFullYear(),
-      kicker: kicker, onThisDay: onThisDay, place: p.place, from: App.person(p.from)
+      kicker: kicker, onThisDay: onThisDay, place: p.place || '', from: App.person(p.from || 'marius')
     };
   };
 
@@ -30,8 +35,9 @@
 
   function caption(ps, size) {
     var m = App.photoMeta(ps[0]);
+    var loc = m.place ? ' · ' + App.esc(m.place) : '';
     return '<div class="cap cap--' + (size || 'l') + '">' +
-      '<div class="cap-kicker">' + (m.onThisDay ? '<b>On this day</b> · ' : '') + m.kicker + ' · ' + App.esc(m.place) + '</div>' +
+      '<div class="cap-kicker">' + (m.onThisDay ? '<b>Heute vor einem Jahr</b> · ' : '') + m.kicker + loc + '</div>' +
       '<div class="cap-date serif">' + (ps.length > 1 ? m.monthYear : m.date) + '</div>' +
       '</div>';
   }

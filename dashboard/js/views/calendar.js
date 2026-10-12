@@ -4,7 +4,7 @@
   var D = window.DATA;
   var PX = 72, START = 6, END = 23; // 72px per hour, 6 AM → 11 PM
   var V = { mode: 'day', date: null, el: null, scroll: null };
-  var MODES = [['day', 'Today'], ['3day', '3 Day'], ['week', 'Week'], ['month', 'Month']];
+  var MODES = [['day', 'Heute'], ['3day', '3 Tage'], ['week', 'Woche'], ['month', 'Monat']];
 
   function y(d) { return ((d.getHours() + d.getMinutes() / 60) - START) * PX; }
   function clampTop(e, day) {
@@ -51,7 +51,7 @@
     var travel = e.travel ? '<span class="ev-travel" style="height:' + (e.travel * PX / 60) + 'px"></span>' : '';
     return '<button class="' + cls + '" data-ev="' + e.id + '" style="' + App.pstyle(p) + ';' + style + '">' + travel +
       '<span class="ev-title">' + App.esc(e.title) + '</span>' +
-      '<span class="ev-meta">' + App.fmt.range(e.start, e.end) + (e.travel ? ' · <b>' + App.icon('car', 16) + 'Leave ' + App.fmt.time(App.leaveBy(e), false) + '</b>' : '') + '</span>' +
+      '<span class="ev-meta">' + App.fmt.range(e.start, e.end) + (e.travel ? ' · <b>' + App.icon('car', 16) + 'Abfahrt ' + App.fmt.time(App.leaveBy(e), false) + '</b>' : '') + '</span>' +
       (others.length && !App.isFamily(e) ? '<span class="ev-with">' + App.dots(others, 14) + '</span>' : '') +
       (App.isFamily(e) ? '<span class="ev-with">' + App.dots(D.ALL, 14) + '</span>' : '') +
       '</button>';
@@ -62,7 +62,7 @@
       var w = 100 / it.cols, left = it.col * w;
       if (it.more) {
         var t = y(it.start), h = Math.max(30, y(it.end) - t - 3);
-        return '<button class="ev ev--more" data-more="' + it.more.map(function (e) { return e.id; }).join(',') + '" style="top:' + t + 'px;height:' + h + 'px;left:calc(' + left + '% + 2px);width:calc(' + w + '% - 4px)">+' + it.more.length + '<small>more</small></button>';
+        return '<button class="ev ev--more" data-more="' + it.more.map(function (e) { return e.id; }).join(',') + '" style="top:' + t + 'px;height:' + h + 'px;left:calc(' + left + '% + 2px);width:calc(' + w + '% - 4px)">+' + it.more.length + '<small>mehr</small></button>';
       }
       var b = clampTop(it.e, V.date);
       return evBlock(it.e, 'top:' + b.top + 'px;height:' + b.h + 'px;left:calc(' + left + '% + 2px);width:calc(' + w + '% - 4px)', { lane: laneId, color: colorFn ? colorFn(it.e) : null, half: it.cols > 1 });
@@ -72,7 +72,7 @@
   function hoursCol() {
     var h = '';
     for (var i = START; i <= END; i++) {
-      h += '<div class="hr" style="top:' + (i - START) * PX + 'px"><span>' + (i === 12 ? 'Noon' : (i % 12 || 12) + (i < 12 ? ' AM' : ' PM')) + '</span></div>';
+      h += '<div class="hr" style="top:' + (i - START) * PX + 'px"><span>' + (i < 10 ? '0' : '') + i + ' Uhr</span></div>';
     }
     return h;
   }
@@ -88,13 +88,13 @@
     var day = V.date;
     var fam = App.timedOn(day).filter(App.isFamily);
     var allDay = App.allDayOn(day);
-    var ad = allDay.length ? '<div class="allday"><div class="gutter label">All day</div><div class="allday-grid">' + allDay.map(function (e) {
+    var ad = allDay.length ? '<div class="allday"><div class="gutter label">Ganztägig</div><div class="allday-grid">' + allDay.map(function (e) {
       var fam2 = App.isFamily(e);
       var idx = D.people.map(function (p) { return p.id; }).indexOf(e.people[0]);
       var col = fam2 ? '1 / -1' : (idx + 1) + ' / span 1';
       var s = App.dayStart(day), spanDays = Math.round((e.end - e.start) / 864e5), dayN = Math.round((s - e.start) / 864e5) + 1;
       return '<button class="ad' + (e.start < s ? ' ad--cont' : '') + '" data-ev="' + e.id + '" style="grid-column:' + col + ';' + App.pstyle(App.evColor(e)) + '">' +
-        (e.start < s ? App.icon('left', 16) : '') + App.esc(e.title) + (spanDays > 1 ? ' <small>Day ' + dayN + ' of ' + spanDays + '</small>' : '') + '</button>';
+        (e.start < s ? App.icon('left', 16) : '') + App.esc(e.title) + (spanDays > 1 ? ' <small>Tag ' + dayN + ' von ' + spanDays + '</small>' : '') + '</button>';
     }).join('') + '</div></div>' : '';
     var grid = '<div class="grid-scroll"><div class="grid" style="height:' + (END - START) * PX + 'px">' +
       '<div class="hours">' + hoursCol() + '</div>' +
@@ -108,7 +108,7 @@
       }).join('') + '</div>' +
       nowLine([day]) + '</div>' +
       '</div></div>';
-    var empty = !App.timedOn(day).length ? '<div class="cal-empty serif">Nothing on the calendar.<br><i>A rare, quiet day.</i></div>' : '';
+    var empty = !App.timedOn(day).length ? '<div class="cal-empty serif">Keine Termine im Kalender.<br><i>Ein herrlich ruhiger Tag.</i></div>' : '';
     return '<div class="cal-day">' + ad + grid + empty + '</div>';
   }
 
@@ -125,7 +125,7 @@
     if (anyAllDay) {
       var s0 = App.dayStart(days[0]), s3 = App.addDays(s0, 3);
       var list = App.events().filter(function (e) { return e.allDay && e.start < s3 && e.end > s0; });
-      ad = '<div class="allday"><div class="gutter label">All day</div><div class="allday-grid allday-grid--3">' + list.map(function (e) {
+      ad = '<div class="allday"><div class="gutter label">Ganztägig</div><div class="allday-grid allday-grid--3">' + list.map(function (e) {
         var a = Math.max(0, Math.round((e.start - s0) / 864e5)), b = Math.min(3, Math.round((e.end - s0) / 864e5));
         return '<button class="ad' + (e.start < s0 ? ' ad--cont' : '') + '" data-ev="' + e.id + '" style="grid-column:' + (a + 1) + ' / ' + (b + 1) + ';' + App.pstyle(App.evColor(e)) + '">' +
           (e.start < s0 ? App.icon('left', 16) : '') + App.esc(e.title) + (e.end > s3 ? App.icon('right', 16) : '') + '</button>';
@@ -157,8 +157,8 @@
           return '<button class="wk-ev' + (e.end <= now ? ' is-past' : '') + '" data-ev="' + e.id + '" style="' + App.pstyle(App.evColor(e)) + '">' +
             '<span class="wk-t">' + App.fmt.time(e.start, false) + '</span><span class="wk-n">' + App.esc(e.title) + '</span></button>';
         }).join('') +
-        (more > 0 ? '<button class="wk-more" data-day="' + (+d) + '">+' + more + ' more</button>' : '') +
-        (!list.length && !ad.length ? '<div class="wk-free serif"><i>Free</i></div>' : '') +
+        (more > 0 ? '<button class="wk-more" data-day="' + (+d) + '">+' + more + ' weitere</button>' : '') +
+        (!list.length && !ad.length ? '<div class="wk-free serif"><i>Frei</i></div>' : '') +
         '</div>';
     }).join('') + '</div>';
   }
@@ -176,28 +176,28 @@
       cells += '<button class="mo-cell' + (d.getMonth() !== first.getMonth() ? ' is-out' : '') + (App.sameDay(d, now) ? ' is-today' : '') + '" data-day="' + (+d) + '">' +
         '<span class="num">' + d.getDate() + '</span><span class="mo-dots">' + dots + (evs.length > 5 ? '<em>+' + (evs.length - 5) + '</em>' : '') + '</span></button>';
     }
-    return '<div class="month"><div class="mo-dow">' + ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(function (d) { return '<span class="label">' + d + '</span>'; }).join('') + '</div>' +
+    return '<div class="month"><div class="mo-dow">' + ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(function (d) { return '<span class="label">' + d + '</span>'; }).join('') + '</div>' +
       '<div class="mo-grid">' + cells + '</div></div>';
   }
 
   // ------------------------------------------------------------ header
   function title() {
     var d = V.date, now = App.now();
-    if (V.mode === 'day') return { k: App.fmt.month(d) + ' ' + d.getFullYear() + (App.sameDay(d, now) ? ' · Today' : ' · ' + App.fmt.rel(d)), t: App.fmt.day(d) + ' <i>' + d.getDate() + '</i>' };
+    if (V.mode === 'day') return { k: App.fmt.month(d) + ' ' + d.getFullYear() + (App.sameDay(d, now) ? ' · Heute' : ' · ' + App.fmt.rel(d)), t: App.fmt.day(d) + ' <i>' + d.getDate() + '</i>' };
     if (V.mode === '3day') { var e = App.addDays(d, 2); return { k: App.fmt.month(d) + ' ' + d.getFullYear(), t: App.fmt.dayShort(d) + ' ' + d.getDate() + ' <i>–</i> ' + App.fmt.dayShort(e) + ' ' + e.getDate() }; }
-    if (V.mode === 'week') { var w = App.addDays(d, 6); return { k: 'Next 7 days', t: App.fmt.monthShort(d) + ' ' + d.getDate() + ' <i>–</i> ' + App.fmt.monthShort(w) + ' ' + w.getDate() }; }
+    if (V.mode === 'week') { var w = App.addDays(d, 6); return { k: 'Nächste 7 Tage', t: App.fmt.monthShort(d) + ' ' + d.getDate() + ' <i>–</i> ' + App.fmt.monthShort(w) + ' ' + w.getDate() }; }
     return { k: d.getFullYear(), t: App.fmt.month(d) };
   }
   function header() {
     var t = title();
     var isToday = V.mode === 'month' ? (V.date.getMonth() === App.now().getMonth()) : App.sameDay(V.date, App.now());
     return '<header class="cal-head">' +
-      '<button class="icon-btn" data-nav="-1" aria-label="Previous">' + App.icon('left', 24) + '</button>' +
+      '<button class="icon-btn" data-nav="-1" aria-label="Zurück">' + App.icon('left', 24) + '</button>' +
       '<div class="cal-title"><div class="serif">' + t.t + '</div><div class="label">' + t.k + '</div></div>' +
-      '<button class="icon-btn" data-nav="1" aria-label="Next">' + App.icon('right', 24) + '</button>' +
-      '<button class="btn btn--ghost' + (isToday ? ' is-hidden' : '') + '" data-today>Today</button>' +
+      '<button class="icon-btn" data-nav="1" aria-label="Weiter">' + App.icon('right', 24) + '</button>' +
+      '<button class="btn btn--ghost' + (isToday ? ' is-hidden' : '') + '" data-today>Heute</button>' +
       '<div class="seg">' + MODES.map(function (m) { return '<button class="' + (V.mode === m[0] ? 'is-on' : '') + '" data-mode="' + m[0] + '">' + m[1] + '</button>'; }).join('') + '</div>' +
-      '<button class="fab" data-add aria-label="Add event">' + App.icon('plus', 26) + '</button>' +
+      '<button class="fab" data-add aria-label="Termin hinzufügen">' + App.icon('plus', 26) + '</button>' +
       '</header>';
   }
 
@@ -255,10 +255,10 @@
       '<div class="evs" style="' + App.pstyle(p) + '">' +
       '<div class="evs-band"><div class="label label--on">' + App.fmt.rel(e.start) + ' · ' + App.fmt.month(e.start) + ' ' + e.start.getDate() + '</div>' +
       '<h2 class="serif">' + App.esc(e.title) + '</h2>' +
-      '<div class="evs-time num">' + (e.allDay ? 'All day' : App.fmt.range(e.start, e.end)) + '</div></div>' +
+      '<div class="evs-time num">' + (e.allDay ? 'Ganztägig' : App.fmt.range(e.start, e.end)) + '</div></div>' +
       '<div class="evs-body">' +
-      (e.travel ? '<div class="evs-row evs-leave">' + App.icon('car', 28) + '<div><b>Leave by ' + App.fmt.time(App.leaveBy(e)) + '</b><span>' + e.travel + ' min drive in current traffic</span></div></div>' : '') +
-      (e.loc ? '<div class="evs-row">' + App.icon('pin', 28) + '<div><b>' + App.esc(e.loc) + '</b><span>Tap to send directions to phone</span></div></div>' : '') +
+      (e.travel ? '<div class="evs-row evs-leave">' + App.icon('car', 28) + '<div><b>Losgehen um ' + App.fmt.time(App.leaveBy(e)) + '</b><span>' + e.travel + ' Min Fahrtzeit</span></div></div>' : '') +
+      (e.loc ? '<div class="evs-row">' + App.icon('pin', 28) + '<div><b>' + App.esc(e.loc) + '</b><span>Tippen für Route aufs Handy</span></div></div>' : '') +
       '<div class="evs-row">' + App.icon('person', 28) + '<div class="evs-people">' + (fam ? D.people : e.people.map(App.person)).map(function (x) {
         return '<span class="chip" style="' + App.pstyle(x) + '">' + App.avatar(x, 32) + x.name + '</span>';
       }).join('') + '</div></div>' +
@@ -268,7 +268,7 @@
 
   function moreSheet(ids) {
     var list = ids.map(App.findEvent).filter(Boolean);
-    App.sheet('<div class="sheet-pad"><div class="label">Overlapping</div><h2 class="serif sheet-h">' + list.length + ' more events</h2>' +
+    App.sheet('<div class="sheet-pad"><div class="label">Überschneidungen</div><h2 class="serif sheet-h">' + list.length + ' weitere Termine</h2>' +
       '<div class="more-list">' + list.map(function (e) {
         return '<button class="more-row" data-ev="' + e.id + '" style="' + App.pstyle(App.evColor(e)) + '"><i></i><b>' + App.esc(e.title) + '</b><span>' + App.fmt.range(e.start, e.end) + '</span></button>';
       }).join('') + '</div></div>', {
@@ -280,27 +280,27 @@
     var now = App.now();
     var st = { who: [], day: 0, time: '15:30', dur: 60, title: '' };
     var days = [0, 1, 2, 3, 4];
-    var times = [['08:00', '8 AM'], ['12:00', 'Noon'], ['15:30', '3:30 PM'], ['16:30', '4:30 PM'], ['18:00', '6 PM'], ['19:30', '7:30 PM']];
-    var ideas = ['Soccer', 'Playdate', 'Dentist', 'Dinner out', 'Swim', 'Birthday party'];
+    var times = [['08:00', '08:00 Uhr'], ['12:00', '12:00 Uhr'], ['15:30', '15:30 Uhr'], ['16:30', '16:30 Uhr'], ['18:00', '18:00 Uhr'], ['19:30', '19:30 Uhr']];
+    var ideas = ['Essen gehen', 'Sport', 'Arzt', 'Einkaufen', 'Besuch', 'Geburtstag'];
     App.sheet(
       '<div class="sheet-pad add">' +
-      '<div class="label">New event</div>' +
-      '<input class="big-input serif" placeholder="What’s happening?" data-f="title">' +
+      '<div class="label">Neuer Termin</div>' +
+      '<input class="big-input serif" placeholder="Was steht an?" data-f="title">' +
       '<div class="chips">' + ideas.map(function (i) { return '<button class="chip chip--ghost" data-idea="' + i + '">' + i + '</button>'; }).join('') + '</div>' +
-      '<div class="label">Who</div><div class="add-who">' + D.people.map(function (p) {
+      '<div class="label">Wer</div><div class="add-who">' + D.people.map(function (p) {
         return '<button class="who-btn" data-who="' + p.id + '" style="' + App.pstyle(p) + '">' + App.avatar(p, 56) + '<span>' + p.name + '</span></button>';
-      }).join('') + '<button class="who-btn" data-who="all" style="' + App.pstyle(D.family) + '">' + App.avatar(D.family, 56) + '<span>Everyone</span></button></div>' +
-      '<div class="add-row"><div><div class="label">When</div><div class="chips">' + days.map(function (i) {
+      }).join('') + '<button class="who-btn" data-who="all" style="' + App.pstyle(D.family) + '">' + App.avatar(D.family, 56) + '<span>Beide</span></button></div>' +
+      '<div class="add-row"><div><div class="label">Wann</div><div class="chips">' + days.map(function (i) {
         var d = App.addDays(now, i);
         return '<button class="chip' + (i === 0 ? ' is-on' : '') + '" data-dayi="' + i + '">' + (i < 2 ? App.fmt.rel(d) : App.fmt.dayShort(d) + ' ' + d.getDate()) + '</button>';
       }).join('') + '</div></div></div>' +
-      '<div class="add-row"><div><div class="label">Time</div><div class="chips">' + times.map(function (t) {
+      '<div class="add-row"><div><div class="label">Uhrzeit</div><div class="chips">' + times.map(function (t) {
         return '<button class="chip' + (t[0] === st.time ? ' is-on' : '') + '" data-time="' + t[0] + '">' + t[1] + '</button>';
       }).join('') + '</div></div>' +
-      '<div><div class="label">Length</div><div class="chips">' + [[30, '30m'], [60, '1h'], [120, '2h']].map(function (t) {
+      '<div><div class="label">Dauer</div><div class="chips">' + [[30, '30 Min'], [60, '1 Std'], [120, '2 Std']].map(function (t) {
         return '<button class="chip' + (t[0] === st.dur ? ' is-on' : '') + '" data-dur="' + t[0] + '">' + t[1] + '</button>';
       }).join('') + '</div></div></div>' +
-      '<div class="sheet-actions"><button class="btn btn--ghost" data-close>Cancel</button><button class="btn btn--solid" data-save>Add to calendar</button></div>' +
+      '<div class="sheet-actions"><button class="btn btn--ghost" data-close>Abbrechen</button><button class="btn btn--solid" data-save>Termin eintragen</button></div>' +
       '</div>', {
       cls: 'sheet--wide',
       onMount: function (s, close) {
@@ -310,10 +310,10 @@
           if (!t) return;
           if (t.dataset.idea) { input.value = t.dataset.idea; }
           if (t.dataset.who) {
-            if (t.dataset.who === 'all') st.who = st.who.length === 4 ? [] : D.ALL.slice();
+            if (t.dataset.who === 'all') st.who = st.who.length === 2 ? [] : D.ALL.slice();
             else { var i = st.who.indexOf(t.dataset.who); if (i > -1) st.who.splice(i, 1); else st.who.push(t.dataset.who); }
             App.$$('[data-who]', s).forEach(function (b) {
-              b.classList.toggle('is-on', b.dataset.who === 'all' ? st.who.length === 4 : st.who.indexOf(b.dataset.who) > -1);
+              b.classList.toggle('is-on', b.dataset.who === 'all' ? st.who.length === 2 : st.who.indexOf(b.dataset.who) > -1);
             });
           }
           ['dayi', 'time', 'dur'].forEach(function (k) {
@@ -323,8 +323,8 @@
             }
           });
           if (t.hasAttribute('data-save')) {
-            var title = input.value.trim() || 'New event';
-            var who = st.who.length ? st.who.slice() : ['jordan'];
+            var title = input.value.trim() || 'Neuer Termin';
+            var who = st.who.length ? st.who.slice() : ['marius'];
             var start = App.addDays(App.dayStart(now), st.day), p = st.time.split(':');
             start.setHours(+p[0], +p[1]);
             var e = { id: D._eid(), title: title, people: who, start: start, end: new Date(+start + st.dur * 60000) };
@@ -333,7 +333,7 @@
             V.date = App.dayStart(start); V.mode = V.mode === 'month' ? 'day' : V.mode; V.scroll = null;
             render();
             App.emit('data');
-            App.toast('Added <b>' + App.esc(title) + '</b> · ' + App.fmt.rel(start) + ' ' + App.fmt.time(start), {
+            App.toast('Eingetragen: <b>' + App.esc(title) + '</b> · ' + App.fmt.rel(start) + ' ' + App.fmt.time(start), {
               icon: 'calendar', undo: function () { D.events.splice(D.events.indexOf(e), 1); render(); App.emit('data'); }
             });
           }

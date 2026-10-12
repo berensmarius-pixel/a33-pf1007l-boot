@@ -1,8 +1,19 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "home-dashboard",
+  "main": "worker.js",
   "compatibility_date": "2026-09-30",
   "assets": {
     "directory": "./dist"
-  }
+  },
+  "vars": {
+    "HOME_LAT": "49.4447",
+    "HOME_LNG": "7.7690"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "PHOTOS_KV",
+      "id": "6cf52746be904f22aea374ba012f6379"
+    }
+  ]
 }

@@ -6,7 +6,7 @@
   function clock() {
     var n = App.now();
     return '<div class="h-time num">' + App.fmt.time(n, false) + '<span class="h-ampm">' + App.fmt.ampm(n) + '</span></div>' +
-      '<div class="h-date"><b>' + App.fmt.day(n) + '</b> ' + App.fmt.month(n) + ' ' + n.getDate() + '</div>';
+      '<div class="h-date"><b>' + App.fmt.day(n) + '</b>, ' + n.getDate() + '. ' + App.fmt.month(n) + '</div>';
   }
 
   function weather() {
@@ -17,7 +17,7 @@
     return '<div class="h-wx-top">' +
       '<span class="h-wx-icon">' + App.icon(w.cond, 60) + '</span>' +
       '<span class="h-wx-temp num">' + w.temp + '°</span>' +
-      '<span class="h-wx-meta"><b>' + w.label + '</b><span>H ' + w.hi + '°  L ' + w.lo + '°</span></span>' +
+      '<span class="h-wx-meta"><b>Kaiserslautern</b><span>H ' + w.hi + '°  T ' + w.lo + '°</span></span>' +
       '</div>' +
       '<div class="h-wx-say"><b>' + w.summary + '.</b> ' + w.advice + '.</div>' +
       '<div class="h-wx-hours">' + hours.map(function (h) {
@@ -29,7 +29,7 @@
 
   function presence() {
     return D.people.map(function (p) {
-      var sub = p.home ? 'Home' : (p.eta ? '<b>ETA ' + p.eta + ' min</b>' : p.status);
+      var sub = p.home ? 'Zuhause' : (p.eta ? '<b>Ankunft ' + p.eta + ' Min</b>' : p.status);
       return '<div class="h-who' + (p.home ? ' is-home' : '') + '" style="' + App.pstyle(p) + '">' +
         App.avatar(p, 36, p.home ? '' : 'avatar--away') +
         '<span><b>' + p.name + '</b><small>' + sub + '</small></span></div>';
@@ -41,28 +41,28 @@
     if (!e) {
       var tomorrow = App.timedOn(App.addDays(now, 1))[0];
       return '<div class="h-hero h-hero--empty" data-go="calendar">' +
-        '<div class="label label--light">Rest of today</div>' +
-        '<div class="h-hero-title serif">Nothing else scheduled.<br><i>Enjoy the quiet.</i></div>' +
-        (tomorrow ? '<div class="h-hero-meta">Tomorrow starts with <b>' + App.esc(tomorrow.title) + '</b> at ' + App.fmt.time(tomorrow.start) + '</div>' : '') +
+        '<div class="label label--light">Heute</div>' +
+        '<div class="h-hero-title serif">Keine weiteren Termine heute.<br><i>Schönen Feierabend!</i></div>' +
+        (tomorrow ? '<div class="h-hero-meta">Morgen startet mit <b>' + App.esc(tomorrow.title) + '</b> um ' + App.fmt.time(tomorrow.start) + '</div>' : '') +
         '</div>';
     }
     var p = App.evColor(e);
     var mins = (e.start - now) / 60000;
     var leave = (App.leaveBy(e) - now) / 60000;
     var who = e.people.map(function (id) { return App.person(id).name; });
-    var whoText = App.isFamily(e) ? 'Everyone' : who.join(' + ');
+    var whoText = App.isFamily(e) ? 'Alle' : who.join(' + ');
     var big = mins < 100
-      ? '<div class="h-hero-count num">' + Math.round(mins) + '<small>min</small></div>'
+      ? '<div class="h-hero-count num">' + Math.round(mins) + '<small>Min</small></div>'
       : '<div class="h-hero-count num">' + App.fmt.time(e.start, false) + '<small>' + App.fmt.ampm(e.start) + '</small></div>';
     var leavePill = '';
     if (e.travel) {
       leavePill = leave <= 0
-        ? '<span class="pill pill--alert"><i class="pulse"></i>Leave now</span>'
-        : '<span class="pill' + (leave <= 15 ? ' pill--soon' : '') + '">' + App.icon('car', 20) + 'Leave in ' + App.fmt.mins(leave) + '</span>';
+        ? '<span class="pill pill--alert"><i class="pulse"></i>Jetzt losgehen</span>'
+        : '<span class="pill' + (leave <= 15 ? ' pill--soon' : '') + '">' + App.icon('car', 20) + 'In ' + App.fmt.mins(leave) + ' los</span>';
     }
     return '<button class="h-hero" style="' + App.pstyle(p) + '" data-ev="' + e.id + '">' +
       '<div class="h-hero-main">' +
-      '  <div class="label label--on">Next up · ' + App.esc(whoText) + '</div>' +
+      '  <div class="label label--on">Als nächstes · ' + App.esc(whoText) + '</div>' +
       '  <div class="h-hero-title serif">' + App.esc(e.title) + '</div>' +
       '  <div class="h-hero-meta">' + App.fmt.range(e.start, e.end) + (e.loc ? ' · ' + App.esc(e.loc) : '') + '</div>' +
       '  <div class="h-hero-foot">' + (e.people.length > 1 ? App.dots(e.people, 22) : '') + leavePill + '</div>' +
@@ -79,10 +79,10 @@
         (list.length ? shown.map(function (e) {
           var cur = e.start <= now;
           return '<button class="h-ev' + (cur ? ' is-now' : '') + '" data-ev="' + e.id + '">' +
-            '<span class="h-ev-t">' + (cur ? 'Now' : App.fmt.time(e.start, false)) + '</span>' +
+            '<span class="h-ev-t">' + (cur ? 'Jetzt' : App.fmt.time(e.start, false)) + '</span>' +
             '<span class="h-ev-n">' + App.esc(e.title) + '</span></button>';
-        }).join('') : '<div class="h-free serif"><i>Free</i> the rest of the day</div>') +
-        (more > 0 ? '<button class="h-more" data-go="calendar">+' + more + ' more</button>' : '') +
+        }).join('') : '<div class="h-free serif"><i>Frei</i> für heute</div>') +
+        (more > 0 ? '<button class="h-more" data-go="calendar">+' + more + ' weitere</button>' : '') +
         '</div>';
     }).join('');
   }
@@ -98,21 +98,21 @@
   function chores() {
     var r = App.currentRoutine();
     var who = D.people.map(function (p) { return p.id; }).concat(['any']);
-    return '<div class="label">Chores · ' + r.name + '</div><div class="h-rings">' + who.map(function (id) {
+    return '<div class="label">Aufgaben · ' + r.name + '</div><div class="h-rings">' + who.map(function (id) {
       var list = D.chores.filter(function (c) { return c.r === r.id && c.who === id; });
       if (!list.length) return '';
       var done = list.filter(function (c) { return c.done; }).length;
       var p = App.person(id);
       return '<div class="h-ring' + (done === list.length ? ' is-done' : '') + '" style="' + App.pstyle(p) + '">' + ring(done, list.length, 64) +
-        '<b class="num">' + (done === list.length ? '✓' : done + '/' + list.length) + '</b><span>' + (id === 'any' ? 'Anyone' : p.name) + '</span></div>';
+        '<b class="num">' + (done === list.length ? '✓' : done + '/' + list.length) + '</b><span>' + (id === 'any' ? 'Beide' : p.name) + '</span></div>';
     }).join('') + '</div>';
   }
 
   function shopping() {
     var open = D.groceries.filter(function (g) { return !g.done; });
     var recent = open.slice(-3).reverse();
-    return '<div class="label">Shopping</div>' +
-      '<div class="h-stat"><span class="num">' + open.length + '</span><small>items to get</small></div>' +
+    return '<div class="label">Einkaufsliste</div>' +
+      '<div class="h-stat"><span class="num">' + open.length + '</span><small>offene Artikel</small></div>' +
       '<ul class="h-recent">' + recent.map(function (g) {
         return '<li><i></i>' + App.esc(g.name) + '</li>';
       }).join('') + '</ul>';
@@ -122,12 +122,78 @@
     var lights = D.devices.filter(function (d) { return d.type === 'light' && d.on; }).length;
     var unlocked = D.devices.filter(function (d) { return d.type === 'lock' && !d.locked; });
     var garage = D.devices.filter(function (d) { return d.type === 'garage'; })[0];
-    var secure = !unlocked.length && garage.state === 'closed';
-    var secText = secure ? 'All locked' : (garage.state !== 'closed' ? 'Garage open' : unlocked[0].name + ' unlocked');
-    return '<div class="label">Home</div>' +
-      '<div class="h-st-row">' + App.icon('bulb', 24) + '<b class="num">' + lights + '</b><span>lights on</span></div>' +
+    var secure = !unlocked.length && (!garage || garage.state === 'closed');
+    var secText = secure ? 'Alles verriegelt' : (garage && garage.state !== 'closed' ? 'Garage offen' : unlocked[0].name + ' offen');
+    return '<div class="label">Zuhause</div>' +
+      '<div class="h-st-row">' + App.icon('bulb', 24) + '<b class="num">' + lights + '</b><span>Lichter an</span></div>' +
       '<div class="h-st-row' + (secure ? '' : ' is-warn') + '">' + App.icon(secure ? 'lock' : 'unlock', 24) + '<span>' + secText + '</span></div>' +
-      '<div class="h-st-row">' + App.icon('thermo', 24) + '<b class="num">' + D.climate.current + '°</b><span>inside</span></div>';
+      '<div class="h-st-row">' + App.icon('thermo', 24) + '<b class="num">' + D.climate.current + '°</b><span>innen</span></div>';
+  }
+
+  function fuelCard() {
+    var f = D.fuel || {};
+    var c = f.cheapest || { name: 'JET', street: 'Pariser Str. 123', dist: 1.4, price: 1.719 };
+    var isCheap = f.trend === 'cheap';
+    var isHigh = f.trend === 'high';
+    var badgeClass = isCheap ? 'badge-cheap' : (isHigh ? 'badge-high' : 'badge-norm');
+    var badgeText = isCheap ? 'Günstig' : (isHigh ? 'Teuer' : 'Normal');
+
+    return '<div class="label">Super E5 · Kaiserslautern</div>' +
+      '<div class="h-fuel-row">' +
+      '  <div class="h-fuel-main">' +
+      '    <div class="h-fuel-price num">' + c.price.toFixed(3).replace('.', ',') + '<small>€</small></div>' +
+      '    <div class="h-fuel-stat"><b>' + App.esc(c.name) + '</b><span>' + App.esc(c.street) + ' · ' + c.dist + ' km</span></div>' +
+      '  </div>' +
+      '  <div class="h-fuel-badge ' + badgeClass + '">' + badgeText + '</div>' +
+      '</div>';
+  }
+
+  function timerCard() {
+    var active = App.Timer ? App.Timer.list() : [];
+    if (active.length) {
+      var t = active[0];
+      return '<div class="label">Küchen-Timer · Läuft</div>' +
+        '<div class="h-timer-active">' +
+        '  <span class="h-timer-emoji">' + t.emoji + '</span>' +
+        '  <div class="h-timer-info"><b>' + App.esc(t.label) + '</b><small>' + App.Timer.fmt(t.remSec) + ' übrig</small></div>' +
+        '  <button class="h-timer-btn" data-action="timer">Öffnen</button>' +
+        '</div>';
+    }
+    return '<div class="label">Küchen-Timer · Schnellstart</div>' +
+      '<div class="h-timer-presets">' +
+      '  <button class="h-t-chip" data-timer-pre="0">☕ 4m</button>' +
+      '  <button class="h-t-chip" data-timer-pre="1">🥚 6m</button>' +
+      '  <button class="h-t-chip" data-timer-pre="3">🍝 9m</button>' +
+      '  <button class="h-t-chip" data-timer-pre="4">🍕 13m</button>' +
+      '</div>';
+  }
+
+  function openFuelSheet() {
+    var f = D.fuel || {};
+    var stations = f.stations || [
+      { name: 'JET', street: 'Pariser Str. 123', dist: 1.4, price: 1.719 },
+      { name: 'ED', street: 'Mainzer Str. 104', dist: 2.1, price: 1.739 },
+      { name: 'TotalEnergies', street: 'Donnersberger Str. 1', dist: 2.5, price: 1.759 },
+      { name: 'Aral', street: 'Ludwigshafener Str. 8', dist: 3.2, price: 1.789 }
+    ];
+    var sheet = App.sheet(
+      '<div class="fuel-sheet">' +
+      '<div class="t-sheet-head">' +
+      '  <div><b>Spritpreise Kaiserslautern</b><small>Super E5 (Super 95) · Günstigste Tankstellen</small></div>' +
+      '  <button class="btn-close" id="fClose">✕</button>' +
+      '</div>' +
+      '<div class="f-list">' + stations.map(function (s, idx) {
+        return '<div class="f-item' + (idx === 0 ? ' is-best' : '') + '">' +
+          '<div class="f-pos">' + (idx + 1) + '</div>' +
+          '<div class="f-name"><b>' + App.esc(s.name) + '</b><span>' + App.esc(s.street) + ' (' + s.dist + ' km)</span></div>' +
+          '<div class="f-price num">' + s.price.toFixed(3).replace('.', ',') + ' €</div>' +
+          '</div>';
+      }).join('') + '</div>' +
+      (f.demo ? '<div class="f-hint">💡 Für minutengenaue Live-Preise: Kostenlosen API-Key auf <u>creativecommons.tankerkoenig.de</u> anfordern.</div>' : '<div class="f-hint">✅ Live-Preise der Markttransparenzstelle für Kraftstoffe (MTS-K)</div>') +
+      '</div>'
+    );
+    var closeBtn = sheet.el.querySelector('#fClose');
+    if (closeBtn) closeBtn.onclick = function () { sheet.close(); };
   }
 
   function paint() {
@@ -140,11 +206,13 @@
     el.querySelector('.h-chores').innerHTML = chores();
     el.querySelector('.h-shop').innerHTML = shopping();
     el.querySelector('.h-status').innerHTML = status();
+    if (el.querySelector('.h-fuel')) el.querySelector('.h-fuel').innerHTML = fuelCard();
+    if (el.querySelector('.h-timer')) el.querySelector('.h-timer').innerHTML = timerCard();
   }
 
   function photoCaption(s) {
     var m = App.photoMeta(s.photos[0]);
-    V.el.querySelector('.h-photo-cap').innerHTML = '<b>' + (m.onThisDay ? 'On this day · ' : '') + m.kicker + '</b><span>' + App.esc(m.place) + '</span>';
+    V.el.querySelector('.h-photo-cap').innerHTML = '<b>' + (m.onThisDay ? 'An diesem Tag · ' : '') + m.kicker + '</b><span>' + App.esc(m.place) + '</span>';
   }
 
   App.register('home', {
@@ -155,13 +223,27 @@
           '<div class="h-clock" data-go="calendar"></div>' +
           '<div class="h-weather"></div>' +
           '<div class="h-presence"></div>' +
-          '<div class="h-main"><div class="h-hero-slot"></div><div class="h-lanes" ></div></div>' +
+          '<div class="h-main">' +
+          '  <div class="h-hero-slot"></div>' +
+          '  <div class="h-lanes"></div>' +
+          '  <div class="h-extra-row"><button class="h-fuel card"></button><button class="h-timer card"></button></div>' +
+          '</div>' +
           '<div class="h-side">' +
           '  <button class="h-photo" data-go="photos"><div class="h-photo-stage"></div><div class="h-photo-cap"></div></button>' +
           '  <button class="h-chores card" data-go="tasks"></button>' +
           '  <div class="h-duo"><button class="h-shop card" data-go="shopping"></button><button class="h-status card" data-go="control"></button></div>' +
           '</div></div>';
         el.addEventListener('click', function (e) {
+          var fc = e.target.closest('.h-fuel');
+          if (fc) { openFuelSheet(); return; }
+          var tc = e.target.closest('[data-timer-pre]');
+          if (tc && App.Timer) {
+            var p = App.Timer.presets[parseInt(tc.dataset.timerPre, 10)];
+            App.Timer.start(p.label, p.emoji, p.sec);
+            return;
+          }
+          var tm = e.target.closest('[data-action="timer"], .h-timer');
+          if (tm && App.Timer) { App.Timer.open(); return; }
           var ev = e.target.closest('[data-ev]');
           if (ev) { App.eventSheet(App.findEvent(ev.dataset.ev)); return; }
           var g = e.target.closest('[data-go]');
@@ -183,4 +265,14 @@
     if (n.getMinutes() === 0) { V.el.querySelector('.h-weather').innerHTML = weather(); V.el.querySelector('.h-lanes').innerHTML = lanes(); }
   });
   App.on('data', function () { if (App.current === 'home') paint(); });
+  App.on('timer-update', function () {
+    if (App.current === 'home' && V.el && V.el.querySelector('.h-timer')) {
+      V.el.querySelector('.h-timer').innerHTML = timerCard();
+    }
+  });
+  App.on('fuel-update', function () {
+    if (App.current === 'home' && V.el && V.el.querySelector('.h-fuel')) {
+      V.el.querySelector('.h-fuel').innerHTML = fuelCard();
+    }
+  });
 })();

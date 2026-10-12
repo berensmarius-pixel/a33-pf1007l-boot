@@ -26,40 +26,39 @@
   App.sameDay = function (a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); };
   App.isNight = function () { var h = App.now().getHours(); return h >= 22 || h < 6; };
 
-  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  var MON_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+  var DAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+  var MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+  var MON_SHORT = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
   App.fmt = {
     time: function (d, ampm) {
       var h = d.getHours(), m = d.getMinutes();
-      var s = (h % 12 || 12) + ':' + (m < 10 ? '0' : '') + m;
-      return ampm === false ? s : s + ' ' + (h >= 12 ? 'PM' : 'AM');
+      var s = (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+      return ampm === false ? s : s + ' Uhr';
     },
-    // "4 PM", "3:45 PM"
+    // "14:00 Uhr"
     hour: function (d) {
       var h = d.getHours(), m = d.getMinutes();
-      return (h % 12 || 12) + (m ? ':' + (m < 10 ? '0' : '') + m : '') + ' ' + (h >= 12 ? 'PM' : 'AM');
+      return (h < 10 ? '0' : '') + h + (m ? ':' + (m < 10 ? '0' : '') + m : '') + ' Uhr';
     },
-    ampm: function (d) { return d.getHours() >= 12 ? 'PM' : 'AM'; },
+    ampm: function (d) { return 'Uhr'; },
     range: function (a, b) {
-      var same = App.fmt.ampm(a) === App.fmt.ampm(b);
-      return (same ? App.fmt.time(a, false) : App.fmt.time(a)) + ' – ' + App.fmt.time(b);
+      return App.fmt.time(a, false) + ' – ' + App.fmt.time(b, false) + ' Uhr';
     },
     day: function (d) { return DAYS[d.getDay()]; },
-    dayShort: function (d) { return DAYS[d.getDay()].slice(0, 3); },
+    dayShort: function (d) { return DAYS[d.getDay()].slice(0, 2); },
     month: function (d) { return MONTHS[d.getMonth()]; },
     monthShort: function (d) { return MON_SHORT[d.getMonth()]; },
     mins: function (m) {
       m = Math.max(0, Math.round(m));
-      if (m < 60) return m + ' min';
+      if (m < 60) return m + ' Min';
       var h = Math.floor(m / 60), r = m % 60;
-      return h + ' hr' + (r ? ' ' + r + ' min' : '');
+      return h + ' Std' + (r ? ' ' + r + ' Min' : '');
     },
     rel: function (d) {
       var t = App.dayStart(App.now()), x = App.dayStart(d), diff = Math.round((x - t) / 864e5);
-      if (diff === 0) return 'Today';
-      if (diff === 1) return 'Tomorrow';
-      if (diff === -1) return 'Yesterday';
+      if (diff === 0) return 'Heute';
+      if (diff === 1) return 'Morgen';
+      if (diff === -1) return 'Gestern';
       return DAYS[d.getDay()];
     }
   };
@@ -135,24 +134,23 @@
     var summary, advice;
     if (rainAt === h) {
       var stop = h; while (stop < 24 && W.p[stop] >= 50) stop++;
-      summary = 'Rain until ' + App.fmt.hour(new Date(2000, 0, 1, stop));
-      advice = 'Umbrella weather';
+      summary = 'Regen bis ' + App.fmt.hour(new Date(2000, 0, 1, stop));
+      advice = 'Regenschirm mitnehmen';
     } else if (rainAt > -1) {
-      summary = 'Rain from ' + App.fmt.hour(new Date(2000, 0, 1, rainAt));
-      var soccer = App.timedOn(App.now()).filter(function (e) { return /soccer/i.test(e.title) && e.start > App.now(); })[0];
-      advice = soccer ? 'Pack a rain jacket for soccer' : 'Grab a rain jacket';
+      summary = 'Regen ab ' + App.fmt.hour(new Date(2000, 0, 1, rainAt));
+      advice = 'Regenjacke einpacken';
     } else {
-      summary = W.t[h] < 12 ? 'Clear and cool' : 'Dry all day';
-      advice = W.t[h] < 12 ? 'Jacket weather' : 'Light layers';
+      summary = W.t[h] < 12 ? 'Klar und kühl' : 'Trocken und angenehm';
+      advice = W.t[h] < 12 ? 'Warme Jacke anziehen' : 'Angenehmes Wetter';
     }
-    var labels = { sun: 'Sunny', moon: 'Clear', partly: 'Partly cloudy', cloud: 'Overcast', rain: 'Rain' };
-    return { temp: W.t[h], cond: W.c[h], label: labels[W.c[h]], hi: W.hi, lo: W.lo, summary: summary, advice: advice, hour: h };
+    var labels = { sun: 'Sonnig', moon: 'Klar', partly: 'Teils wolkig', cloud: 'Bewölkt', rain: 'Regnerisch', snow: 'Schnee' };
+    return { temp: W.t[h], cond: W.c[h], label: labels[W.c[h]] || 'Heiter', hi: W.hi, lo: W.lo, summary: summary, advice: advice, hour: h };
   };
   App.hourly = function (count) {
     var W = D.weather, h = App.now().getHours(), out = [];
     for (var i = 0; i < count; i++) {
       var x = (h + i) % 24;
-      out.push({ h: x, t: W.t[x], c: W.c[x], p: W.p[x], label: i === 0 ? 'Now' : ((x % 12 || 12) + (x >= 12 ? 'p' : 'a')) });
+      out.push({ h: x, t: W.t[x], c: W.c[x], p: W.p[x], label: i === 0 ? 'Jetzt' : ((x < 10 ? '0' : '') + x + 'h') });
     }
     return out;
   };
@@ -226,7 +224,7 @@
     t.className = 'toast' + (opts.tone ? ' toast--' + opts.tone : '');
     t.style.setProperty('--ms', ms + 'ms');
     t.innerHTML = (opts.icon ? App.icon(opts.icon, 26) : '') + '<span class="toast-msg">' + html + '</span>' +
-      (opts.undo ? '<button class="toast-undo">' + App.icon('undo', 22) + 'Undo</button>' : '');
+      (opts.undo ? '<button class="toast-undo">' + App.icon('undo', 22) + 'Rückgängig</button>' : '');
     box.appendChild(t);
     t.classList.add('is-in');
     function kill() { t.remove(); }
@@ -239,7 +237,7 @@
     opts = opts || {};
     var layer = $('#sheetLayer');
     layer.innerHTML = '<div class="sheet-scrim"></div><div class="sheet ' + (opts.cls || '') + '">' +
-      '<button class="sheet-x" data-close aria-label="Close">' + App.icon('x', 28) + '</button>' + html + '</div>';
+      '<button class="sheet-x" data-close aria-label="Schließen">' + App.icon('x', 28) + '</button>' + html + '</div>';
     layer.classList.add('is-open');
     function close() {
       if (!layer.classList.contains('is-open')) return;
@@ -327,16 +325,20 @@
 
   // ------------------------------------------------------------ boot
   App.start = function () {
-    App.setTime(15, 18); // demo default: a busy weekday afternoon
+    App.setTime(null); // Real live time
     fit();
     window.addEventListener('resize', fit);
     // Switch tabs the instant a finger lands (pointerdown), not on release. Keyboard "clicks"
     // (detail === 0) still work.
     $('#rail').addEventListener('pointerdown', function (e) {
+      var act = e.target.closest('[data-action="timer"]');
+      if (act && e.button === 0 && App.Timer) { App.Timer.open(); return; }
       var b = e.target.closest('[data-go]');
       if (b && e.button === 0) App.go(b.dataset.go);
     });
     $('#rail').addEventListener('click', function (e) {
+      var act = e.target.closest('[data-action="timer"]');
+      if (act && App.Timer) { App.Timer.open(); return; }
       var b = e.target.closest('[data-go]');
       if (b && e.detail === 0) App.go(b.dataset.go);
     });
@@ -347,7 +349,6 @@
     setInterval(tick, 1000);
     App.emit('ready');
     refreshStale(1500);
-    setTimeout(function () { App.toast('Tip: press and hold the <b>clock</b> in the sidebar for demo controls', { ms: 6000, icon: 'bolt' }); }, 1200);
   };
   document.addEventListener('DOMContentLoaded', function () { App.start(); });
 })();

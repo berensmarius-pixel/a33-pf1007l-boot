@@ -2,13 +2,13 @@
 (function () {
   'use strict';
   var V = { el: null, show: null, layout: 'auto', loud: false };
-  var LAYOUTS = [['auto', 'Auto'], ['cover', 'Cover'], ['pair', 'Pair'], ['collage', 'Collage'], ['polaroid', 'Polaroid']];
+  var LAYOUTS = [['auto', 'Auto'], ['cover', 'Vollbild'], ['pair', 'Paar'], ['collage', 'Collage'], ['polaroid', 'Polaroid']];
 
   function heart() {
     var s = V.show && V.show.current, on = s && s.photos[0].fav;
     var b = V.el.querySelector('[data-fav]');
     b.classList.toggle('is-on', !!on);
-    b.querySelector('span').textContent = on ? 'Favourite' : 'Favourite';
+    b.querySelector('span').textContent = on ? 'Favorit' : 'Favorit';
   }
 
   App.register('photos', {
@@ -17,15 +17,15 @@
         V.el = el;
         el.innerHTML = '<div class="photos">' +
           '<div class="ph-stage"></div>' +
-          '<button class="ph-zone ph-zone--l" data-prev aria-label="Previous"></button>' +
-          '<button class="ph-zone ph-zone--c" data-loud aria-label="Show details"></button>' +
-          '<button class="ph-zone ph-zone--r" data-next aria-label="Next"></button>' +
+          '<button class="ph-zone ph-zone--l" data-prev aria-label="Zurück"></button>' +
+          '<button class="ph-zone ph-zone--c" data-loud aria-label="Details anzeigen"></button>' +
+          '<button class="ph-zone ph-zone--r" data-next aria-label="Weiter"></button>' +
           '<div class="ph-top"><div class="seg seg--glass">' + LAYOUTS.map(function (l) {
             return '<button data-layout="' + l[0] + '" class="' + (l[0] === V.layout ? 'is-on' : '') + '">' + l[1] + '</button>';
           }).join('') + '</div></div>' +
           '<div class="ph-bottom">' +
           '  <button class="ph-btn" data-prev>' + App.icon('left', 30) + '</button>' +
-          '  <button class="ph-btn ph-btn--fav" data-fav>' + App.icon('heart', 30) + '<span>Favourite</span></button>' +
+          '  <button class="ph-btn ph-btn--fav" data-fav>' + App.icon('heart', 30) + '<span>Favorit</span></button>' +
           '  <button class="ph-btn" data-next>' + App.icon('right', 30) + '</button>' +
           '</div></div>';
         V.show = new App.Slideshow(el.querySelector('.ph-stage'), { layout: V.layout, interval: 15000, onChange: function () { setTimeout(heart); } });
@@ -45,7 +45,7 @@
             if (!p) return;
             p.fav = !p.fav;
             heart();
-            App.toast(p.fav ? 'Added to favourites · it’ll show up more often' : 'Removed from favourites', { icon: 'heart', ms: 2500 });
+            App.toast(p.fav ? 'Zu Favoriten hinzugefügt · wird öfter gezeigt' : 'Aus Favoriten entfernt', { icon: 'heart', ms: 2500 });
           }
         });
       }

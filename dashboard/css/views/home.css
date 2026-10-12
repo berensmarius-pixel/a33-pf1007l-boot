@@ -108,3 +108,29 @@
 .h-st-row span { color: var(--ink-2); }
 .h-st-row.is-warn { color: #B45F00; font-weight: 800; }
 .h-st-row.is-warn span { color: inherit; }
+
+/* ---- fuel & kitchen timer cards in main column ---- */
+.h-extra-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+.h-fuel, .h-timer { padding: 16px 20px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; }
+.h-fuel-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
+.h-fuel-main { display: flex; align-items: baseline; gap: 10px; }
+.h-fuel-price { font-size: 38px; line-height: .95; font-weight: 900; }
+.h-fuel-price small { font-size: 14px; font-weight: 600; margin-left: 2px; color: var(--mute); }
+.h-fuel-stat { display: flex; flex-direction: column; }
+.h-fuel-stat b { font-size: 16px; font-weight: 700; white-space: nowrap; }
+.h-fuel-stat span { font-size: 13px; color: var(--mute); white-space: nowrap; }
+.h-fuel-badge { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; padding: 4px 8px; border-radius: 6px; }
+.badge-cheap { background: #dcfce7; color: #15803d; }
+.badge-norm { background: #fef3c7; color: #b45309; }
+.badge-high { background: #fee2e2; color: #b91c1c; }
+
+.h-timer-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+.h-t-chip { padding: 8px 4px; border-radius: 10px; background: var(--paper-2); border: 1px solid var(--line); font-size: 13px; font-weight: 700; color: var(--ink); cursor: pointer; text-align: center; }
+.h-t-chip:active { background: var(--ink); color: #fff; }
+.h-timer-active { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+.h-timer-emoji { font-size: 28px; }
+.h-timer-info { flex: 1; }
+.h-timer-info b { font-size: 16px; display: block; }
+.h-timer-info small { font-size: 14px; color: var(--mute); font-family: monospace; font-weight: 700; }
+.h-timer-btn { padding: 6px 14px; border-radius: 8px; background: var(--ink); color: var(--paper); border: none; font-size: 13px; font-weight: 700; cursor: pointer; }
+

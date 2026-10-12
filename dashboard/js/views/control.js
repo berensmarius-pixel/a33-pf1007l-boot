@@ -16,7 +16,7 @@
       delete V.pending[id];
       if (d.flaky && !(opts && opts.silent)) {
         Object.keys(before).forEach(function (k) { d[k] = before[k]; });
-        App.toast('Couldn’t reach <b>' + d.name + '</b> · it may be offline', { tone: 'error', icon: 'bolt' });
+        App.toast('<b>' + d.name + '</b> nicht erreichbar · eventuell offline', { tone: 'error', icon: 'bolt' });
         changed([id]);
       } else paintTile(id);
     }, d.flaky ? 2600 : 600);
@@ -30,24 +30,24 @@
         '<span class="tile-fill"></span>' + pend +
         '<span class="tile-icon">' + App.icon('bulb', 28) + '</span>' +
         '<span class="tile-name">' + d.name + '</span>' +
-        '<span class="tile-state num">' + (d.on ? d.level + '%' : 'Off') + '</span></div>';
+        '<span class="tile-state num">' + (d.on ? d.level + '%' : 'Aus') + '</span></div>';
     }
     if (d.type === 'blind') {
       return '<div class="tile tile--blind' + (d.pos > 0 ? ' is-on' : '') + '" data-dev="' + d.id + '" style="--lvl:' + d.pos + '%">' +
         '<span class="tile-fill"></span>' + pend +
         '<span class="tile-icon">' + App.icon('blinds', 28) + '</span>' +
         '<span class="tile-name">' + d.name + '</span>' +
-        '<span class="tile-state num">' + (d.pos === 0 ? 'Closed' : d.pos === 100 ? 'Open' : d.pos + '% open') + '</span></div>';
+        '<span class="tile-state num">' + (d.pos === 0 ? 'Geschlossen' : d.pos === 100 ? 'Offen' : d.pos + '% offen') + '</span></div>';
     }
     if (d.type === 'lock') {
       return '<div class="tile tile--lock' + (d.locked ? '' : ' is-warn') + '" data-dev="' + d.id + '">' + pend +
         '<span class="tile-icon">' + App.icon(d.locked ? 'lock' : 'unlock', 28) + '</span>' +
         '<span class="tile-name">' + d.name + '</span>' +
-        '<span class="tile-state">' + (d.locked ? 'Locked<small>Hold to unlock</small>' : 'Unlocked<small>Tap to lock</small>') + '</span>' +
+        '<span class="tile-state">' + (d.locked ? 'Verriegelt<small>Halten zum Öffnen</small>' : 'Entriegelt<small>Tippen zum Verriegeln</small>') + '</span>' +
         '<svg class="hold-ring" viewBox="0 0 40 40"><circle cx="20" cy="20" r="17"/></svg></div>';
     }
     if (d.type === 'garage') {
-      var label = { closed: 'Closed', open: 'Open', opening: 'Opening…', closing: 'Closing…' }[d.state];
+      var label = { closed: 'Geschlossen', open: 'Offen', opening: 'Öffnet…', closing: 'Schließt…' }[d.state];
       return '<div class="tile tile--garage' + (d.state !== 'closed' ? ' is-warn' : '') + (/ing$/.test(d.state) ? ' is-moving' : '') + '" data-dev="' + d.id + '">' + pend +
         '<span class="tile-icon">' + App.icon('garage', 28) + '</span>' +
         '<span class="tile-name">' + d.name + '</span>' +
@@ -62,10 +62,10 @@
     var garage = dev('g-door');
     var secure = !unlocked.length && garage.state === 'closed';
     var c = D.climate, m = D.media;
-    return '<button class="sum' + (lights.length ? ' sum--warm' : '') + '" data-sum="lights"><span class="label">Lights</span><b class="num">' + lights.length + '</b><small>on in ' + unique(lights.map(function (l) { return l.room; })).length + ' rooms</small></button>' +
-      '<button class="sum' + (secure ? '' : ' sum--warn') + '" data-sum="security"><span class="label">Security</span><b class="num">' + (secure ? 'Locked' : unlocked.length + (garage.state !== 'closed' ? 1 : 0)) + '</b><small>' + (secure ? 'All doors + garage' : (garage.state !== 'closed' ? 'Garage ' + garage.state : '') + (unlocked.length ? (garage.state !== 'closed' ? ' · ' : '') + unlocked.map(function (u) { return u.name; }).join(', ') : '') + (secure ? '' : ' open')) + '</small></button>' +
-      '<button class="sum" data-sum="climate"><span class="label">Climate</span><b class="num">' + c.current + '°</b><small>' + (c.mode === 'off' ? 'System off' : (c.set > c.current ? 'Heating' : c.set < c.current ? 'Cooling' : 'Holding') + ' to ' + c.set + '°') + '</small></button>' +
-      '<button class="sum" data-sum="media"><span class="label">Media</span><b class="num">' + (m.playing ? 'Playing' : 'Paused') + '</b><small>' + m.room + ' speaker</small></button>';
+    return '<button class="sum' + (lights.length ? ' sum--warm' : '') + '" data-sum="lights"><span class="label">Lichter</span><b class="num">' + lights.length + '</b><small>an in ' + unique(lights.map(function (l) { return l.room; })).length + ' Räumen</small></button>' +
+      '<button class="sum' + (secure ? '' : ' sum--warn') + '" data-sum="security"><span class="label">Sicherheit</span><b class="num">' + (secure ? 'Verriegelt' : unlocked.length + (garage.state !== 'closed' ? 1 : 0)) + '</b><small>' + (secure ? 'Alle Türen + Garage' : (garage.state !== 'closed' ? 'Garage ' + garage.state : '') + (unlocked.length ? (garage.state !== 'closed' ? ' · ' : '') + unlocked.map(function (u) { return u.name; }).join(', ') : '') + (secure ? '' : ' offen')) + '</small></button>' +
+      '<button class="sum" data-sum="climate"><span class="label">Klima</span><b class="num">' + c.current + '°</b><small>' + (c.mode === 'off' ? 'System aus' : (c.set > c.current ? 'Heizen' : c.set < c.current ? 'Kühlen' : 'Halten') + ' auf ' + c.set + '°') + '</small></button>' +
+      '<button class="sum" data-sum="media"><span class="label">Medien</span><b class="num">' + (m.playing ? 'Wiedergabe' : 'Pausiert') + '</b><small>' + m.room + ' Lautsprecher</small></button>';
   }
   function unique(a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }); }
 
@@ -77,7 +77,7 @@
 
   function roomCount(room) {
     var on = D.devices.filter(function (d) { return d.room === room && d.type === 'light' && d.on; }).length;
-    return on ? on + ' on' : 'All off';
+    return on ? on + ' an' : 'Alle aus';
   }
   function rooms() {
     return D.rooms.map(function (r) {
@@ -90,19 +90,19 @@
 
   function climate() {
     var c = D.climate;
-    var verb = c.mode === 'off' ? 'Off' : c.set > c.current ? 'Heating' : c.set < c.current ? 'Cooling' : 'Holding';
-    return '<div class="label label--light">Climate · Main floor</div>' +
-      '<div class="th-main"><button class="th-btn" data-temp="-0.5" aria-label="Cooler">' + App.icon('minus', 36) + '</button>' +
-      '<div class="th-set"><span class="num">' + c.set.toFixed(1).replace('.0', '') + '°</span><small>Set to</small></div>' +
-      '<button class="th-btn" data-temp="0.5" aria-label="Warmer">' + App.icon('plus', 36) + '</button></div>' +
-      '<div class="th-now"><span><b class="num">' + c.current + '°</b> inside</span><span class="th-verb th-verb--' + verb.toLowerCase() + '">' + verb + '</span><span><b class="num">' + c.humidity + '%</b> humidity</span></div>' +
-      '<div class="seg seg--dark">' + [['heat', 'Heat'], ['cool', 'Cool'], ['auto', 'Auto'], ['off', 'Off']].map(function (m) {
+    var verb = c.mode === 'off' ? 'Aus' : c.set > c.current ? 'Heizen' : c.set < c.current ? 'Kühlen' : 'Halten';
+    return '<div class="label label--light">Klima · Erdgeschoss</div>' +
+      '<div class="th-main"><button class="th-btn" data-temp="-0.5" aria-label="Kühler">' + App.icon('minus', 36) + '</button>' +
+      '<div class="th-set"><span class="num">' + c.set.toFixed(1).replace('.0', '') + '°</span><small>Zielwert</small></div>' +
+      '<button class="th-btn" data-temp="0.5" aria-label="Wärmer">' + App.icon('plus', 36) + '</button></div>' +
+      '<div class="th-now"><span><b class="num">' + c.current + '°</b> innen</span><span class="th-verb th-verb--' + verb.toLowerCase() + '">' + verb + '</span><span><b class="num">' + c.humidity + '%</b> Feuchtigkeit</span></div>' +
+      '<div class="seg seg--dark">' + [['heat', 'Heizen'], ['cool', 'Kühlen'], ['auto', 'Auto'], ['off', 'Aus']].map(function (m) {
         return '<button class="' + (c.mode === m[0] ? 'is-on' : '') + '" data-tmode="' + m[0] + '">' + m[1] + '</button>';
       }).join('') + '</div>';
   }
 
   function cams() {
-    return '<div class="label">Cameras · snapshots every 20s</div><div class="cams">' + D.cameras.slice(0, 2).map(function (c) {
+    return '<div class="label">Kameras · Schnappschuss alle 20s</div><div class="cams">' + D.cameras.slice(0, 2).map(function (c) {
       return '<button class="cam" data-cam="' + c.id + '"><img src="' + App.img(c.seed, 400, 250) + '" alt=""><span class="cam-name">' + c.name + '</span><span class="cam-age">' + V.camAge + 's ago</span></button>';
     }).join('') + '</div>';
   }
@@ -111,7 +111,7 @@
     var m = D.media;
     return '<img class="np-art" src="' + App.img(m.seed, 160, 160) + '" alt="">' +
       '<div class="np-text"><span class="label">' + m.room + '</span><b>' + m.title + '</b><span>' + m.artist + '</span></div>' +
-      '<button class="np-btn" data-play aria-label="Play/Pause">' + App.icon(m.playing ? 'pause' : 'play', 30) + '</button>';
+      '<button class="np-btn" data-play aria-label="Wiedergabe/Pause">' + App.icon(m.playing ? 'pause' : 'play', 30) + '</button>';
   }
 
   // Granular updates: an action repaints only what it touched (full paint() rebuilds ~270 nodes,
@@ -167,7 +167,7 @@
       var lvl = Math.max(0, Math.min(100, Math.round(startLvl + dx / w * 100)));
       t.style.setProperty('--lvl', lvl + '%');
       t.classList.toggle('is-on', lvl > 0);
-      t.querySelector('.tile-state').textContent = d.type === 'light' ? (lvl ? lvl + '%' : 'Off') : (lvl === 0 ? 'Closed' : lvl === 100 ? 'Open' : lvl + '% open');
+      t.querySelector('.tile-state').textContent = d.type === 'light' ? (lvl ? lvl + '%' : 'Aus') : (lvl === 0 ? 'Geschlossen' : lvl === 100 ? 'Offen' : lvl + '% offen');
       t._lvl = lvl;
     });
     t.addEventListener('pointerup', function () {
@@ -193,8 +193,8 @@
       if (d.type === 'lock') {
         App.hold(t, 1000, {
           enabled: function () { return d.locked; },
-          done: function () { V.lastHold = Date.now(); App.setDevice(d.id, { locked: false }); App.toast('<b>' + d.name + '</b> unlocked', { icon: 'unlock' }); },
-          cancel: function () { App.toast('Hold for a second to unlock <b>' + d.name + '</b>', { icon: 'lock', ms: 2200 }); }
+          done: function () { V.lastHold = Date.now(); App.setDevice(d.id, { locked: false }); App.toast('<b>' + d.name + '</b> entriegelt', { icon: 'unlock' }); },
+          cancel: function () { App.toast('Eine Sekunde gedrückt halten zum Entriegeln von <b>' + d.name + '</b>', { icon: 'lock', ms: 2200 }); }
         });
         t.addEventListener('click', function () { if (!d.locked && Date.now() - (V.lastHold || 0) > 800) App.setDevice(d.id, { locked: true }); });
       }
@@ -205,9 +205,9 @@
   // Slide-to-confirm for the garage
   App.openGarageSheet = function () {
     var g = dev('g-door'), opening = g.state === 'closed';
-    App.sheet('<div class="sheet-pad"><div class="label">Garage door · currently ' + g.state + '</div><h2 class="serif sheet-h">' + (opening ? 'Open' : 'Close') + ' the garage?</h2>' +
-      '<p class="sheet-p">' + (opening ? 'Make sure the driveway is clear.' : 'The door will stop and reverse if anything is in the way.') + '</p>' +
-      '<div class="slide-confirm"><span class="sc-label">Slide to ' + (opening ? 'open' : 'close') + ' →</span><span class="sc-fill"></span><span class="sc-knob">' + App.icon('garage', 30) + '</span></div></div>', {
+    App.sheet('<div class="sheet-pad"><div class="label">Garagentor · aktuell ' + (g.state === 'closed' ? 'geschlossen' : 'offen') + '</div><h2 class="serif sheet-h">' + (opening ? 'Garagentor öffnen?' : 'Garagentor schließen?') + '</h2>' +
+      '<p class="sheet-p">' + (opening ? 'Bitte sicherstellen, dass die Einfahrt frei ist.' : 'Das Tor stoppt und reversiert bei Hindernissen.') + '</p>' +
+      '<div class="slide-confirm"><span class="sc-label">Wischen zum ' + (opening ? 'Öffnen' : 'Schließen') + ' →</span><span class="sc-fill"></span><span class="sc-knob">' + App.icon('garage', 30) + '</span></div></div>', {
       onMount: function (s, close) {
         var track = s.querySelector('.slide-confirm'), knob = s.querySelector('.sc-knob'), fill = s.querySelector('.sc-fill');
         var sx = null, max;
@@ -232,7 +232,7 @@
             g.state = opening ? 'opening' : 'closing';
             V.scene = null;
             changed(['g-door']);
-            setTimeout(function () { g.state = opening ? 'open' : 'closed'; changed(['g-door']); App.toast('Garage ' + g.state, { icon: 'garage', ms: 2500 }); }, 4000);
+            setTimeout(function () { g.state = opening ? 'open' : 'closed'; changed(['g-door']); App.toast('Garagentor ' + (g.state === 'open' ? 'geöffnet' : 'geschlossen'), { icon: 'garage', ms: 2500 }); }, 4000);
           } else { knob.style.transform = ''; fill.style.width = ''; }
         });
       }
@@ -240,16 +240,16 @@
   };
 
   App.cameraSheet = function (c) {
-    App.sheet('<div class="cam-big"><img src="' + App.img(c.seed, 1200, 750) + '" alt=""><div class="cam-big-bar"><span class="tk-live"><i></i>' + c.name + '</span><span class="label label--light">Snapshot · ' + V.camAge + 's ago</span></div></div>', { cls: 'sheet--cam' });
+    App.sheet('<div class="cam-big"><img src="' + App.img(c.seed, 1200, 750) + '" alt=""><div class="cam-big-bar"><span class="tk-live"><i></i>' + c.name + '</span><span class="label label--light">Schnappschuss · vor ' + V.camAge + 's</span></div></div>', { cls: 'sheet--cam' });
   };
 
   function listSheet(kind) {
     var list = D.devices.filter(function (d) { return kind === 'lights' ? d.type === 'light' : (d.type === 'lock' || d.type === 'garage'); });
     if (kind === 'lights') list.sort(function (a, b) { return b.on - a.on; });
-    App.sheet('<div class="sheet-pad"><div class="label">' + (kind === 'lights' ? 'Every light in the house' : 'Doors + garage') + '</div>' +
-      '<h2 class="serif sheet-h">' + (kind === 'lights' ? 'Lights' : 'Security') + '</h2>' +
+    App.sheet('<div class="sheet-pad"><div class="label">' + (kind === 'lights' ? 'Alle Lichter im Haus' : 'Türen & Garage') + '</div>' +
+      '<h2 class="serif sheet-h">' + (kind === 'lights' ? 'Lichter' : 'Sicherheit') + '</h2>' +
       '<div class="tiles tiles--sheet">' + list.map(tile).join('') + '</div>' +
-      '<div class="sheet-actions">' + (kind === 'lights' ? '<button class="btn btn--solid" data-alloff>Turn everything off</button>' : '<button class="btn btn--solid" data-lockall>Lock all doors</button>') + '</div></div>', {
+      '<div class="sheet-actions">' + (kind === 'lights' ? '<button class="btn btn--solid" data-alloff>Alle Lichter ausschalten</button>' : '<button class="btn btn--solid" data-lockall>Alle Türen verriegeln</button>') + '</div></div>', {
       cls: 'sheet--wide',
       onClose: function () { V.sheetBox = null; },
       onMount: function (s, close) {
@@ -261,13 +261,13 @@
           var prev = D.devices.filter(function (d) { return d.type === 'light' && d.on; });
           prev.forEach(function (d) { d.on = false; });
           close(); changed(prev.map(function (d) { return d.id; }));
-          App.toast('Turned off ' + prev.length + ' lights', { icon: 'bulb', undo: function () { prev.forEach(function (d) { d.on = true; }); changed(prev.map(function (d) { return d.id; })); } });
+          App.toast(prev.length + ' Lichter ausgeschaltet', { icon: 'bulb', undo: function () { prev.forEach(function (d) { d.on = true; }); changed(prev.map(function (d) { return d.id; })); } });
         };
         if (lk) lk.onclick = function () {
           var locks = D.devices.filter(function (d) { return d.type === 'lock'; });
           locks.forEach(function (d) { d.locked = true; });
           close(); changed(locks.map(function (d) { return d.id; }));
-          App.toast('All doors locked', { icon: 'lock' });
+          App.toast('Alle Türen verriegelt', { icon: 'lock' });
         };
       }
     });
@@ -292,7 +292,7 @@
     var ids = diff();
     paintPart('.hc-scenes', scenes());
     changed(ids);
-    App.toast('<b>' + s.name + '</b> scene on', {
+    App.toast('Szene <b>' + s.name + '</b> aktiviert', {
       icon: s.icon, undo: function () {
         snapshot.forEach(function (o) { Object.assign(dev(o.id), o); });
         V.scene = prevScene;
@@ -327,7 +327,7 @@
     clearInterval(V.camTimer);
     V.camTimer = setInterval(function () {
       V.camAge = V.camAge >= 20 ? 1 : V.camAge + 1;
-      App.$$('.cam-age', V.el).forEach(function (a) { a.textContent = V.camAge + 's ago'; });
+      App.$$('.cam-age', V.el).forEach(function (a) { a.textContent = 'Vor ' + V.camAge + 's'; });
     }, 1000);
   }
 
