@@ -30,32 +30,31 @@ export default {
         });
       }
 
+      const icsHeaders = {
+        'Content-Type': 'text/calendar; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=300'
+      };
+      // Bei Google-Fehlern (z. B. 429 auf geteilten Cloudflare-IPs) den letzten guten Stand aus KV liefern.
+      const stale = async (reason) => {
+        const cached = env.PHOTOS_KV ? await env.PHOTOS_KV.get('calendar_cache') : null;
+        if (cached) return new Response(cached, { headers: { ...icsHeaders, 'X-Stale': reason, 'Cache-Control': 'no-cache' } });
+        return json({ error: reason }, 502, { 'Access-Control-Allow-Origin': '*' });
+      };
+
       try {
         const resp = await fetch(icsUrl, {
           headers: { 'User-Agent': 'HomeHQ-Calendar-Fetcher/1.0' },
-          cf: { cacheTtl: 300 }
+          cf: { cacheTtlByStatus: { '200-299': 300, '400-599': 0 } }
         });
-
-        if (!resp.ok) {
-          return new Response(JSON.stringify({ error: `Upstream HTTP ${resp.status}` }), {
-            status: 502,
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-          });
-        }
+        if (!resp.ok) return stale(`Upstream HTTP ${resp.status}`);
 
         const icsText = await resp.text();
-        return new Response(icsText, {
-          headers: {
-            'Content-Type': 'text/calendar; charset=utf-8',
-            'Access-Control-Allow-Origin': '*',
-            'Cache-Control': 'public, max-age=300'
-          }
-        });
+        if (!icsText.includes('BEGIN:VCALENDAR')) return stale('Ungültige Kalenderantwort');
+        if (env.PHOTOS_KV) await env.PHOTOS_KV.put('calendar_cache', icsText);
+        return new Response(icsText, { headers: icsHeaders });
       } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-        });
+        return stale(err.message);
       }
     }
 
@@ -71,7 +70,7 @@ export default {
       if (apiKey && apiKey.length > 5) {
         try {
           const tUrl = `https://creativecommons.tankerkoenig.de/json/list.php?lat=${lat}&lng=${lng}&rad=5&sort=price&type=${fuelType}&apikey=${apiKey}`;
-          const resp = await fetch(tUrl, { cf: { cacheTtl: 600 } });
+          const resp = await fetch(tUrl, { cf: { cacheTtlByStatus: { '200-299': 600, '400-599': 0 } } });
           if (resp.ok) {
             const data = await resp.json();
             if (data.ok && Array.isArray(data.stations)) {
