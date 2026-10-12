@@ -366,7 +366,7 @@ function renderUploadHtml() {
     .drop-zone span { display: block; font-size: 15px; font-weight: 600; color: #E0E0E8; }
     .drop-zone small { display: block; font-size: 12px; color: #8E8E9A; margin-top: 4px; }
     input[type="file"] { display: none; }
-    .preview-box { display: none; margin-bottom: 16px; border-radius: 14px; overflow: hidden; max-height: 240px; background: #000; position: relative; }
+    .preview-box { display: none; margin-bottom: 16px; border-radius: 14px; overflow: hidden; max-height: 300px; overflow-y: auto; background: #000; position: relative; }
     .preview-box img { width: 100%; height: 240px; object-fit: contain; }
     .btn-remove { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px; }
     .input-text { width: 100%; padding: 13px 15px; border-radius: 12px; background: #26262E; border: 1px solid #3E3E4C; color: #fff; font-size: 15px; margin-bottom: 18px; outline: none; }
@@ -379,6 +379,9 @@ function renderUploadHtml() {
     .g-thumb { aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: #26262E; position: relative; }
     .g-thumb img { width: 100%; height: 100%; object-fit: cover; }
     .g-badge { position: absolute; bottom: 4px; left: 4px; font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.7); color: #fff; font-weight: 600; }
+    #previewGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .preview-box #previewGrid img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; display: block; }
+    .preview-count { position: absolute; left: 8px; bottom: 8px; background: rgba(0,0,0,0.7); color: #fff; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 10px; }
     .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #22c55e; color: #000; padding: 12px 24px; border-radius: 30px; font-weight: 700; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
     .toast.show { opacity: 1; }
   </style>
@@ -399,20 +402,20 @@ function renderUploadHtml() {
 
       <div class="drop-zone" id="dropZone">
         <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-        <span>Foto auswählen oder aufnehmen</span>
-        <small>Tippen für Galerie / Kamera</small>
-        <input type="file" id="fileInput" accept="image/*">
+        <span>Fotos auswählen oder aufnehmen</span>
+        <small>Tippen für Galerie / Kamera · mehrere möglich</small>
+        <input type="file" id="fileInput" accept="image/*" multiple>
       </div>
 
       <div class="preview-box" id="previewBox">
-        <img id="previewImg" src="">
+        <div id="previewGrid"></div>
         <button class="btn-remove" id="btnRemove">✕</button>
       </div>
 
       <span class="label">Notiz oder Ort (optional)</span>
       <input type="text" class="input-text" id="noteInput" placeholder="z. B. Urlaub 2026, Pfälzerwald...">
 
-      <button class="btn-submit" id="btnSubmit" disabled>Foto auf den Rahmen zaubern ✨</button>
+      <button class="btn-submit" id="btnSubmit" disabled>Fotos auf den Rahmen zaubern ✨</button>
     </div>
 
     <div class="gallery-title">
@@ -426,12 +429,12 @@ function renderUploadHtml() {
 
   <script>
     let selectedWho = 'marius';
-    let selectedFile = null;
+    let selectedFiles = [];
 
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     const previewBox = document.getElementById('previewBox');
-    const previewImg = document.getElementById('previewImg');
+    const previewGrid = document.getElementById('previewGrid');
     const btnRemove = document.getElementById('btnRemove');
     const btnSubmit = document.getElementById('btnSubmit');
     const noteInput = document.getElementById('noteInput');
@@ -449,29 +452,40 @@ function renderUploadHtml() {
 
     dropZone.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files[0]) {
-        handleFile(e.target.files[0]);
+      if (e.target.files && e.target.files.length) {
+        handleFiles(Array.from(e.target.files));
       }
     });
 
     btnRemove.addEventListener('click', () => {
-      selectedFile = null;
+      resetSelection();
+    });
+
+    function resetSelection() {
+      selectedFiles = [];
       fileInput.value = '';
+      previewGrid.innerHTML = '';
       previewBox.style.display = 'none';
       dropZone.style.display = 'block';
       btnSubmit.disabled = true;
-    });
+    }
 
-    function handleFile(file) {
-      selectedFile = file;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        previewImg.src = e.target.result;
-        previewBox.style.display = 'block';
-        dropZone.style.display = 'none';
-        btnSubmit.disabled = false;
-      };
-      reader.readAsDataURL(file);
+    function handleFiles(files) {
+      selectedFiles = files;
+      previewGrid.innerHTML = '';
+      files.slice(0, 12).forEach((f) => {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(f);
+        previewGrid.appendChild(img);
+      });
+      const cnt = document.createElement('span');
+      cnt.className = 'preview-count';
+      cnt.textContent = files.length + (files.length === 1 ? ' Foto' : ' Fotos');
+      previewBox.querySelectorAll('.preview-count').forEach((n) => n.remove());
+      previewBox.appendChild(cnt);
+      previewBox.style.display = 'block';
+      dropZone.style.display = 'none';
+      btnSubmit.disabled = false;
     }
 
     // Verkleinert Handyfotos vor dem Upload (max. 1920 px, WebP oder JPEG). Bei Fehlern (z. B. HEIC) geht das Original raus.
@@ -498,43 +512,49 @@ function renderUploadHtml() {
       }
     }
 
-    btnSubmit.addEventListener('click', async () => {
-      if (!selectedFile) return;
-      btnSubmit.disabled = true;
-      btnSubmit.innerText = 'Wird übertragen...';
-
+    async function uploadOne(file, who, title) {
       const fd = new FormData();
-      const prepared = await shrinkImage(selectedFile);
+      const prepared = await shrinkImage(file);
       fd.append('photo', prepared, prepared.name);
-      fd.append('who', selectedWho);
-      fd.append('title', noteInput.value.trim() || 'Schnappschuss');
+      fd.append('who', who);
+      fd.append('title', title);
+      let pin = localStorage.getItem('upload_pin') || '';
+      let resp = await fetch('/api/upload', { method: 'POST', body: fd, headers: { 'X-Pin': pin } });
+      if (resp.status === 401) {
+        pin = prompt('PIN für Foto-Upload:') || '';
+        localStorage.setItem('upload_pin', pin);
+        resp = await fetch('/api/upload', { method: 'POST', body: fd, headers: { 'X-Pin': pin } });
+      }
+      const res = await resp.json();
+      if (!res.ok) throw new Error(res.error || 'Upload fehlgeschlagen');
+    }
 
-      try {
-        let pin = localStorage.getItem('upload_pin') || '';
-        let resp = await fetch('/api/upload', { method: 'POST', body: fd, headers: { 'X-Pin': pin } });
-        if (resp.status === 401) {
-          pin = prompt('PIN für Foto-Upload:') || '';
-          localStorage.setItem('upload_pin', pin);
-          resp = await fetch('/api/upload', { method: 'POST', body: fd, headers: { 'X-Pin': pin } });
+    btnSubmit.addEventListener('click', async () => {
+      if (!selectedFiles.length) return;
+      btnSubmit.disabled = true;
+      const total = selectedFiles.length;
+      const title = noteInput.value.trim() || 'Schnappschuss';
+      let done = 0;
+      const failed = [];
+      for (const file of selectedFiles) {
+        btnSubmit.innerText = 'Foto ' + (done + failed.length + 1) + ' von ' + total + ' wird übertragen...';
+        try {
+          await uploadOne(file, selectedWho, title);
+          done++;
+        } catch (err) {
+          failed.push(file);
+          if (err.message && err.message.indexOf('PIN') > -1) break;
         }
-        const res = await resp.json();
-        if (res.ok) {
-          showToast('Foto erfolgreich hochgeladen! 🎉');
-          selectedFile = null;
-          fileInput.value = '';
-          noteInput.value = '';
-          previewBox.style.display = 'none';
-          dropZone.style.display = 'block';
-          btnSubmit.innerText = 'Foto auf den Rahmen zaubern ✨';
-          loadRecentPhotos();
-        } else {
-          alert('Fehler: ' + (res.error || 'Upload fehlgeschlagen'));
-          btnSubmit.disabled = false;
-          btnSubmit.innerText = 'Erneut versuchen';
-        }
-      } catch (err) {
-        alert('Netzwerkfehler: ' + err.message);
-        btnSubmit.disabled = false;
+      }
+      loadRecentPhotos();
+      if (!failed.length) {
+        showToast(done === 1 ? 'Foto erfolgreich hochgeladen! 🎉' : done + ' Fotos erfolgreich hochgeladen! 🎉');
+        noteInput.value = '';
+        resetSelection();
+        btnSubmit.innerText = 'Fotos auf den Rahmen zaubern ✨';
+      } else {
+        alert(done + ' von ' + total + ' hochgeladen. ' + failed.length + ' fehlgeschlagen (PIN oder Netzwerk).');
+        handleFiles(failed);
         btnSubmit.innerText = 'Erneut versuchen';
       }
     });

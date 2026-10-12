@@ -95,41 +95,6 @@
   }
   App.ring = ring;
 
-  function chores() {
-    var r = App.currentRoutine();
-    var who = D.people.map(function (p) { return p.id; }).concat(['any']);
-    return '<div class="label">Aufgaben · ' + r.name + '</div><div class="h-rings">' + who.map(function (id) {
-      var list = D.chores.filter(function (c) { return c.r === r.id && c.who === id; });
-      if (!list.length) return '';
-      var done = list.filter(function (c) { return c.done; }).length;
-      var p = App.person(id);
-      return '<div class="h-ring' + (done === list.length ? ' is-done' : '') + '" style="' + App.pstyle(p) + '">' + ring(done, list.length, 64) +
-        '<b class="num">' + (done === list.length ? '✓' : done + '/' + list.length) + '</b><span>' + (id === 'any' ? 'Beide' : p.name) + '</span></div>';
-    }).join('') + '</div>';
-  }
-
-  function shopping() {
-    var open = D.groceries.filter(function (g) { return !g.done; });
-    var recent = open.slice(-3).reverse();
-    return '<div class="label">Einkaufsliste</div>' +
-      '<div class="h-stat"><span class="num">' + open.length + '</span><small>offene Artikel</small></div>' +
-      '<ul class="h-recent">' + recent.map(function (g) {
-        return '<li><i></i>' + App.esc(g.name) + '</li>';
-      }).join('') + '</ul>';
-  }
-
-  function status() {
-    var lights = D.devices.filter(function (d) { return d.type === 'light' && d.on; }).length;
-    var unlocked = D.devices.filter(function (d) { return d.type === 'lock' && !d.locked; });
-    var garage = D.devices.filter(function (d) { return d.type === 'garage'; })[0];
-    var secure = !unlocked.length && (!garage || garage.state === 'closed');
-    var secText = secure ? 'Alles verriegelt' : (garage && garage.state !== 'closed' ? 'Garage offen' : unlocked[0].name + ' offen');
-    return '<div class="label">Zuhause</div>' +
-      '<div class="h-st-row">' + App.icon('bulb', 24) + '<b class="num">' + lights + '</b><span>Lichter an</span></div>' +
-      '<div class="h-st-row' + (secure ? '' : ' is-warn') + '">' + App.icon(secure ? 'lock' : 'unlock', 24) + '<span>' + secText + '</span></div>' +
-      '<div class="h-st-row">' + App.icon('thermo', 24) + '<b class="num">' + D.climate.current + '°</b><span>innen</span></div>';
-  }
-
   function fuelCard() {
     var f = D.fuel || {};
     var c = f.cheapest || { name: 'JET', street: 'Pariser Str. 123', dist: 1.4, price: 1.719 };
@@ -196,6 +161,41 @@
     if (closeBtn) closeBtn.onclick = function () { sheet.close(); };
   }
 
+  // Banner: Geburtstage/Jahrestage (ganztägige Termine, nächste 14 Tage) und Wetterwarnungen
+  var BDAY_RE = /geburtstag|gebib|birthday|bday|🎂|🎈/i, ANNIV_RE = /jahrestag|hochzeit|anniversary|💍|❤/i;
+  function occasions() {
+    var now = App.now(), today = App.dayStart(now), out = [];
+    App.events().forEach(function (e) {
+      if (!e.allDay) return;
+      var isB = BDAY_RE.test(e.title), isA = ANNIV_RE.test(e.title);
+      if (!isB && !isA && !e.yearly) return;
+      var days = Math.round((App.dayStart(e.start) - today) / 86400000);
+      if (days < 0 || days > 14) return;
+      var years = e.origYear ? e.start.getFullYear() - e.origYear : 0;
+      out.push({ e: e, days: days, kind: isA ? 'anniv' : 'bday', years: years >= 1 && e.origYear >= 1900 ? years : 0 });
+    });
+    out.sort(function (a, b) { return a.days - b.days; });
+    return out.slice(0, 2);
+  }
+  // Höchstens zwei Banner, sortiert nach Wichtigkeit (Unwetter, Geburtstag heute, Warnung, Geburtstag bald)
+  function notices() {
+    var items = [];
+    (D.weather && D.weather.alerts || []).forEach(function (a) {
+      items.push({ prio: a.level === 'alert' ? 0 : 2, html: '<div class="h-note h-note--' + a.level + '">' + App.icon(a.icon, 24) +
+        '<div class="h-note-txt"><b>' + App.esc(a.title) + '</b><span>' + App.esc(a.text) + '</span></div></div>' });
+    });
+    occasions().forEach(function (o) {
+      var when = o.days === 0 ? 'Heute!' : o.days === 1 ? 'Morgen' : 'in ' + o.days + ' Tagen';
+      var detail = o.years ? (o.kind === 'anniv' ? o.years + '. Jahrestag' : 'wird ' + o.years) : (o.kind === 'anniv' ? 'Jahrestag' : 'Geburtstag');
+      items.push({ prio: o.days === 0 ? 1 : 3, html: '<div class="h-note h-note--party' + (o.days === 0 ? ' is-today' : '') + '">' +
+        '<span class="h-note-emoji">' + (o.kind === 'anniv' ? '💍' : '🎂') + '</span>' +
+        '<div class="h-note-txt"><b>' + App.esc(o.e.title) + '</b><span>' + detail + '</span></div>' +
+        '<div class="h-note-when num">' + when + '</div></div>' });
+    });
+    items.sort(function (x, y) { return x.prio - y.prio; });
+    return items.slice(0, 2).map(function (i) { return i.html; }).join('');
+  }
+
   function paint() {
     var el = V.el;
     el.querySelector('.h-clock').innerHTML = clock();
@@ -203,9 +203,7 @@
     el.querySelector('.h-presence').innerHTML = presence();
     el.querySelector('.h-hero-slot').innerHTML = hero();
     el.querySelector('.h-lanes').innerHTML = lanes();
-    el.querySelector('.h-chores').innerHTML = chores();
-    el.querySelector('.h-shop').innerHTML = shopping();
-    el.querySelector('.h-status').innerHTML = status();
+    el.querySelector('.h-notices').innerHTML = notices();
     if (el.querySelector('.h-fuel')) el.querySelector('.h-fuel').innerHTML = fuelCard();
     if (el.querySelector('.h-timer')) el.querySelector('.h-timer').innerHTML = timerCard();
   }
@@ -226,12 +224,11 @@
           '<div class="h-main">' +
           '  <div class="h-hero-slot"></div>' +
           '  <div class="h-lanes"></div>' +
+          '  <div class="h-notices"></div>' +
           '  <div class="h-extra-row"><button class="h-fuel card"></button><button class="h-timer card"></button></div>' +
           '</div>' +
           '<div class="h-side">' +
           '  <button class="h-photo" data-go="photos"><div class="h-photo-stage"></div><div class="h-photo-cap"></div></button>' +
-          '  <button class="h-chores card" data-go="tasks"></button>' +
-          '  <div class="h-duo"><button class="h-shop card" data-go="shopping"></button><button class="h-status card" data-go="control"></button></div>' +
           '</div></div>';
         el.addEventListener('click', function (e) {
           var fc = e.target.closest('.h-fuel');
@@ -262,6 +259,7 @@
     if (!V.el || !V.el.firstChild) return;
     V.el.querySelector('.h-clock').innerHTML = clock();
     V.el.querySelector('.h-hero-slot').innerHTML = hero();
+    V.el.querySelector('.h-notices').innerHTML = notices();
     if (n.getMinutes() === 0) { V.el.querySelector('.h-weather').innerHTML = weather(); V.el.querySelector('.h-lanes').innerHTML = lanes(); }
   });
   App.on('data', function () { if (App.current === 'home') paint(); });

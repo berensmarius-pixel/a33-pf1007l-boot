@@ -77,7 +77,7 @@
 .h-more { min-height: 36px; margin-top: auto; font-size: 16px; font-weight: 800; font-stretch: 75%; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); text-align: left; padding: 0 12px; }
 
 /* ---- side column */
-.h-side { grid-column: 8 / 13; display: grid; grid-template-rows: 1fr 142px 150px; gap: 16px; min-height: 0; }
+.h-side { grid-column: 8 / 13; display: grid; grid-template-rows: 1fr; gap: 16px; min-height: 0; }
 .h-photo { position: relative; border-radius: var(--r); overflow: hidden; background: var(--paper-2); display: block; width: 100%; }
 .h-photo-stage { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
 .h-photo-cap {
@@ -134,3 +134,17 @@
 .h-timer-info small { font-size: 14px; color: var(--mute); font-family: monospace; font-weight: 700; }
 .h-timer-btn { padding: 6px 14px; border-radius: 8px; background: var(--ink); color: var(--paper); border: none; font-size: 13px; font-weight: 700; cursor: pointer; }
 
+
+/* ---- Banner: Wetterwarnung + Geburtstage */
+.h-notices { display: flex; flex-direction: column; gap: 6px; }
+.h-notices:empty { display: none; }
+.h-note { display: flex; align-items: center; gap: 12px; padding: 7px 16px; border-radius: var(--r); background: var(--card); }
+.h-note-txt { display: flex; align-items: baseline; gap: 10px; min-width: 0; flex: 1; overflow: hidden; }
+.h-note-txt b { font-size: 19px; flex: none; max-width: 60%; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.h-note-txt span { font-size: 15px; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.h-note-emoji { font-size: 24px; line-height: 1; }
+.h-note-when { font-size: 22px; font-weight: 900; white-space: nowrap; }
+.h-note--warn { background: var(--amber); color: var(--ink); }
+.h-note--alert { background: var(--alert); color: #fff; }
+.h-note--party { background: var(--card); border: 2px solid var(--ink); }
+.h-note--party.is-today { background: var(--ink); color: var(--paper); }
