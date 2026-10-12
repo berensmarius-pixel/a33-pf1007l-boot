@@ -92,7 +92,7 @@ class Resolver:
     def reply(self, packet):
         ident, flags, name, kind, cls, end = question(packet)
         response_flags = 0x8080 | (flags & 0x0110)  # QR, RA, original RD/CD
-        if name == self.hostname:
+        if name in (self.hostname, ALTERNATE_HOSTNAME):
             answer = b''
             if cls == 1 and kind == 1:
                 answer = b'\xc0\x0c' + struct.pack('!HHIH', 1, 1, 5, 4) + self.mac_ip
@@ -184,8 +184,8 @@ def main():
             if server is not None:
                 server.resolver, server.allowed, server.bind_ip = resolver, set(args.allow_client), args.bind
                 server.clients_file = args.clients_file
-        # Sudo is needed only to bind port 53. Run DNS handlers as the owner.
-        if os.geteuid() == 0:
+        # Sudo is needed only on Unix to bind port 53. Run DNS handlers as the owner.
+        if hasattr(os, 'geteuid') and os.geteuid() == 0:
             uid, gid = int(os.environ.get('SUDO_UID', '0')), int(os.environ.get('SUDO_GID', '0'))
             if uid <= 0 or gid <= 0:
                 if tcp is not None:
@@ -198,7 +198,7 @@ def main():
             threading.Thread(target=tcp.serve_forever, daemon=True).start()
         event('dns_listening', bind=args.bind, port=args.port, allowed_clients=args.allow_client,
               override=args.hostname, ttl_seconds=5, system_dns_changed=False,
-              tcp_enabled=tcp is not None, running_uid=os.geteuid())
+              tcp_enabled=tcp is not None, running_uid=os.geteuid() if hasattr(os, 'geteuid') else None)
         if args.clients_file is not None:
             event('dns_reloadable_clients', clients_file=str(args.clients_file),
                   frame_clients=sorted(file_clients(args.clients_file)))

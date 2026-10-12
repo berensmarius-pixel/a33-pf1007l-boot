@@ -162,7 +162,7 @@ def cmd_prepare(number, image=None):
     existing = before[OFFSET:OFFSET + STUB_LEN]
     is_stub = STUB.exists() and existing == stub_bytes()
     if existing[4:12] == b"eGON.BT0" and not is_stub:
-        die("another boot image is already at 8 KiB; use a new card")
+        print("Note: replacing existing eGON.BT0 boot image.")
     print(f"Partitions start at sectors {starts}; writing {len(region)} bytes at 8192 "
           f"(ends at {end_padded}, partition starts at {min(starts) * 512}).")
     confirm(d, what)
