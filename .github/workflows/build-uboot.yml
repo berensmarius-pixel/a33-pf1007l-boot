@@ -24,13 +24,25 @@ jobs:
           git clone https://github.com/u-boot/u-boot.git $HOME/u-boot
           git -C $HOME/u-boot checkout e50b1e8715011def8aff1588081a2649a2c6cd47
 
-      - name: Build SD-boot U-Boot and dump script
+      - name: Build Route U (PF1007L Backup U-Boot with pf1007l-uboot.patch)
         run: |
-          chmod +x scripts/a33-sdboot/build.sh
-          bash scripts/a33-sdboot/build.sh $HOME/u-boot
+          SRC=$HOME/u-boot
+          git -C "$SRC" apply "$GITHUB_WORKSPACE/scripts/a33-uboot/pf1007l-uboot.patch"
+          
+          OUT="$GITHUB_WORKSPACE/diagnostics/a33-uboot-out"
+          mkdir -p "$OUT"
+          
+          export CROSS_COMPILE=arm-linux-gnueabihf-
+          make -C "$SRC" O="$OUT/build" pf1007l_backup_defconfig
+          make -C "$SRC" O="$OUT/build" -j$(nproc)
+          
+          cp "$OUT/build/u-boot-sunxi-with-spl.bin" "$OUT/"
+          mkimage -C none -A arm -T script -d "$GITHUB_WORKSPACE/scripts/a33-uboot/ums-readonly.cmd" "$OUT/ums-readonly.scr"
+          
+          ls -l "$OUT/u-boot-sunxi-with-spl.bin" "$OUT/ums-readonly.scr"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: a33-sdboot-artifacts
-          path: diagnostics/a33-sdboot/
+          name: a33-fel-uboot-artifacts
+          path: diagnostics/a33-uboot-out/
