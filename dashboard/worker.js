@@ -474,13 +474,38 @@ function renderUploadHtml() {
       reader.readAsDataURL(file);
     }
 
+    // Verkleinert Handyfotos vor dem Upload (max. 1920 px, WebP oder JPEG). Bei Fehlern (z. B. HEIC) geht das Original raus.
+    async function shrinkImage(file) {
+      const MAX = 1920;
+      try {
+        const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+        const scale = Math.min(1, MAX / Math.max(bmp.width, bmp.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(bmp.width * scale);
+        canvas.height = Math.round(bmp.height * scale);
+        canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height);
+        bmp.close();
+        let blob = await new Promise((res) => canvas.toBlob(res, 'image/webp', 0.82));
+        let ext = 'webp';
+        if (!blob || blob.type !== 'image/webp') {
+          blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.85));
+          ext = 'jpg';
+        }
+        if (!blob || blob.size >= file.size) return file;
+        return new File([blob], 'photo.' + ext, { type: blob.type });
+      } catch (e) {
+        return file;
+      }
+    }
+
     btnSubmit.addEventListener('click', async () => {
       if (!selectedFile) return;
       btnSubmit.disabled = true;
       btnSubmit.innerText = 'Wird übertragen...';
 
       const fd = new FormData();
-      fd.append('photo', selectedFile);
+      const prepared = await shrinkImage(selectedFile);
+      fd.append('photo', prepared, prepared.name);
       fd.append('who', selectedWho);
       fd.append('title', noteInput.value.trim() || 'Schnappschuss');
 
