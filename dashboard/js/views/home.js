@@ -27,15 +27,6 @@
       }).join('') + '</div>';
   }
 
-  function presence() {
-    return D.people.map(function (p) {
-      var sub = p.home ? 'Zuhause' : (p.eta ? '<b>Ankunft ' + p.eta + ' Min</b>' : p.status);
-      return '<div class="h-who' + (p.home ? ' is-home' : '') + '" style="' + App.pstyle(p) + '">' +
-        App.avatar(p, 36, p.home ? '' : 'avatar--away') +
-        '<span><b>' + p.name + '</b><small>' + sub + '</small></span></div>';
-    }).join('');
-  }
-
   function hero() {
     var e = App.nextEvent(), now = App.now();
     if (!e) {
@@ -67,24 +58,6 @@
       '  <div class="h-hero-meta">' + App.fmt.range(e.start, e.end) + (e.loc ? ' · ' + App.esc(e.loc) : '') + '</div>' +
       '  <div class="h-hero-foot">' + (e.people.length > 1 ? App.dots(e.people, 22) : '') + leavePill + '</div>' +
       '</div>' + big + '</button>';
-  }
-
-  function lanes() {
-    var now = App.now();
-    return D.people.map(function (p) {
-      var list = App.timedOn(now, p.id).filter(function (e) { return e.end > now; });
-      var shown = list.slice(0, 3), more = list.length - shown.length;
-      return '<div class="h-lane" style="' + App.pstyle(p) + '">' +
-        '<div class="h-lane-head">' + App.avatar(p, 30) + '<b>' + p.name + '</b></div>' +
-        (list.length ? shown.map(function (e) {
-          var cur = e.start <= now;
-          return '<button class="h-ev' + (cur ? ' is-now' : '') + '" data-ev="' + e.id + '">' +
-            '<span class="h-ev-t">' + (cur ? 'Jetzt' : App.fmt.time(e.start, false)) + '</span>' +
-            '<span class="h-ev-n">' + App.esc(e.title) + '</span></button>';
-        }).join('') : '<div class="h-free serif"><i>Frei</i> für heute</div>') +
-        (more > 0 ? '<button class="h-more" data-go="calendar">+' + more + ' weitere</button>' : '') +
-        '</div>';
-    }).join('');
   }
 
   function ring(done, total, size) {
@@ -200,9 +173,7 @@
     var el = V.el;
     el.querySelector('.h-clock').innerHTML = clock();
     el.querySelector('.h-weather').innerHTML = weather();
-    el.querySelector('.h-presence').innerHTML = presence();
     el.querySelector('.h-hero-slot').innerHTML = hero();
-    el.querySelector('.h-lanes').innerHTML = lanes();
     el.querySelector('.h-notices').innerHTML = notices();
     if (el.querySelector('.h-fuel')) el.querySelector('.h-fuel').innerHTML = fuelCard();
     if (el.querySelector('.h-timer')) el.querySelector('.h-timer').innerHTML = timerCard();
@@ -220,10 +191,8 @@
         el.innerHTML = '<div class="home">' +
           '<div class="h-clock" data-go="calendar"></div>' +
           '<div class="h-weather"></div>' +
-          '<div class="h-presence"></div>' +
           '<div class="h-main">' +
           '  <div class="h-hero-slot"></div>' +
-          '  <div class="h-lanes"></div>' +
           '  <div class="h-notices"></div>' +
           '  <div class="h-extra-row"><button class="h-fuel card"></button><button class="h-timer card"></button></div>' +
           '</div>' +
@@ -260,7 +229,7 @@
     V.el.querySelector('.h-clock').innerHTML = clock();
     V.el.querySelector('.h-hero-slot').innerHTML = hero();
     V.el.querySelector('.h-notices').innerHTML = notices();
-    if (n.getMinutes() === 0) { V.el.querySelector('.h-weather').innerHTML = weather(); V.el.querySelector('.h-lanes').innerHTML = lanes(); }
+    if (n.getMinutes() === 0) { V.el.querySelector('.h-weather').innerHTML = weather(); }
   });
   App.on('data', function () { if (App.current === 'home') paint(); });
   App.on('timer-update', function () {
