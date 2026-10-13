@@ -64,6 +64,7 @@ function gate(request, url, env) {
   if (p === '/manifest.webmanifest' || /^\/icon-\d+\.png$/.test(p)) return null;
   if (p === '/api/usage' && request.method === 'POST') return null;
   if (p.startsWith('/api/livetrack')) return null;
+  if (p === '/api/version') return null;
 
   const given = url.searchParams.get('k');
   if (given && safeEqual(given, key)) {
@@ -284,7 +285,10 @@ export default {
     // 3. Foto-Upload API & Storage (KV / R2)
     // ------------------------------------------------------------
     if (url.pathname === '/api/version') {
-      return json({ ok: true, version: '2026-10-13-18-00' }, 200, { 'Cache-Control': 'no-store' });
+      return json({ ok: true, version: '2026-10-13-18-35' }, 200, {
+        'Cache-Control': 'no-store',
+        'Access-Control-Allow-Origin': '*'
+      });
     }
 
     if (url.pathname === '/liste' || url.pathname === '/liste.html') {
@@ -760,10 +764,18 @@ export default {
           if (env.PHOTOS_KV) await env.PHOTOS_KV.put('garmin_livetrack', JSON.stringify(session));
         }
 
+        let lastWebhook = memoryCache.livetrack.lastWebhook;
+        if (!lastWebhook && env.PHOTOS_KV) {
+          lastWebhook = await env.PHOTOS_KV.get('last_livetrack_webhook', { type: 'json' });
+          if (lastWebhook) memoryCache.livetrack.lastWebhook = lastWebhook;
+        }
+
         return json({
           ok: true,
           active: Boolean(session && session.active),
-          session: session || null
+          session: session || null,
+          lastWebhook: lastWebhook || null,
+          serverTime: new Date().toISOString()
         }, 200, { 'Cache-Control': 'no-cache', 'Access-Control-Allow-Origin': '*' });
       }
 
@@ -782,6 +794,16 @@ export default {
         try {
           raw = await request.text();
         } catch (e) {}
+
+        const webhookDebug = {
+          time: new Date().toISOString(),
+          len: raw.length,
+          snippet: raw.slice(0, 300)
+        };
+        memoryCache.livetrack.lastWebhook = webhookDebug;
+        if (env.PHOTOS_KV) {
+          await env.PHOTOS_KV.put('last_livetrack_webhook', JSON.stringify(webhookDebug), { expirationTtl: 24 * 3600 });
+        }
 
         // Demo / Testmodus
         if (url.searchParams.get('test') === '1' && (!raw || raw === '{}')) {
