@@ -285,7 +285,7 @@ export default {
     // 3. Foto-Upload API & Storage (KV / R2)
     // ------------------------------------------------------------
     if (url.pathname === '/api/version') {
-      return json({ ok: true, version: '2026-10-13-18-45' }, 200, {
+      return json({ ok: true, version: '2026-10-13-18-50' }, 200, {
         'Cache-Control': 'no-store',
         'Access-Control-Allow-Origin': '*'
       });
@@ -750,7 +750,7 @@ export default {
       // Status abfragen
       if (request.method === 'GET') {
         let session = memoryCache.livetrack.session;
-        if (!session && (now - (memoryCache.livetrack.ts || 0) > 30 * 1000) && env.PHOTOS_KV) {
+        if ((!session || (now - (memoryCache.livetrack.ts || 0) > 10 * 1000)) && env.PHOTOS_KV) {
           session = await env.PHOTOS_KV.get('garmin_livetrack', { type: 'json' });
           memoryCache.livetrack.session = session;
           memoryCache.livetrack.ts = now;
@@ -765,9 +765,12 @@ export default {
         }
 
         let lastWebhook = memoryCache.livetrack.lastWebhook;
-        if (!lastWebhook && env.PHOTOS_KV) {
+        if ((!lastWebhook || (now - (memoryCache.livetrack.tsWebhook || 0) > 10 * 1000)) && env.PHOTOS_KV) {
           lastWebhook = await env.PHOTOS_KV.get('last_livetrack_webhook', { type: 'json' });
-          if (lastWebhook) memoryCache.livetrack.lastWebhook = lastWebhook;
+          if (lastWebhook) {
+            memoryCache.livetrack.lastWebhook = lastWebhook;
+            memoryCache.livetrack.tsWebhook = now;
+          }
         }
 
         const ua = request.headers.get('User-Agent') || '';
