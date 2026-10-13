@@ -129,7 +129,7 @@ window.DATA = (function () {
       url: '/photos/20260920_155050.jpg',
       o: 'l',
       date: '2026-09-20',
-      place: 'Marius & Soraya',
+      place: '',
       from: 'marius',
       tag: 'urlaub'
     },
@@ -137,7 +137,7 @@ window.DATA = (function () {
       url: '/photos/20260923_122930.jpg',
       o: 'l',
       date: '2026-09-23',
-      place: 'Marius & Soraya',
+      place: '',
       from: 'soraya',
       tag: 'urlaub'
     }

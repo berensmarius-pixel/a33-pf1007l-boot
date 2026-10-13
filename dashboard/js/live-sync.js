@@ -1,6 +1,7 @@
 // Live Sync: Kaiserslautern Weather + Google Calendar (Marius & Soraya)
 (function () {
   'use strict';
+  if (window.DATA && !window.DATA.sync) window.DATA.sync = { start: Date.now() };
 
   var KAISERSLAUTERN_LAT = 49.4447;
   var KAISERSLAUTERN_LON = 7.7690;
@@ -54,6 +55,7 @@
 
       var D = window.DATA;
       if (!D || !D.weather) return;
+      D.sync.weather = Date.now();
 
       var currentHour = new Date().getHours();
       var t = [];
@@ -318,6 +320,7 @@
 
       var parsed = parseIcs(icsText);
       window.DATA.events = parsed;
+      window.DATA.sync.calendar = Date.now();
       if (window.App) {
         window.App.emit('data');
         window.App.rerender();
@@ -365,6 +368,7 @@
         meters.push({ label: 'Woche', win: 10080, used: Math.min(100, Math.round(c.weekTotal / c.limits.week * 100)), left: 10080,
           detail: c.weekTotal.toFixed(1).replace('.', ',') + ' Mio. Tokens' });
       }
+      window.DATA.sync.usage = Date.now();
       a.meters = meters; a.tokens = c.tokens; a.week = c.week; a.live = true;
       a.updatedAt = u.updatedAt;
       if (window.App) { window.App.emit('data'); window.App.rerender(); }
@@ -384,6 +388,7 @@
       if (data && data.ok && Array.isArray(data.photos) && window.DATA) {
         var added = 0;
         data.photos.forEach(function (p) {
+          if (/\.hei[cf]$/i.test(p.id || p.url || '')) return;   // HEIC kann das Tablet nicht darstellen
           if (!knownPhotoIds.has(p.id)) {
             knownPhotoIds.add(p.id);
             var exists = window.DATA.photos.some(function (x) { return x.id === p.id || x.url === p.url; });
@@ -392,8 +397,8 @@
                 id: p.id,
                 url: p.url,
                 o: 'l',
-                date: p.date || new Date().toISOString().split('T')[0],
-                place: p.title || 'Marius & Soraya',
+                date: (p.taken ? p.taken.slice(0, 10) : p.date) || new Date().toISOString().split('T')[0],
+                place: p.place || (p.title && p.title !== 'Schnappschuss' ? p.title : ''),
                 from: p.who || 'marius',
                 tag: 'upload',
                 r2: true

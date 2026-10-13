@@ -171,6 +171,19 @@
     out.sort(function (a, b) { return a.days - b.days; });
     return out.slice(0, 2);
   }
+  // Hinweis, wenn der Kalender nicht mehr aktuell ist (WLAN weg, Server nicht erreichbar, ...)
+  function ago(min) {
+    return min < 60 ? Math.round(min) + ' Min' : min < 1440 ? Math.round(min / 60) + ' Std' : Math.round(min / 1440) + ' Tagen';
+  }
+  function staleCalendar() {
+    var S = D.sync || {}, now = Date.now();
+    if (!S.calendar) {
+      return (now - (S.start || now)) > 3 * 60000 ? { title: 'Kalender nicht geladen', text: 'Keine Verbindung zum Server?' } : null;
+    }
+    var min = (now - S.calendar) / 60000;
+    return min > 20 ? { title: 'Kalender nicht aktuell', text: 'Stand vor ' + ago(min) + ' · ' + App.fmt.time(new Date(S.calendar)) } : null;
+  }
+
   // Höchstens zwei Banner, sortiert nach Wichtigkeit (Unwetter, Geburtstag heute, Warnung, Geburtstag bald)
   function notices() {
     var items = [];
@@ -178,6 +191,11 @@
       items.push({ prio: a.level === 'alert' ? 0 : 2, html: '<div class="h-note h-note--' + a.level + '">' + App.icon(a.icon, 24) +
         '<div class="h-note-txt"><b>' + App.esc(a.title) + '</b><span>' + App.esc(a.text) + '</span></div></div>' });
     });
+    var stale = staleCalendar();
+    if (stale) {
+      items.push({ prio: 2, html: '<div class="h-note h-note--warn">' + App.icon('clock', 24) +
+        '<div class="h-note-txt"><b>' + stale.title + '</b><span>' + stale.text + '</span></div></div>' });
+    }
     occasions().forEach(function (o) {
       var when = o.days === 0 ? 'Heute!' : o.days === 1 ? 'Morgen' : 'in ' + o.days + ' Tagen';
       var detail = o.years ? (o.kind === 'anniv' ? o.years + '. Jahrestag' : 'wird ' + o.years) : (o.kind === 'anniv' ? 'Jahrestag' : 'Geburtstag');

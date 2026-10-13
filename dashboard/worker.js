@@ -1,8 +1,9 @@
 import listeHtml from './liste.html';
+import uploadHtml from './upload.html';
 
 const LIST_NAMES = ['groceries', 'chores'];
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'heic'];
+const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp', 'avif']; // HEIC kann das Tablet nicht anzeigen
 
 function json(body, status = 200, extra = {}) {
   return new Response(JSON.stringify(body), {
@@ -58,6 +59,34 @@ function gate(request, url, env) {
 
   if (p.startsWith('/api/')) return json({ error: 'Zugriff nur mit Schlüssel' }, 401, { 'Cache-Control': 'no-store' });
   return new Response(LOCKED_HTML, { status: 401, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+}
+
+// Ortsname zu Koordinaten (OpenStreetMap Nominatim). Es werden nur auf ~1 km gerundete Werte gesendet,
+// gesucht wird nur der Stadtname; das Ergebnis wird in KV zwischengespeichert.
+async function placeName(lat, lon, env) {
+  const la = Number(lat), lo = Number(lon);
+  if (!isFinite(la) || !isFinite(lo) || Math.abs(la) > 90 || Math.abs(lo) > 180) return '';
+  const rl = la.toFixed(2), ro = lo.toFixed(2);
+  const cacheKey = 'geo_' + rl + '_' + ro;
+  if (env.PHOTOS_KV) {
+    const hit = await env.PHOTOS_KV.get(cacheKey);
+    if (hit !== null) return hit;
+  }
+  try {
+    const resp = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=12&accept-language=de&lat=' + rl + '&lon=' + ro, {
+      headers: { 'User-Agent': 'HomeHQ-PhotoFrame/1.0 (private family dashboard)' },
+      signal: AbortSignal.timeout(4000)
+    });
+    if (!resp.ok) return '';
+    const a = (await resp.json()).address || {};
+    const city = a.city || a.town || a.village || a.municipality || a.suburb || a.county || '';
+    const country = a.country_code && a.country_code !== 'de' ? a.country : '';
+    const name = [city, country].filter(Boolean).join(', ');
+    if (env.PHOTOS_KV && name) await env.PHOTOS_KV.put(cacheKey, name, { expirationTtl: 60 * 60 * 24 * 365 });
+    return name;
+  } catch (e) {
+    return '';
+  }
 }
 
 export default {
@@ -207,7 +236,7 @@ export default {
     }
 
     if (url.pathname === '/upload') {
-      return new Response(renderUploadHtml(), {
+      return new Response(uploadHtml, {
         headers: { 'Content-Type': 'text/html; charset=utf-8' }
       });
     }
@@ -227,7 +256,11 @@ export default {
         const formData = await request.formData();
         const file = formData.get('photo');
         const who = formData.get('who') || 'marius';
-        const title = formData.get('title') || 'Schnappschuss';
+        const title = String(formData.get('title') || '').slice(0, 80);
+        const takenRaw = String(formData.get('taken') || '');
+        const taken = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(takenRaw) ? takenRaw : '';
+        const lat = formData.get('lat'), lon = formData.get('lon');
+        const place = lat !== null && lon !== null ? await placeName(lat, lon, env) : '';
 
         if (!file || typeof file === 'string') {
           return new Response(JSON.stringify({ error: 'Keine Bilddatei übermittelt' }), {
@@ -248,6 +281,8 @@ export default {
             metadata: {
               who: String(who),
               title: String(title),
+              taken: taken,
+              place: place,
               uploadedAt: new Date().toISOString(),
               contentType: file.type || 'image/jpeg'
             }
@@ -255,7 +290,7 @@ export default {
         } else if (env.PHOTOS_BUCKET) {
           await env.PHOTOS_BUCKET.put(key, buffer, {
             httpMetadata: { contentType: file.type || 'image/jpeg', cacheControl: 'public, max-age=31536000' },
-            customMetadata: { who: String(who), title: String(title), uploadedAt: new Date().toISOString() }
+            customMetadata: { who: String(who), title: String(title), taken: taken, place: place, uploadedAt: new Date().toISOString() }
           });
         }
 
@@ -264,7 +299,9 @@ export default {
           id: key,
           url: `/api/photos/${key}`,
           who: who,
-          title: title
+          title: title,
+          taken: taken,
+          place: place
         }), {
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
@@ -289,8 +326,10 @@ export default {
               id: item.name,
               url: `/api/photos/${item.name}`,
               who: meta.who || 'marius',
-              title: meta.title || 'Foto',
-              date: meta.uploadedAt ? meta.uploadedAt.split('T')[0] : 'Heute',
+              title: meta.title || '',
+              taken: meta.taken || '',
+              place: meta.place || '',
+              date: meta.taken ? meta.taken.slice(0, 10) : (meta.uploadedAt ? meta.uploadedAt.split('T')[0] : ''),
               uploadedAt: meta.uploadedAt || ''
             });
           }
@@ -303,8 +342,10 @@ export default {
                 id: obj.key,
                 url: `/api/photos/${obj.key}`,
                 who: meta.who || 'marius',
-                title: meta.title || 'Foto',
-                date: meta.uploadedAt ? meta.uploadedAt.split('T')[0] : 'Heute',
+                title: meta.title || '',
+                taken: meta.taken || '',
+                place: meta.place || '',
+                date: meta.taken ? meta.taken.slice(0, 10) : (meta.uploadedAt ? meta.uploadedAt.split('T')[0] : ''),
                 uploadedAt: meta.uploadedAt || obj.uploaded
               });
             }
@@ -427,253 +468,3 @@ export default {
     return env.ASSETS.fetch(request);
   }
 };
-
-// ------------------------------------------------------------
-// Mobile Upload Web App (HTML & Styling)
-// ------------------------------------------------------------
-function renderUploadHtml() {
-  return `<!doctype html>
-<html lang="de">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Bilderrahmen Foto-Upload · Marius & Soraya</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: #121214; color: #F4F4F6; min-height: 100vh; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; }
-    .wrap { width: 100%; max-width: 440px; }
-    header { text-align: center; margin-bottom: 24px; padding-top: 10px; }
-    h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.02em; }
-    p.sub { font-size: 14px; color: #A0A0AB; }
-    .card { background: #1C1C21; border: 1px solid #2E2E38; border-radius: 20px; padding: 22px; margin-bottom: 20px; }
-    .label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #8E8E9A; margin-bottom: 10px; display: block; }
-    .who-group { display: flex; gap: 10px; margin-bottom: 18px; }
-    .who-btn { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #2E2E38; background: #26262E; color: #E0E0E8; font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s; }
-    .who-btn.active.marius { border-color: #3b82f6; background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
-    .who-btn.active.soraya { border-color: #ec4899; background: rgba(236, 72, 153, 0.15); color: #f472b6; }
-    .drop-zone { border: 2px dashed #3E3E4C; border-radius: 16px; padding: 30px 16px; text-align: center; cursor: pointer; background: #18181E; transition: border-color 0.2s; margin-bottom: 16px; position: relative; }
-    .drop-zone.dragover { border-color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
-    .drop-zone svg { width: 44px; height: 44px; stroke: #8E8E9A; margin-bottom: 10px; }
-    .drop-zone span { display: block; font-size: 15px; font-weight: 600; color: #E0E0E8; }
-    .drop-zone small { display: block; font-size: 12px; color: #8E8E9A; margin-top: 4px; }
-    input[type="file"] { display: none; }
-    .preview-box { display: none; margin-bottom: 16px; border-radius: 14px; overflow: hidden; max-height: 300px; overflow-y: auto; background: #000; position: relative; }
-    .preview-box img { width: 100%; height: 240px; object-fit: contain; }
-    .btn-remove { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px; }
-    .input-text { width: 100%; padding: 13px 15px; border-radius: 12px; background: #26262E; border: 1px solid #3E3E4C; color: #fff; font-size: 15px; margin-bottom: 18px; outline: none; }
-    .input-text:focus { border-color: #3b82f6; }
-    .btn-submit { width: 100%; padding: 15px; border-radius: 14px; background: #2563eb; color: #fff; border: none; font-size: 16px; font-weight: 700; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-submit:active { transform: scale(0.99); }
-    .gallery-title { font-size: 16px; font-weight: 700; margin: 24px 0 12px; display: flex; justify-content: space-between; align-items: center; }
-    .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .g-thumb { aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: #26262E; position: relative; }
-    .g-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .g-badge { position: absolute; bottom: 4px; left: 4px; font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.7); color: #fff; font-weight: 600; }
-    #previewGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-    .preview-box #previewGrid img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; display: block; }
-    .preview-count { position: absolute; left: 8px; bottom: 8px; background: rgba(0,0,0,0.7); color: #fff; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 10px; }
-    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #22c55e; color: #000; padding: 12px 24px; border-radius: 30px; font-weight: 700; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
-    .toast.show { opacity: 1; }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <header>
-      <h1>📸 Foto an Rahmen senden</h1>
-      <p class="sub">Erscheint sofort in der Diashow in der Küche</p>
-    </header>
-
-    <div class="card">
-      <span class="label">Wer lädt hoch?</span>
-      <div class="who-group">
-        <button class="who-btn marius active" data-who="marius">Marius</button>
-        <button class="who-btn soraya" data-who="soraya">Soraya</button>
-      </div>
-
-      <div class="drop-zone" id="dropZone">
-        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-        <span>Fotos auswählen oder aufnehmen</span>
-        <small>Tippen für Galerie / Kamera · mehrere möglich</small>
-        <input type="file" id="fileInput" accept="image/*" multiple>
-      </div>
-
-      <div class="preview-box" id="previewBox">
-        <div id="previewGrid"></div>
-        <button class="btn-remove" id="btnRemove">✕</button>
-      </div>
-
-      <span class="label">Notiz oder Ort (optional)</span>
-      <input type="text" class="input-text" id="noteInput" placeholder="z. B. Urlaub 2026, Pfälzerwald...">
-
-      <button class="btn-submit" id="btnSubmit" disabled>Fotos auf den Rahmen zaubern ✨</button>
-    </div>
-
-    <div class="gallery-title">
-      <span>Bisherige Uploads</span>
-      <small id="countText" style="color:#8E8E9A;"></small>
-    </div>
-    <div class="gallery-grid" id="galleryGrid"></div>
-  </div>
-
-  <div class="toast" id="toast">Foto erfolgreich hochgeladen! 🎉</div>
-
-  <script>
-    let selectedWho = 'marius';
-    let selectedFiles = [];
-
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const previewBox = document.getElementById('previewBox');
-    const previewGrid = document.getElementById('previewGrid');
-    const btnRemove = document.getElementById('btnRemove');
-    const btnSubmit = document.getElementById('btnSubmit');
-    const noteInput = document.getElementById('noteInput');
-    const toast = document.getElementById('toast');
-    const galleryGrid = document.getElementById('galleryGrid');
-    const countText = document.getElementById('countText');
-
-    document.querySelectorAll('.who-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.who-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedWho = btn.dataset.who;
-      });
-    });
-
-    dropZone.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files.length) {
-        handleFiles(Array.from(e.target.files));
-      }
-    });
-
-    btnRemove.addEventListener('click', () => {
-      resetSelection();
-    });
-
-    function resetSelection() {
-      selectedFiles = [];
-      fileInput.value = '';
-      previewGrid.innerHTML = '';
-      previewBox.style.display = 'none';
-      dropZone.style.display = 'block';
-      btnSubmit.disabled = true;
-    }
-
-    function handleFiles(files) {
-      selectedFiles = files;
-      previewGrid.innerHTML = '';
-      files.slice(0, 12).forEach((f) => {
-        const img = document.createElement('img');
-        img.src = URL.createObjectURL(f);
-        previewGrid.appendChild(img);
-      });
-      const cnt = document.createElement('span');
-      cnt.className = 'preview-count';
-      cnt.textContent = files.length + (files.length === 1 ? ' Foto' : ' Fotos');
-      previewBox.querySelectorAll('.preview-count').forEach((n) => n.remove());
-      previewBox.appendChild(cnt);
-      previewBox.style.display = 'block';
-      dropZone.style.display = 'none';
-      btnSubmit.disabled = false;
-    }
-
-    // Verkleinert Handyfotos vor dem Upload (max. 1920 px, WebP oder JPEG). Bei Fehlern (z. B. HEIC) geht das Original raus.
-    async function shrinkImage(file) {
-      const MAX = 1920;
-      try {
-        const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
-        const scale = Math.min(1, MAX / Math.max(bmp.width, bmp.height));
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(bmp.width * scale);
-        canvas.height = Math.round(bmp.height * scale);
-        canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height);
-        bmp.close();
-        let blob = await new Promise((res) => canvas.toBlob(res, 'image/webp', 0.82));
-        let ext = 'webp';
-        if (!blob || blob.type !== 'image/webp') {
-          blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.85));
-          ext = 'jpg';
-        }
-        if (!blob || blob.size >= file.size) return file;
-        return new File([blob], 'photo.' + ext, { type: blob.type });
-      } catch (e) {
-        return file;
-      }
-    }
-
-    async function uploadOne(file, who, title) {
-      const fd = new FormData();
-      const prepared = await shrinkImage(file);
-      fd.append('photo', prepared, prepared.name);
-      fd.append('who', who);
-      fd.append('title', title);
-      let pin = localStorage.getItem('upload_pin') || '';
-      let resp = await fetch('/api/upload', { method: 'POST', body: fd, headers: { 'X-Pin': pin } });
-      if (resp.status === 401) {
-        pin = prompt('PIN für Foto-Upload:') || '';
-        localStorage.setItem('upload_pin', pin);
-        resp = await fetch('/api/upload', { method: 'POST', body: fd, headers: { 'X-Pin': pin } });
-      }
-      const res = await resp.json();
-      if (!res.ok) throw new Error(res.error || 'Upload fehlgeschlagen');
-    }
-
-    btnSubmit.addEventListener('click', async () => {
-      if (!selectedFiles.length) return;
-      btnSubmit.disabled = true;
-      const total = selectedFiles.length;
-      const title = noteInput.value.trim() || 'Schnappschuss';
-      let done = 0;
-      const failed = [];
-      for (const file of selectedFiles) {
-        btnSubmit.innerText = 'Foto ' + (done + failed.length + 1) + ' von ' + total + ' wird übertragen...';
-        try {
-          await uploadOne(file, selectedWho, title);
-          done++;
-        } catch (err) {
-          failed.push(file);
-          if (err.message && err.message.indexOf('PIN') > -1) break;
-        }
-      }
-      loadRecentPhotos();
-      if (!failed.length) {
-        showToast(done === 1 ? 'Foto erfolgreich hochgeladen! 🎉' : done + ' Fotos erfolgreich hochgeladen! 🎉');
-        noteInput.value = '';
-        resetSelection();
-        btnSubmit.innerText = 'Fotos auf den Rahmen zaubern ✨';
-      } else {
-        alert(done + ' von ' + total + ' hochgeladen. ' + failed.length + ' fehlgeschlagen (PIN oder Netzwerk).');
-        handleFiles(failed);
-        btnSubmit.innerText = 'Erneut versuchen';
-      }
-    });
-
-    function showToast(msg) {
-      toast.innerText = msg;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 3500);
-    }
-
-    async function loadRecentPhotos() {
-      try {
-        const resp = await fetch('/api/photos');
-        const res = await resp.json();
-        if (res.ok && res.photos) {
-          countText.innerText = res.photos.length + ' Fotos';
-          galleryGrid.innerHTML = res.photos.map(p => \`
-            <div class="g-thumb">
-              <img src="\${p.url}" loading="lazy">
-              <span class="g-badge" style="color:\${p.who === 'soraya' ? '#f472b6' : '#60a5fa'}">\${p.who === 'soraya' ? 'S' : 'M'}</span>
-            </div>
-          \`).join('');
-        }
-      } catch (e) {}
-    }
-
-    loadRecentPhotos();
-  </script>
-</body>
-</html>`;
-}

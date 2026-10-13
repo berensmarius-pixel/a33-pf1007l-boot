@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bilderrahmen Foto-Upload · Marius & Soraya</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #121214; color: #F4F4F6; min-height: 100vh; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; }
+    .wrap { width: 100%; max-width: 440px; }
+    header { text-align: center; margin-bottom: 24px; padding-top: 10px; }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.02em; }
+    p.sub { font-size: 14px; color: #A0A0AB; }
+    .card { background: #1C1C21; border: 1px solid #2E2E38; border-radius: 20px; padding: 22px; margin-bottom: 20px; }
+    .label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #8E8E9A; margin-bottom: 10px; display: block; }
+    .who-group { display: flex; gap: 10px; margin-bottom: 18px; }
+    .who-btn { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #2E2E38; background: #26262E; color: #E0E0E8; font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s; }
+    .who-btn.active.marius { border-color: #3b82f6; background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .who-btn.active.soraya { border-color: #ec4899; background: rgba(236, 72, 153, 0.15); color: #f472b6; }
+    .drop-zone { border: 2px dashed #3E3E4C; border-radius: 16px; padding: 30px 16px; text-align: center; cursor: pointer; background: #18181E; transition: border-color 0.2s; margin-bottom: 16px; position: relative; }
+    .drop-zone.dragover { border-color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
+    .drop-zone svg { width: 44px; height: 44px; stroke: #8E8E9A; margin-bottom: 10px; }
+    .drop-zone span { display: block; font-size: 15px; font-weight: 600; color: #E0E0E8; }
+    .drop-zone small { display: block; font-size: 12px; color: #8E8E9A; margin-top: 4px; }
+    input[type="file"] { display: none; }
+    .preview-box { display: none; margin-bottom: 16px; border-radius: 14px; overflow: hidden; max-height: 300px; overflow-y: auto; background: #000; position: relative; }
+    .preview-box img { width: 100%; height: 240px; object-fit: contain; }
+    .btn-remove { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px; }
+    .input-text { width: 100%; padding: 13px 15px; border-radius: 12px; background: #26262E; border: 1px solid #3E3E4C; color: #fff; font-size: 15px; margin-bottom: 18px; outline: none; }
+    .input-text:focus { border-color: #3b82f6; }
+    .btn-submit { width: 100%; padding: 15px; border-radius: 14px; background: #2563eb; color: #fff; border: none; font-size: 16px; font-weight: 700; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-submit:active { transform: scale(0.99); }
+    .gallery-title { font-size: 16px; font-weight: 700; margin: 24px 0 12px; display: flex; justify-content: space-between; align-items: center; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .g-thumb { aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: #26262E; position: relative; }
+    .g-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .g-badge { position: absolute; top: 4px; left: 4px; font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.7); color: #fff; font-weight: 600; }
+    #previewGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .preview-box #previewGrid img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; display: block; }
+    .preview-count { position: absolute; left: 8px; bottom: 8px; background: rgba(0,0,0,0.7); color: #fff; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 10px; }
+    .g-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 5px 4px; font-size: 9px; line-height: 1.25; color: #fff; font-weight: 600; background: linear-gradient(transparent, rgba(0,0,0,0.75)); text-align: right; pointer-events: none; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #22c55e; color: #000; padding: 12px 24px; border-radius: 30px; font-weight: 700; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>📸 Foto an Rahmen senden</h1>
+      <p class="sub">Erscheint sofort in der Diashow in der Küche</p>
+    </header>
+
+    <div class="card">
+      <span class="label">Wer lädt hoch?</span>
+      <div class="who-group">
+        <button class="who-btn marius active" data-who="marius">Marius</button>
+        <button class="who-btn soraya" data-who="soraya">Soraya</button>
+      </div>
+
+      <div class="drop-zone" id="dropZone">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <span>Fotos auswählen oder aufnehmen</span>
+        <small>Tippen für Galerie / Kamera · mehrere möglich</small>
+        <input type="file" id="fileInput" accept="image/*" multiple>
+      </div>
+
+      <div class="preview-box" id="previewBox">
+        <div id="previewGrid"></div>
+        <button class="btn-remove" id="btnRemove">✕</button>
+      </div>
+
+      <span class="label">Notiz oder Ort (optional)</span>
+      <input type="text" class="input-text" id="noteInput" placeholder="z. B. Urlaub 2026, Pfälzerwald...">
+
+      <button class="btn-submit" id="btnSubmit" disabled>Fotos auf den Rahmen zaubern ✨</button>
+    </div>
+
+    <div class="gallery-title">
+      <span>Bisherige Uploads</span>
+      <small id="countText" style="color:#8E8E9A;"></small>
+    </div>
+    <div class="gallery-grid" id="galleryGrid"></div>
+  </div>
+
+  <div class="toast" id="toast">Foto erfolgreich hochgeladen! 🎉</div>
+
+  <script src="/exif.js"></script>
+  <script>
+    let selectedWho = 'marius';
+    let selectedFiles = [];
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const previewBox = document.getElementById('previewBox');
+    const previewGrid = document.getElementById('previewGrid');
+    const btnRemove = document.getElementById('btnRemove');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const noteInput = document.getElementById('noteInput');
+    const toast = document.getElementById('toast');
+    const galleryGrid = document.getElementById('galleryGrid');
+    const countText = document.getElementById('countText');
+
+    document.querySelectorAll('.who-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.who-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedWho = btn.dataset.who;
+      });
+    });
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length) {
+        handleFiles(Array.from(e.target.files));
+      }
+    });
+
+    btnRemove.addEventListener('click', () => {
+      resetSelection();
+    });
+
+    function resetSelection() {
+      selectedFiles = [];
+      fileInput.value = '';
+      previewGrid.innerHTML = '';
+      previewBox.style.display = 'none';
+      dropZone.style.display = 'block';
+      btnSubmit.disabled = true;
+    }
+
+    function handleFiles(files) {
+      selectedFiles = files;
+      previewGrid.innerHTML = '';
+      files.slice(0, 12).forEach((f) => {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(f);
+        previewGrid.appendChild(img);
+      });
+      const cnt = document.createElement('span');
+      cnt.className = 'preview-count';
+      cnt.textContent = files.length + (files.length === 1 ? ' Foto' : ' Fotos');
+      previewBox.querySelectorAll('.preview-count').forEach((n) => n.remove());
+      previewBox.appendChild(cnt);
+      previewBox.style.display = 'block';
+      dropZone.style.display = 'none';
+      btnSubmit.disabled = false;
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src; s.onload = resolve; s.onerror = () => reject(new Error('Umwandler nicht ladbar'));
+        document.head.appendChild(s);
+      });
+    }
+
+    // HEIC/HEIF -> JPEG. Safari kann HEIC selbst lesen, andere Browser brauchen den Umwandler (wird nur dann geladen).
+    async function toDecodable(file) {
+      const isHeic = /hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
+      if (!isHeic) return file;
+      try { (await createImageBitmap(file)).close(); return file; } catch (e) { /* weiter */ }
+      if (!window.libheif) await loadScript('https://cdn.jsdelivr.net/npm/libheif-js@1.18.2/libheif-wasm/libheif-bundle.js');
+      const decoder = new (window.libheif()).HeifDecoder();
+      const images = decoder.decode(new Uint8Array(await file.arrayBuffer()));
+      if (!images || !images.length) throw new Error('HEIC konnte nicht gelesen werden');
+      const w = images[0].get_width(), h = images[0].get_height();
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      const pixels = ctx.createImageData(w, h);
+      await new Promise((res, rej) => images[0].display(pixels, (d) => d ? res(d) : rej(new Error('HEIC konnte nicht gelesen werden'))));
+      ctx.putImageData(pixels, 0, 0);
+      const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.9));
+      if (!blob) throw new Error('HEIC konnte nicht umgewandelt werden');
+      return new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+    }
+
+    // Verkleinert Handyfotos vor dem Upload (max. 1920 px, WebP oder JPEG). Bei Fehlern (z. B. HEIC) geht das Original raus.
+    async function shrinkImage(file) {
+      const MAX = 1920;
+      try {
+        const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+        const scale = Math.min(1, MAX / Math.max(bmp.width, bmp.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(bmp.width * scale);
+        canvas.height = Math.round(bmp.height * scale);
+        canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height);
+        bmp.close();
+        let blob = await new Promise((res) => canvas.toBlob(res, 'image/webp', 0.82));
+        let ext = 'webp';
+        if (!blob || blob.type !== 'image/webp') {
+          blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.85));
+          ext = 'jpg';
+        }
+        if (!blob || blob.size >= file.size) return file;
+        return new File([blob], 'photo.' + ext, { type: blob.type });
+      } catch (e) {
+        return file;
+      }
+    }
+
+    async function uploadOne(file, who, title) {
+      const fd = new FormData();
+      let meta = {};
+      try { meta = window.parseExif ? window.parseExif(await file.slice(0, 2097152).arrayBuffer()) : {}; } catch (e) {}
+      const decodable = await toDecodable(file);
+      const prepared = await shrinkImage(decodable);
+      if (/hei[cf]/i.test(prepared.type) || /\.hei[cf]$/i.test(prepared.name)) throw new Error('HEIC konnte nicht umgewandelt werden');
+      fd.append('photo', prepared, prepared.name);
+      fd.append('who', who);
+      fd.append('title', title);
+      if (!meta.taken && file.lastModified) {
+        const d = new Date(file.lastModified), p2 = (n) => String(n).padStart(2, '0');
+        meta.taken = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) + 'T' + p2(d.getHours()) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds());
+      }
+      if (meta.taken) fd.append('taken', meta.taken);
+      if (meta.lat !== undefined && meta.lon !== undefined) { fd.append('lat', meta.lat); fd.append('lon', meta.lon); }
+      let pin = localStorage.getItem('upload_pin') || '';
+      let resp = await fetch('/api/upload', { method: 'POST', body: fd, headers: { 'X-Pin': pin } });
+      if (resp.status === 401) {
+        pin = prompt('PIN für Foto-Upload:') || '';
+        localStorage.setItem('upload_pin', pin);
+        resp = await fetch('/api/upload', { method: 'POST', body: fd, headers: { 'X-Pin': pin } });
+      }
+      const res = await resp.json();
+      if (!res.ok) throw new Error(res.error || 'Upload fehlgeschlagen');
+    }
+
+    btnSubmit.addEventListener('click', async () => {
+      if (!selectedFiles.length) return;
+      btnSubmit.disabled = true;
+      const total = selectedFiles.length;
+      const title = noteInput.value.trim();
+      let done = 0;
+      const failed = [];
+      for (const file of selectedFiles) {
+        btnSubmit.innerText = 'Foto ' + (done + failed.length + 1) + ' von ' + total + ' wird übertragen...';
+        try {
+          await uploadOne(file, selectedWho, title);
+          done++;
+        } catch (err) {
+          failed.push(file);
+          if (err.message && err.message.indexOf('PIN') > -1) break;
+        }
+      }
+      loadRecentPhotos();
+      if (!failed.length) {
+        showToast(done === 1 ? 'Foto erfolgreich hochgeladen! 🎉' : done + ' Fotos erfolgreich hochgeladen! 🎉');
+        noteInput.value = '';
+        resetSelection();
+        btnSubmit.innerText = 'Fotos auf den Rahmen zaubern ✨';
+      } else {
+        alert(done + ' von ' + total + ' hochgeladen. ' + failed.length + ' fehlgeschlagen (PIN oder Netzwerk).');
+        handleFiles(failed);
+        btnSubmit.innerText = 'Erneut versuchen';
+      }
+    });
+
+    function showToast(msg) {
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    async function loadRecentPhotos() {
+      try {
+        const resp = await fetch('/api/photos');
+        const res = await resp.json();
+        if (res.ok && res.photos) {
+          countText.innerText = res.photos.length + ' Fotos';
+          galleryGrid.innerHTML = res.photos.map(p => `
+            <div class="g-thumb" data-id="${p.id}" title="${(p.place || p.title || '').replace(/"/g, '')}">
+              <img src="${p.url}" loading="lazy">
+              <span class="g-badge" style="color:${p.who === 'soraya' ? '#f472b6' : '#60a5fa'}">${p.who === 'soraya' ? 'S' : 'M'}</span>
+              <span class="g-cap">${(p.place || p.title || '').replace(/</g, '&lt;')}${p.taken ? '<br>' + p.taken.slice(8, 10) + '.' + p.taken.slice(5, 7) + '.' + p.taken.slice(0, 4) : ''}</span>
+            </div>
+          `).join('');
+        }
+      } catch (e) {}
+    }
+
+    galleryGrid.addEventListener('click', async (e) => {
+      const t = e.target.closest('.g-thumb');
+      if (!t || !confirm('Dieses Foto vom Rahmen löschen?')) return;
+      let pin = localStorage.getItem('upload_pin') || '';
+      let resp = await fetch('/api/photos/' + t.dataset.id, { method: 'DELETE', headers: { 'X-Pin': pin } });
+      if (resp.status === 401) {
+        pin = prompt('PIN zum Löschen:') || '';
+        localStorage.setItem('upload_pin', pin);
+        resp = await fetch('/api/photos/' + t.dataset.id, { method: 'DELETE', headers: { 'X-Pin': pin } });
+      }
+      if (resp.ok) { showToast('Foto gelöscht'); loadRecentPhotos(); } else { alert('Löschen nicht möglich (PIN?)'); }
+    });
+
+    loadRecentPhotos();
+  </script>
+</body>
+</html>
