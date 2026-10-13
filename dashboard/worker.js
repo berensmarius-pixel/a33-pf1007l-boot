@@ -512,37 +512,105 @@ export default {
 
       const promptText = 'Erstelle ein schnelles, leckeres High-Protein-Rezept auf Deutsch für folgende Anfrage: "' + (userPrompt || 'Ein kreatives, schnelles High-Protein-Alltagsgericht') + '". Bevorzugte Zubereitung: ' + cat + '.';
 
-      const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      const models = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
       let aiResult = null;
       let lastErr = null;
 
+      const recipeSchema = {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          category: { type: 'string' },
+          badge: { type: 'string' },
+          time: { type: 'integer' },
+          protein: { type: 'integer' },
+          calories: { type: 'integer' },
+          description: { type: 'string' },
+          ingredients: { type: 'array', items: { type: 'string' } },
+          steps: { type: 'array', items: { type: 'string' } }
+        },
+        required: ['title', 'category', 'badge', 'time', 'protein', 'calories', 'description', 'ingredients', 'steps']
+      };
+
       for (const mName of models) {
+        // 1. Primär: Moderne Gemini Interactions API (v1beta / response_format)
         try {
-          const gUrl = 'https://generativelanguage.googleapis.com/v1beta/models/' + mName + ':generateContent?key=' + encodeURIComponent(apiKey.trim());
-          const gResp = await fetch(gUrl, {
+          const iUrl = 'https://generativelanguage.googleapis.com/v1beta/interactions?key=' + encodeURIComponent(apiKey.trim());
+          const iResp = await fetch(iUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Api-Revision': '2026-05-20'
+            },
             body: JSON.stringify({
-              contents: [{ role: 'user', parts: [{ text: systemInstruction + '\n\n' + promptText }] }],
-              generationConfig: { responseMimeType: 'application/json' }
+              model: mName,
+              input: promptText,
+              system_instruction: systemInstruction,
+              response_format: {
+                type: 'text',
+                mime_type: 'application/json',
+                schema: recipeSchema
+              }
             })
           });
 
-          if (gResp.ok) {
-            const gData = await gResp.json();
-            const rawText = gData?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (rawText) {
-              const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+          if (iResp.ok) {
+            const iData = await iResp.json();
+            let text = '';
+            if (Array.isArray(iData.steps)) {
+              for (const st of iData.steps) {
+                if (st.type === 'model_output' && Array.isArray(st.content)) {
+                  for (const c of st.content) {
+                    if (c.type === 'text' && c.text) text += c.text;
+                  }
+                }
+              }
+            } else if (Array.isArray(iData.outputs)) {
+              for (const o of iData.outputs) {
+                if (o.text) text += o.text;
+              }
+            }
+            if (text) {
+              const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
               aiResult = JSON.parse(cleaned);
               break;
             }
-          } else {
-            const errBody = await gResp.json().catch(() => ({}));
-            lastErr = errBody?.error?.message || ('HTTP ' + gResp.status);
           }
         } catch (e) {
           lastErr = e.message;
         }
+
+        // 2. Sekundär / Fallback: Standard generateContent API
+        if (!aiResult) {
+          try {
+            const gUrl = 'https://generativelanguage.googleapis.com/v1beta/models/' + mName + ':generateContent?key=' + encodeURIComponent(apiKey.trim());
+            const gResp = await fetch(gUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ role: 'user', parts: [{ text: systemInstruction + '\n\n' + promptText }] }],
+                generationConfig: { responseMimeType: 'application/json' }
+              })
+            });
+
+            if (gResp.ok) {
+              const gData = await gResp.json();
+              const rawText = gData?.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (rawText) {
+                const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+                aiResult = JSON.parse(cleaned);
+                break;
+              }
+            } else {
+              const errBody = await gResp.json().catch(() => ({}));
+              lastErr = errBody?.error?.message || ('HTTP ' + gResp.status);
+            }
+          } catch (e) {
+            lastErr = e.message;
+          }
+        }
+
+        if (aiResult) break;
       }
 
       if (!aiResult) {
