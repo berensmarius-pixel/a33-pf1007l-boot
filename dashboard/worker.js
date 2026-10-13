@@ -836,16 +836,50 @@ export default {
           candidate = parsed.url || parsed.html || parsed.text || parsed.body || parsed.plain || raw;
         } catch (e) {}
 
-        // Regex sucht nach Garmin LiveTrack Link
-        const match = String(candidate).match(/https:\/\/livetrack\.garmin\.com\/(?:session\/([a-zA-Z0-9-]+)\/token\/([a-zA-Z0-9_-]+)|sessionToken\/([a-zA-Z0-9_-]+)|[^\s"'<>]+)/i);
+        let trackUrl = '';
+        let sessionId = '';
+        let token = '';
 
-        if (!match) {
-          return json({ ok: false, error: 'Kein gültiger Garmin LiveTrack Link im Payload gefunden.' }, 400);
+        // 1. Suche nach gar.mn Kurzlink (z. B. https://gar.mn/zZdOe4P9NO)
+        const shortMatch = String(candidate).match(/https:\/\/gar\.mn\/([a-zA-Z0-9_-]+)/i);
+        if (shortMatch) {
+          try {
+            const headResp = await fetch(shortMatch[0], {
+              method: 'HEAD',
+              redirect: 'manual',
+              headers: { 'User-Agent': 'Mozilla/5.0' }
+            });
+            const loc = headResp.headers.get('Location');
+            if (loc && loc.includes('livetrack.garmin.com')) {
+              trackUrl = loc;
+            } else {
+              const getResp = await fetch(shortMatch[0], { redirect: 'follow' });
+              if (getResp.url && getResp.url.includes('livetrack.garmin.com')) {
+                trackUrl = getResp.url;
+              }
+            }
+          } catch (e) {}
         }
 
-        const trackUrl = match[0];
-        const sessionId = match[1] || '';
-        const token = match[2] || match[3] || '';
+        // 2. Suche nach direktem livetrack.garmin.com Link
+        if (!trackUrl) {
+          const directMatch = String(candidate).match(/https:\/\/livetrack\.garmin\.com\/(?:session\/([a-zA-Z0-9-]+)\/token\/([a-zA-Z0-9_-]+)|sessionToken\/([a-zA-Z0-9_-]+)|[^\s"'<>]+)/i);
+          if (directMatch) {
+            trackUrl = directMatch[0];
+          }
+        }
+
+        if (trackUrl) {
+          const subMatch = trackUrl.match(/\/session\/([a-zA-Z0-9-]+)\/token\/([a-zA-Z0-9_-]+)/i);
+          if (subMatch) {
+            sessionId = subMatch[1] || '';
+            token = subMatch[2] || '';
+          }
+        }
+
+        if (!trackUrl) {
+          return json({ ok: false, error: 'Kein gültiger Garmin LiveTrack Link im Payload gefunden.' }, 400);
+        }
 
         const session = {
           active: true,
