@@ -158,7 +158,7 @@ window.DATA = (function () {
     people: people, family: family, ALL: ALL,
     events: events, busyExtras: busyExtras,
     routines: routines, chores: chores, stars: stars, week: week,
-    stores: stores, catOrder: catOrder, groceries: groceries, catalog: catalog, usuals: usuals,
+    stores: stores, catOrder: catOrder, groceries: groceries, catalog: catalog, usuals: usuals, meals: [],
     rooms: rooms, devices: devices, climate: climate, media: media, cameras: cameras, scenes: scenes,
     weather: weather, photos: photos, agents: agents,
     fuel: {

@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var D = window.DATA;
-  var NAMES = ['groceries', 'chores'];
+  var NAMES = ['groceries', 'chores', 'meals'];
   var state = { rev: {}, queue: Promise.resolve(), pending: 0, failed: {}, day: '' };
 
   function pad(n) { return (n < 10 ? '0' : '') + n; }

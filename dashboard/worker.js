@@ -1,7 +1,7 @@
 import listeHtml from './liste.html';
 import uploadHtml from './upload.html';
 
-const LIST_NAMES = ['groceries', 'chores'];
+const LIST_NAMES = ['groceries', 'chores', 'meals'];
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp', 'avif']; // HEIC kann das Tablet nicht anzeigen
 

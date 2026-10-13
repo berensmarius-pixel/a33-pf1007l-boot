@@ -148,3 +148,28 @@
 .h-note--alert { background: var(--alert); color: #fff; }
 .h-note--party { background: var(--card); border: 2px solid var(--ink); }
 .h-note--party.is-today { background: var(--ink); color: var(--paper); }
+.h-note--meal { background: var(--card); border: 2px solid var(--line); }
+
+/* ---- Rain radar pill in weather widget ---- */
+.h-wx-rain-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 999px;
+  background: var(--paper-2); border: 1px solid var(--line);
+  font-size: 13px; font-weight: 700; color: var(--ink);
+  cursor: pointer; margin-top: 6px; width: fit-content;
+}
+.h-wx-rain-pill.is-rain { background: #dbeafe; border-color: #3b82f6; color: #1d4ed8; }
+.h-wx-rain-pill:active { transform: scale(0.97); }
+
+/* ---- Radar sheet modal ---- */
+.radar-sheet { width: 720px; max-width: 90vw; display: flex; flex-direction: column; gap: 12px; }
+.radar-frame-box { border-radius: 14px; overflow: hidden; background: #000; height: 380px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+.radar-iframe { width: 100%; height: 100%; border: none; display: block; }
+.radar-chart-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--mute); }
+.radar-bars { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; align-items: flex-end; padding: 10px 4px; background: var(--paper-2); border-radius: 12px; }
+.r-bar-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.r-bar-track { height: 48px; width: 14px; display: flex; align-items: flex-end; justify-content: center; }
+.r-bar-fill { width: 100%; border-radius: 4px; }
+.r-bar-mm { font-size: 11px; font-weight: 800; }
+.r-bar-t { font-size: 11px; color: var(--mute); font-weight: 600; }
+.radar-hint { font-size: 12px; color: var(--mute); }

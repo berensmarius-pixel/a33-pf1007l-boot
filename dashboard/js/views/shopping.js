@@ -2,7 +2,8 @@
 (function () {
   'use strict';
   var D = window.DATA;
-  var V = { el: null, store: 'all', query: '', drawer: false, pending: {}, flash: null };
+  var V = { el: null, subtab: 'groceries', store: 'all', query: '', drawer: false, pending: {}, flash: null };
+  var DAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 
   // Vom Handy hinzugefügte Artikel haben noch keine Kategorie: hier einsortieren (nur lokal).
   function fixCats() {
@@ -22,6 +23,78 @@
   }
   function find(name, isDone) {
     return D.groceries.filter(function (g) { return !!g.done === isDone && g.name.toLowerCase() === name.toLowerCase(); })[0];
+  }
+
+  function mealsHTML() {
+    var curDay = (App.now().getDay() + 6) % 7;
+    var mealsMap = {};
+    (D.meals || []).forEach(function (m) { mealsMap[m.day] = m; });
+    return '<div class="s-meals-wrap">' + DAYS.map(function (dayName, idx) {
+      var m = mealsMap[idx] || { id: 'm_' + idx, day: idx, title: '', ingredients: '' };
+      var isToday = idx === curDay;
+      return '<div class="s-meal-col' + (isToday ? ' is-today' : '') + '" data-day="' + idx + '">' +
+        '<div>' +
+        '  <div class="s-meal-day">' + App.esc(dayName) + (isToday ? ' · Heute' : '') + '</div>' +
+        '  <div class="s-meal-title' + (!m.title ? ' is-empty' : '') + '" data-edit-meal="' + idx + '">' + (m.title ? App.esc(m.title) : '+ Gericht planen') + '</div>' +
+        (m.ingredients ? '  <div class="s-meal-ing"><b>Zutaten:</b> ' + App.esc(m.ingredients) + '</div>' : '') +
+        '</div>' +
+        '<div class="s-meal-foot">' +
+        '  <button class="s-meal-btn" data-edit-meal="' + idx + '">' + (m.title ? 'Bearbeiten' : 'Planen') + '</button>' +
+        (m.ingredients ? '  <button class="s-meal-btn s-meal-btn--cart" data-cart-meal="' + idx + '">🛒 Auf Liste</button>' : '') +
+        '</div>' +
+        '</div>';
+    }).join('') + '</div>';
+  }
+
+  function openMealSheet(dayIdx) {
+    var dayName = DAYS[dayIdx];
+    var m = (D.meals || []).filter(function (x) { return x.day === dayIdx; })[0] || { id: 'm_' + dayIdx, day: dayIdx, title: '', ingredients: '' };
+    var html = '<div class="t-sheet-head"><div><b>' + App.esc(dayName) + '</b><small>Gericht &amp; Zutaten planen</small></div><button class="btn-close" id="mClose">✕</button></div>' +
+      '<div style="padding:16px 0;display:flex;flex-direction:column;gap:12px">' +
+      '<label class="label">Gericht</label>' +
+      '<input id="mDish" class="s-input" style="height:56px;padding:0 16px;background:var(--paper-2);border-radius:12px;border:1px solid var(--line);font-size:20px" placeholder="z. B. Pasta Carbonara, Ofengemüse..." value="' + App.esc(m.title) + '">' +
+      '<label class="label">Zutaten (durch Komma getrennt)</label>' +
+      '<input id="mIng" class="s-input" style="height:56px;padding:0 16px;background:var(--paper-2);border-radius:12px;border:1px solid var(--line);font-size:18px" placeholder="z. B. Spaghetti, Eier, Speck, Parmesan" value="' + App.esc(m.ingredients) + '">' +
+      '<div style="display:flex;gap:10px;margin-top:10px">' +
+      '<button id="mSave" class="btn btn--solid" style="flex:1">Speichern</button>' +
+      (m.title ? '<button id="mDel" class="btn btn--ghost" style="color:var(--alert)">Löschen</button>' : '') +
+      '</div></div>';
+    App.sheet(html, {
+      onMount: function (el, close) {
+        var dishInp = el.querySelector('#mDish');
+        var ingInp = el.querySelector('#mIng');
+        dishInp.focus();
+        el.querySelector('#mClose').onclick = close;
+        el.querySelector('#mSave').onclick = function () {
+          var title = dishInp.value.trim();
+          var ing = ingInp.value.trim();
+          m.title = title;
+          m.ingredients = ing;
+          var next = (D.meals || []).filter(function (x) { return x.id !== m.id; });
+          if (title || ing) next.push(m);
+          D.meals = next;
+          App.Lists.upsert('meals', [m]);
+          close();
+          render();
+          App.toast('Plan für ' + dayName + ' gespeichert', { icon: 'check' });
+        };
+        var delBtn = el.querySelector('#mDel');
+        if (delBtn) delBtn.onclick = function () {
+          D.meals = (D.meals || []).filter(function (x) { return x.id !== m.id; });
+          App.Lists.remove('meals', [m.id]);
+          close();
+          render();
+          App.toast('Gericht gelöscht', { icon: 'check' });
+        };
+      }
+    });
+  }
+
+  function addIngredientsToCart(ingString) {
+    if (!ingString) return;
+    var items = ingString.split(/[,;\n]+/).map(function (s) { return s.trim(); }).filter(Boolean);
+    items.forEach(function (name) { add(name); });
+    App.toast(items.length + ' Zutaten zur Einkaufsliste hinzugefügt! 🛒', { icon: 'cart' });
   }
 
   function row(g) {
@@ -126,8 +199,25 @@
     }).join('');
   }
   function render() {
+    if (V.subtab === 'meals') {
+      V.el.innerHTML = '<div class="shop" style="grid-template-columns:1fr;grid-template-rows:auto 1fr">' +
+        '<header class="s-head"><div><div class="label">Kochen &amp; Planen</div><h1 class="serif">Wochen-Essensplan</h1></div>' +
+        '<div class="s-tab-bar">' +
+        '  <button class="' + (V.subtab === 'groceries' ? 'is-on' : '') + '" data-subtab="groceries">Einkaufsliste</button>' +
+        '  <button class="' + (V.subtab === 'meals' ? 'is-on' : '') + '" data-subtab="meals">Wochenplan</button>' +
+        '</div></header>' +
+        mealsHTML() +
+        '</div>';
+      return;
+    }
+
     V.el.innerHTML = '<div class="shop">' +
-      '<header class="s-head"><div><div class="label">Gemeinsame Liste</div><h1 class="serif">Einkaufsliste</h1></div><div class="s-count"></div><div class="seg s-stores"></div></header>' +
+      '<header class="s-head"><div><div class="label">Gemeinsame Liste</div><h1 class="serif">Einkaufsliste</h1></div>' +
+      '<div class="s-tab-bar">' +
+      '  <button class="' + (V.subtab === 'groceries' ? 'is-on' : '') + '" data-subtab="groceries">Einkaufsliste</button>' +
+      '  <button class="' + (V.subtab === 'meals' ? 'is-on' : '') + '" data-subtab="meals">Wochenplan</button>' +
+      '</div>' +
+      '<div class="s-count"></div><div class="seg s-stores"></div></header>' +
       '<div class="s-list"></div>' +
       '<aside class="s-side">' +
       '  <div class="s-add">' +
@@ -159,15 +249,17 @@
       g = { id: D._gid(), name: cat ? cat[0] : name.charAt(0).toUpperCase() + name.slice(1), cat: categorize(name), qty: 1, store: V.store === 'all' ? 'rewe' : V.store, done: false, note: '' };
       D.groceries.push(g);
       msg = '<b>' + App.esc(g.name) + '</b> hinzugefügt zu ' + g.cat;
-      insertRow(g);
+      if (V.subtab === 'groceries') insertRow(g);
     }
     App.Lists.upsert('groceries', [g]);
     var hadQuery = !!V.query.trim();
     V.query = '';
-    var input = V.el.querySelector('.s-input');
+    var input = V.el ? V.el.querySelector('.s-input') : null;
     if (input) input.value = '';
-    if (hadQuery) paintSuggest(); else refreshSuggestFor(g);
-    flash(g);
+    if (V.subtab === 'groceries') {
+      if (hadQuery) paintSuggest(); else refreshSuggestFor(g);
+      flash(g);
+    }
     App.emit('data');
     App.toast(msg, { icon: 'cart', ms: 3000 });
   }
@@ -202,6 +294,19 @@
 
   function onClick(e) {
     var t;
+    if ((t = e.target.closest('[data-subtab]'))) {
+      V.subtab = t.dataset.subtab;
+      return render();
+    }
+    if ((t = e.target.closest('[data-edit-meal]'))) {
+      return openMealSheet(parseInt(t.dataset.editMeal, 10));
+    }
+    if ((t = e.target.closest('[data-cart-meal]'))) {
+      var dIdx = parseInt(t.dataset.cartMeal, 10);
+      var m = (D.meals || []).filter(function (x) { return x.day === dIdx; })[0];
+      if (m && m.ingredients) addIngredientsToCart(m.ingredients);
+      return;
+    }
     if ((t = e.target.closest('[data-check]'))) {
       var g = D.groceries.filter(function (x) { return x.id === t.dataset.check; })[0];
       if (g && !V.pending[g.id]) check(g);
@@ -237,9 +342,10 @@
   }
 
   App.on('lists', function (name) {
-    if (name !== 'groceries' || !V.el || !V.el.firstChild || App.current !== 'shopping') return;
+    if (!V.el || !V.el.firstChild || App.current !== 'shopping') return;
     if (Object.keys(V.pending).length) return;
-    paintList(); paintSuggest();
+    if (name === 'groceries' && V.subtab === 'groceries') { paintList(); paintSuggest(); }
+    else if (name === 'meals' && V.subtab === 'meals') { render(); }
   });
 
   App.register('shopping', {

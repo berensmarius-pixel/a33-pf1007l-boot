@@ -24,7 +24,19 @@
   App.dayStart = function (d) { var x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
   App.addDays = function (d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; };
   App.sameDay = function (a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); };
-  App.isNight = function () { var h = App.now().getHours(); return h >= 22 || h < 6; };
+  App.nightHours = function () {
+    var s = parseInt(localStorage.getItem('night_start') || '22', 10);
+    var e = parseInt(localStorage.getItem('night_end') || '6', 10);
+    return { start: isNaN(s) ? 22 : s, end: isNaN(e) ? 6 : e };
+  };
+  App.isNight = function () {
+    var h = App.now().getHours();
+    var nh = App.nightHours();
+    if (nh.start > nh.end) {
+      return h >= nh.start || h < nh.end;
+    }
+    return h >= nh.start && h < nh.end;
+  };
 
   var DAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
   var MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
@@ -346,6 +358,8 @@
       var b = e.target.closest('[data-go]');
       if (b && e.detail === 0) App.go(b.dataset.go);
     });
+    var rc = $('#railClock');
+    if (rc) rc.addEventListener('click', function () { App.setMode(App.mode === 'night' ? 'day' : 'night'); });
     document.addEventListener('pointerdown', App.resetIdle, true);
     window.addEventListener('hashchange', function () { App.go(location.hash.slice(1)); });
     App.go(location.hash.slice(1) || 'home');

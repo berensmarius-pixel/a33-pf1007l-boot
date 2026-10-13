@@ -14,12 +14,19 @@
     var hours = App.hourly(7);
     var tmin = Math.min.apply(null, hours.map(function (h) { return h.t; }));
     var tmax = Math.max.apply(null, hours.map(function (h) { return h.t; }));
+    var r15 = D.weather && D.weather.rain15;
+    var rainPill = '';
+    if (r15) {
+      rainPill = '<button class="h-wx-rain-pill' + (r15.hasRain ? ' is-rain' : '') + '" data-action="radar">' +
+        (r15.hasRain ? '🌧️ ' : '☂️ ') + App.esc(r15.summary) + ' · <u>Radar</u></button>';
+    }
     return '<div class="h-wx-top">' +
       '<span class="h-wx-icon">' + App.icon(w.cond, 60) + '</span>' +
       '<span class="h-wx-temp num">' + w.temp + '°</span>' +
       '<span class="h-wx-meta"><b>Kaiserslautern</b><span>H ' + w.hi + '°  T ' + w.lo + '°</span></span>' +
       '</div>' +
       '<div class="h-wx-say"><b>' + w.summary + '.</b> ' + w.advice + '.</div>' +
+      rainPill +
       '<div class="h-wx-hours">' + hours.map(function (h) {
         var lift = tmax === tmin ? 0 : Math.round((h.t - tmin) / (tmax - tmin) * 8);
         return '<div class="h-hr' + (h.p >= 50 ? ' is-wet' : '') + '"><span class="h-hr-l">' + h.label + '</span>' +
@@ -155,6 +162,35 @@
     if (closeBtn) closeBtn.onclick = function () { sheet.close(); };
   }
 
+  function openRadarSheet() {
+    var r15 = D.weather && D.weather.rain15;
+    var slots = (r15 && r15.slots) || [];
+    var maxMm = Math.max(0.5, Math.max.apply(null, slots.map(function (s) { return s.mm; })));
+    var chartHtml = slots.length ? '<div class="radar-chart-title">Niederschlag nächste 2 Stunden (15-Min.-Schritte)</div>' +
+      '<div class="radar-bars">' + slots.map(function (s) {
+        var hPct = Math.round((s.mm / maxMm) * 44);
+        return '<div class="r-bar-col"><div class="r-bar-track"><div class="r-bar-fill" style="height:' + Math.max(3, hPct) + 'px;' + (s.mm > 0.05 ? 'background:#3b82f6' : 'background:var(--line)') + '"></div></div>' +
+          '<span class="r-bar-mm">' + (s.mm > 0 ? s.mm : '–') + '</span>' +
+          '<span class="r-bar-t">' + s.time + '</span></div>';
+      }).join('') + '</div>' : '';
+
+    var sheet = App.sheet(
+      '<div class="radar-sheet">' +
+      '<div class="t-sheet-head">' +
+      '  <div><b>Regenradar &amp; Kurzzeit-Vorschau</b><small>Kaiserslautern · RainViewer Live-Radar</small></div>' +
+      '  <button class="btn-close" id="rClose">✕</button>' +
+      '</div>' +
+      '<div class="radar-frame-box">' +
+      '  <iframe class="radar-iframe" src="https://www.rainviewer.com/map.html?loc=49.4447,7.7690,9&oColor=1&c=1&o=85&layer=radar&sm=1&sn=1" loading="lazy"></iframe>' +
+      '</div>' +
+      chartHtml +
+      '<div class="radar-hint">💡 Live-Radar mit Wolkenzugbahn der letzten 90 Minuten und 30-Minuten-Nowcast.</div>' +
+      '</div>'
+    );
+    var closeBtn = sheet.el.querySelector('#rClose');
+    if (closeBtn) closeBtn.onclick = function () { sheet.close(); };
+  }
+
   // Banner: Geburtstage/Jahrestage (ganztägige Termine, nächste 14 Tage) und Wetterwarnungen
   var BDAY_RE = /geburtstag|\bgebi\b|birthday|bday|🎂|🎈/i, ANNIV_RE = /jahrestag|hochzeit|anniversary|💍|❤/i;
   function occasions() {
@@ -204,6 +240,15 @@
         '<div class="h-note-txt"><b>' + App.esc(o.e.title) + '</b><span>' + detail + '</span></div>' +
         '<div class="h-note-when num">' + when + '</div></div>' });
     });
+    if (D.meals && D.meals.length) {
+      var curDay = (App.now().getDay() + 6) % 7;
+      var todayMeal = D.meals.filter(function (m) { return m.day === curDay && m.title; })[0];
+      if (todayMeal) {
+        items.push({ prio: 4, html: '<div class="h-note h-note--meal" style="cursor:pointer" data-go="shopping">' +
+          '<span class="h-note-emoji">🍳</span>' +
+          '<div class="h-note-txt"><b>Heute: ' + App.esc(todayMeal.title) + '</b><span>' + (todayMeal.ingredients ? 'Zutaten: ' + App.esc(todayMeal.ingredients) : 'Im Wochenplan') + '</span></div></div>' });
+      }
+    }
     items.sort(function (x, y) { return x.prio - y.prio; });
     return items.slice(0, 2).map(function (i) { return i.html; }).join('');
   }
@@ -239,6 +284,8 @@
           '  <button class="h-photo" data-go="photos"><div class="h-photo-stage"></div><div class="h-photo-cap"></div></button>' +
           '</div></div>';
         el.addEventListener('click', function (e) {
+          var rad = e.target.closest('[data-action="radar"], .h-weather');
+          if (rad) { openRadarSheet(); return; }
           var fc = e.target.closest('.h-fuel');
           if (fc) { openFuelSheet(); return; }
           var tc = e.target.closest('[data-timer-pre]');

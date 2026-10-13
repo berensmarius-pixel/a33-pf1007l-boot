@@ -46,6 +46,7 @@
         '&longitude=' + KAISERSLAUTERN_LON +
         '&current=temperature_2m,weather_code' +
         '&hourly=temperature_2m,precipitation_probability,weather_code,wind_gusts_10m' +
+        '&minutely_15=precipitation,weather_code' +
         '&daily=weather_code,temperature_2m_max,temperature_2m_min' +
         '&timezone=Europe%2FBerlin&forecast_days=2';
 
@@ -69,6 +70,45 @@
         t.push(temp);
         p.push(prob);
         c.push(mapWmoToCondition(code, h));
+      }
+
+      // 15-Minuten Kurzzeit-Regenprognose (nächste 2 Stunden)
+      if (data.minutely_15 && Array.isArray(data.minutely_15.precipitation)) {
+        var m15 = data.minutely_15;
+        var nowMs = Date.now();
+        var startIdx = 0;
+        for (var i = 0; i < m15.time.length; i++) {
+          var dt = new Date(m15.time[i]).getTime();
+          if (dt <= nowMs) startIdx = i;
+          else break;
+        }
+        var next8 = [];
+        var totalMm = 0;
+        var rainStart = null;
+        var rainEnd = null;
+        for (var k = 0; k < 8 && (startIdx + k) < m15.time.length; k++) {
+          var idx = startIdx + k;
+          var val = Math.round((m15.precipitation[idx] || 0) * 10) / 10;
+          var tStr = m15.time[idx] ? m15.time[idx].slice(11, 16) : '';
+          next8.push({ time: tStr, mm: val });
+          totalMm += val;
+          if (val > 0.05 && !rainStart) rainStart = tStr;
+          if (val > 0.05) rainEnd = tStr;
+        }
+        var rainText = 'Trocken in den nächsten 2 Stunden';
+        if (totalMm > 0.05) {
+          if (next8[0] && next8[0].mm > 0.05) {
+            rainText = 'Regen bis ca. ' + (rainEnd || 'bald') + ' Uhr';
+          } else {
+            rainText = 'Regen ab ' + rainStart + ' Uhr (ca. ' + Math.round(totalMm * 10) / 10 + ' mm)';
+          }
+        }
+        D.weather.rain15 = {
+          slots: next8,
+          totalMm: Math.round(totalMm * 10) / 10,
+          summary: rainText,
+          hasRain: totalMm > 0.05
+        };
       }
 
       D.weather.alerts = computeAlerts(data, currentHour);
