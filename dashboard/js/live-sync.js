@@ -482,6 +482,7 @@
     updateFuel();
     updatePhotos();
     updateUsage();
+    checkVersion();
     setInterval(updateUsage, 5 * 60 * 1000);
 
     // Weather & Fuel refresh every 15 minutes
@@ -491,6 +492,8 @@
     setInterval(updateCalendar, 5 * 60 * 1000);
     // Mobile R2/KV Photos refresh alle 5 Minuten (drastische KV-Entlastung)
     setInterval(updatePhotos, 5 * 60 * 1000);
+    // Auto-Update: Alle 3 Minuten prüfen, ob neue Version deployed wurde
+    setInterval(checkVersion, 3 * 60 * 1000);
 
     if (window.App) {
       window.App.on('mode', function (m) {
@@ -501,9 +504,24 @@
           updatePhotos();
           updateFuel();
           updateUsage();
+          checkVersion();
         }
       });
     }
+  }
+
+  var currentVersion = null;
+  function checkVersion() {
+    fetch('/api/version', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.version) {
+        if (currentVersion && currentVersion !== d.version) {
+          console.log('[LiveSync] Neue Version erkannt (' + d.version + ') - lade Dashboard neu...');
+          location.reload(true);
+        } else {
+          currentVersion = d.version;
+        }
+      }
+    }).catch(function () {});
   }
 
   window.LiveSync = {

@@ -1,5 +1,5 @@
 // Offline-Fallback: Netzwerk zuerst, bei Ausfall die zuletzt geladene Version (App-Shell + API-Daten).
-const CACHE = 'homehq-v1';
+const CACHE = 'homehq-v2';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => {

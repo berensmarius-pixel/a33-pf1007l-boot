@@ -113,6 +113,7 @@
     V.el.innerHTML = '<div class="agents">' +
       '<header class="ag-top"><div><div class="label">KI-Pläne · Verbrauchslimits</div><h1 class="serif">System</h1></div>' +
       '<div class="ag-sync"><span class="label">' + synced() + '</span>' +
+      '<button class="icon-btn" data-hard-reload aria-label="Dashboard neu laden" title="Dashboard neu laden" style="margin-right:6px">🔄</button>' +
       '<button class="icon-btn" data-refresh aria-label="Aktualisieren">' + App.icon('undo', 26) + '</button></div></header>' +
       '<div class="ag-grid">' + D.agents.map(card).join('') + summary() + '</div>' +
       '</div>';
@@ -123,6 +124,10 @@
       if (!V.el) {
         V.el = el;
         el.addEventListener('click', function (e) {
+          if (e.target.closest('[data-hard-reload]')) {
+            location.reload(true);
+            return;
+          }
           var b = e.target.closest('[data-refresh]');
           if (!b) return;
           if (window.LiveSync) window.LiveSync.updateUsage();

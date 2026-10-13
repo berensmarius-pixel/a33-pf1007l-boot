@@ -87,6 +87,8 @@
           App.Lists.upsert('meals', [m]);
           close();
           render();
+          if (M.el) renderMeals();
+          App.emit('data');
           App.toast('Plan für ' + dayName + ' gespeichert', { icon: 'check' });
         };
         var delBtn = el.querySelector('#mDel');
@@ -95,6 +97,8 @@
           App.Lists.remove('meals', [m.id]);
           close();
           render();
+          if (M.el) renderMeals();
+          App.emit('data');
           App.toast('Gericht gelöscht', { icon: 'check' });
         };
       }
@@ -197,6 +201,8 @@
           App.Lists.upsert('meals', [m]);
           close();
           render();
+          if (M.el) renderMeals();
+          App.emit('data');
           App.toast('<b>' + App.esc(r.title) + '</b> für ' + targetDayName + ' eingeplant! 🍳', { icon: 'check' });
         }
 
@@ -562,6 +568,8 @@
   function onClick(e) {
     var t;
     if ((t = e.target.closest('[data-subtab]'))) {
+      if (t.dataset.subtab === 'meals') return App.go('meals');
+      if (t.dataset.subtab === 'groceries') return App.go('shopping');
       V.subtab = t.dataset.subtab;
       return render();
     }
@@ -620,17 +628,38 @@
     }
   }
 
+  var M = { el: null };
+  function renderMeals() {
+    if (!M.el) return;
+    M.el.innerHTML = '<div class="shop" style="grid-template-columns:1fr;grid-template-rows:auto 1fr">' +
+      '<header class="s-head"><div><div class="label">Kochen &amp; Planen</div><h1 class="serif">Wochen-Essensplan</h1></div>' +
+      '<div class="s-tab-bar">' +
+      '  <button class="s-m-btn" data-go="shopping">🛒 Zur Einkaufsliste</button>' +
+      '</div></header>' +
+      mealsHTML() +
+      '</div>';
+  }
+
   App.on('lists', function (name) {
-    if (!V.el || !V.el.firstChild || App.current !== 'shopping') return;
     if (Object.keys(V.pending).length) return;
-    if (name === 'groceries' && V.subtab === 'groceries') { paintList(); paintSuggest(); }
-    else if (name === 'meals' && V.subtab === 'meals') { render(); }
+    if (name === 'groceries' && V.el && App.current === 'shopping') { paintList(); paintSuggest(); }
+    else if (name === 'meals') {
+      if (M.el) renderMeals();
+      if (V.el && V.subtab === 'meals') render();
+    }
   });
 
   App.register('shopping', {
     show: function (el) {
       if (!V.el) { V.el = el; el.addEventListener('click', onClick); }
       render();
+    }
+  });
+
+  App.register('meals', {
+    show: function (el) {
+      if (!M.el) { M.el = el; el.addEventListener('click', onClick); }
+      renderMeals();
     }
   });
 })();

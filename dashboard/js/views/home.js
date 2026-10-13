@@ -245,14 +245,16 @@
         '<div class="h-note-txt"><b>' + App.esc(o.e.title) + '</b><span>' + detail + '</span></div>' +
         '<div class="h-note-when num">' + when + '</div></div>' });
     });
-    if (D.meals && D.meals.length) {
-      var curDay = (App.now().getDay() + 6) % 7;
-      var todayMeal = D.meals.filter(function (m) { return m.day === curDay && m.title; })[0];
-      if (todayMeal) {
-        items.push({ prio: 4, html: '<div class="h-note h-note--meal" style="cursor:pointer" data-go="shopping">' +
-          '<span class="h-note-emoji">🍳</span>' +
-          '<div class="h-note-txt"><b>Heute: ' + App.esc(todayMeal.title) + '</b><span>' + (todayMeal.ingredients ? 'Zutaten: ' + App.esc(todayMeal.ingredients) : 'Im Wochenplan') + '</span></div></div>' });
-      }
+    var curDay = (App.now().getDay() + 6) % 7;
+    var todayMeal = (D.meals || []).filter(function (m) { return m.day === curDay && m.title; })[0];
+    if (todayMeal) {
+      items.push({ prio: 3, html: '<div class="h-note h-note--meal" style="cursor:pointer" data-go="meals">' +
+        '<span class="h-note-emoji">🍳</span>' +
+        '<div class="h-note-txt"><b>Heute: ' + App.esc(todayMeal.title) + '</b><span>' + (todayMeal.ingredients ? 'Zutaten: ' + App.esc(todayMeal.ingredients) : 'Im Wochenplan') + '</span></div></div>' });
+    } else {
+      items.push({ prio: 4, html: '<div class="h-note h-note--meal" style="cursor:pointer" data-go="meals">' +
+        '<span class="h-note-emoji">🍳</span>' +
+        '<div class="h-note-txt"><b>Wochenplan: Heute noch nichts geplant</b><span>Tippen für Rezepte &amp; Planen</span></div></div>' });
     }
     items.sort(function (x, y) { return x.prio - y.prio; });
     return items.slice(0, 2).map(function (i) { return i.html; }).join('');
@@ -324,6 +326,7 @@
     if (n.getMinutes() === 0) { V.el.querySelector('.h-weather').innerHTML = weather(); }
   });
   App.on('data', function () { if (App.current === 'home') paint(); });
+  App.on('lists', function () { if (App.current === 'home') paint(); });
   App.on('timer-update', function () {
     if (App.current === 'home' && V.el && V.el.querySelector('.h-timer')) {
       V.el.querySelector('.h-timer').innerHTML = timerCard();
