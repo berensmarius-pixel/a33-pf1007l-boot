@@ -301,7 +301,8 @@
           var g = e.target.closest('[data-go]');
           if (g) App.go(g.dataset.go);
         });
-        V.slides = new App.Slideshow(el.querySelector('.h-photo-stage'), { layout: 'cover', captions: false, interval: 12000, onChange: photoCaption });
+        var pInt = App.photoInterval ? App.photoInterval() : 60000;
+        V.slides = new App.Slideshow(el.querySelector('.h-photo-stage'), { layout: 'cover', captions: false, interval: pInt, onChange: photoCaption });
       }
       paint();
       V.slides.start();

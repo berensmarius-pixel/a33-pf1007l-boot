@@ -69,14 +69,26 @@
     }
   };
 
+  App.photoInterval = function (setMs) {
+    if (setMs) {
+      localStorage.setItem('photo_interval', setMs);
+      App.emit('photo-interval', setMs);
+    }
+    var saved = parseInt(localStorage.getItem('photo_interval'), 10);
+    return !isNaN(saved) && saved >= 5000 ? saved : 60000; // 60 Sekunden Standard
+  };
+
   App.Slideshow = function (el, opts) {
     this.el = el;
-    this.o = Object.assign({ layout: 'auto', interval: 15000, captions: true }, opts || {});
+    var defInt = App.photoInterval ? App.photoInterval() : 60000;
+    this.o = Object.assign({ layout: 'auto', interval: defInt, captions: true }, opts || {});
     this.queue = [];
     this.history = [];
     this.count = 0;
     this.timer = null;
     this.current = null;
+    var self = this;
+    App.on('photo-interval', function (ms) { self.setInterval(ms); });
   };
   var S = App.Slideshow.prototype;
 
@@ -123,6 +135,7 @@
     wrap.innerHTML = BUILD[slide.layout](slide.photos, this.o);
     var node = wrap.firstChild;
     node.style.opacity = '0';
+    node.style.transition = 'opacity 1.4s ease-in-out';
     // Fallback look if images can't load (offline)
     Array.prototype.forEach.call(node.querySelectorAll('img'), function (im) {
       im.addEventListener('error', function () { im.classList.add('is-broken'); });
@@ -134,8 +147,11 @@
     function show() {
       if (shown) return; shown = true;
       node.classList.add('is-in');
-      node.style.opacity = '';
-      old.forEach(function (o) { o.remove(); });
+      void node.offsetWidth;
+      node.style.opacity = '1';
+      setTimeout(function () {
+        old.forEach(function (o) { o.remove(); });
+      }, 1500);
     }
     if (first && !first.complete) { first.addEventListener('load', show); first.addEventListener('error', show); setTimeout(show, 2500); }
     else show();
@@ -155,6 +171,7 @@
     this.restart();
   };
   S.setLayout = function (l) { this.o.layout = l; this.next(); };
+  S.setInterval = function (ms) { this.o.interval = ms; this.restart(); };
   S.restart = function () {
     var self = this;
     clearInterval(this.timer);
