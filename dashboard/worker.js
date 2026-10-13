@@ -1,3 +1,6 @@
+import listeHtml from './liste.html';
+
+const LIST_NAMES = ['groceries', 'chores'];
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'heic'];
 
@@ -154,6 +157,10 @@ export default {
     // ------------------------------------------------------------
     // 3. Foto-Upload API & Storage (KV / R2)
     // ------------------------------------------------------------
+    if (url.pathname === '/liste') {
+      return new Response(listeHtml, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' } });
+    }
+
     if (url.pathname === '/upload') {
       return new Response(renderUploadHtml(), {
         headers: { 'Content-Type': 'text/html; charset=utf-8' }
@@ -328,6 +335,45 @@ export default {
       }
       const raw = await env.PHOTOS_KV.get('usage');
       return new Response(raw || '{}', { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' } });
+    }
+
+    // ------------------------------------------------------------
+    // 5. Geteilte Listen (Einkaufsliste, Aufgaben) in KV
+    //    POST { upsert: [item…], remove: [id…] } → Antwort ist die komplette Liste
+    // ------------------------------------------------------------
+    if (url.pathname.startsWith('/api/list/')) {
+      const name = url.pathname.slice('/api/list/'.length);
+      if (!LIST_NAMES.includes(name)) return json({ error: 'Unbekannte Liste' }, 404);
+      if (!env.PHOTOS_KV) return json({ error: 'KV fehlt' }, 500);
+      const key = 'list_' + name;
+      const load = async () => (await env.PHOTOS_KV.get(key, { type: 'json' })) || { rev: 0, items: [] };
+
+      if (request.method === 'GET') {
+        return new Response(JSON.stringify(await load()), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+      }
+      if (request.method === 'POST') {
+        if (!isAuthorized(request, env)) return json({ error: 'PIN falsch oder fehlt' }, 401);
+        let op;
+        try {
+          const text = await request.text();
+          if (text.length > 100000) return json({ error: 'Zu groß' }, 413);
+          op = JSON.parse(text);
+        } catch (e) { return json({ error: 'Kein JSON' }, 400); }
+
+        const doc = await load();
+        const byId = new Map(doc.items.map((i) => [i.id, i]));
+        for (const id of Array.isArray(op.remove) ? op.remove : []) byId.delete(String(id));
+        for (const item of Array.isArray(op.upsert) ? op.upsert : []) {
+          if (!item || typeof item !== 'object' || typeof item.id !== 'string' || item.id.length > 40) continue;
+          if (JSON.stringify(item).length > 1000) continue;
+          byId.set(item.id, item);
+        }
+        if (byId.size > 500) return json({ error: 'Liste zu lang' }, 413);
+        const next = { rev: doc.rev + 1, items: [...byId.values()] };
+        await env.PHOTOS_KV.put(key, JSON.stringify(next));
+        return json(next, 200, { 'Cache-Control': 'no-store' });
+      }
+      return json({ error: 'Methode nicht erlaubt' }, 405);
     }
 
     // ------------------------------------------------------------

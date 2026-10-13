@@ -56,6 +56,7 @@
       '<header class="t-head">' +
       '<div class="t-title"><div class="label">' + (r.id === auto.id ? 'Gerade aktiv · ' : '') + r.range + '</div><h1 class="serif">' + r.name + '</h1></div>' +
       '<div class="seg">' + D.routines.map(function (x) { return '<button class="' + (x.id === r.id ? 'is-on' : '') + '" data-r="' + x.id + '">' + x.name + '</button>'; }).join('') + '</div>' +
+      '<button class="btn btn--solid t-add" data-add-chore>' + App.icon('plus', 22) + ' Aufgabe</button>' +
       '<div class="t-progress"><span class="num">' + done + '<small>/' + inR.length + '</small></span><div class="t-bar"><i style="width:' + (inR.length ? done / inR.length * 100 : 0) + '%"></i></div><span class="label">erledigt</span></div>' +
       '</header>' +
       '<div class="ch-lanes">' + LANES.map(function (w) { return lane(w, r); }).join('') + '</div>' +
@@ -70,6 +71,7 @@
       delete V.pending[c.id];
       c.done = true;
       if (by) c.doneBy = by;
+      App.Lists.upsert('chores', [c]);
       var earner = D.stars[c.who] != null ? c.who : (by && D.stars[by] != null ? by : null);
       if (earner && c.stars) D.stars[earner] += c.stars;
       render();
@@ -86,6 +88,7 @@
         undo: function () {
           c.done = false;
           delete c.doneBy;
+          App.Lists.upsert('chores', [c]);
           if (earner && c.stars) D.stars[earner] -= c.stars;
           render();
           App.emit('data');
@@ -112,7 +115,91 @@
     });
   }
 
+
+  var EMOJIS = ['✅', '🧹', '🍽️', '🗑️', '🧺', '🛒', '🪴', '🐾', '🪟', '🧽', '☕', '🔐'];
+  function choreSheet(c) {
+    var editing = !!c;
+    var cur = c || { r: App.currentRoutine().id, who: 'marius', title: '', emoji: '✅' };
+    var sel = { who: cur.who, r: cur.r, emoji: cur.emoji || '✅' };
+    var whoBtns = D.people.map(function (p) { return { id: p.id, name: p.name }; }).concat([{ id: 'any', name: 'Offen' }]);
+    App.sheet('<div class="sheet-pad ch-form"><div class="label">' + (editing ? 'Aufgabe bearbeiten' : 'Neue Aufgabe') + '</div>' +
+      '<h2 class="serif sheet-h">' + (editing ? 'Bearbeiten' : 'Was ist zu tun?') + '</h2>' +
+      '<input class="ch-title" maxlength="40" placeholder="z. B. Spülmaschine ausräumen" value="' + App.esc(cur.title) + '">' +
+      '<div class="label">Wer?</div><div class="seg ch-who">' + whoBtns.map(function (w) {
+        return '<button data-who="' + w.id + '" class="' + (w.id === sel.who ? 'is-on' : '') + '">' + w.name + '</button>';
+      }).join('') + '</div>' +
+      '<div class="label">Wann?</div><div class="seg ch-when">' + D.routines.map(function (r) {
+        return '<button data-when="' + r.id + '" class="' + (r.id === sel.r ? 'is-on' : '') + '">' + r.name + '</button>';
+      }).join('') + '</div>' +
+      '<div class="label">Symbol</div><div class="ch-emojis">' + EMOJIS.map(function (e) {
+        return '<button data-emoji="' + e + '" class="' + (e === sel.emoji ? 'is-on' : '') + '">' + e + '</button>';
+      }).join('') + '</div>' +
+      '<div class="ch-actions">' + (editing ? '<button class="btn btn--ghost" data-del>Löschen</button>' : '') +
+      '<button class="btn btn--solid" data-save>Speichern</button></div></div>', {
+      onMount: function (sh, close) {
+        var input = sh.querySelector('.ch-title');
+        function pick(attr, group, key) {
+          group.addEventListener('click', function (e) {
+            var b = e.target.closest('[' + attr + ']');
+            if (!b) return;
+            sel[key] = b.getAttribute(attr);
+            [].forEach.call(group.querySelectorAll('button'), function (x) { x.classList.toggle('is-on', x === b); });
+          });
+        }
+        pick('data-who', sh.querySelector('.ch-who'), 'who');
+        pick('data-when', sh.querySelector('.ch-when'), 'r');
+        pick('data-emoji', sh.querySelector('.ch-emojis'), 'emoji');
+        sh.querySelector('[data-save]').addEventListener('click', function () {
+          var title = input.value.trim();
+          if (!title) { input.focus(); return; }
+          if (editing) {
+            c.title = title; c.who = sel.who; c.r = sel.r; c.emoji = sel.emoji;
+            App.Lists.upsert('chores', [c]);
+          } else {
+            var n = { id: App.Lists.uid('c'), r: sel.r, who: sel.who, title: title, emoji: sel.emoji, stars: 0, done: false };
+            D.chores.push(n);
+            App.Lists.upsert('chores', [n]);
+          }
+          close();
+          V.routine = sel.r === App.currentRoutine().id ? null : sel.r;
+          render();
+          App.emit('data');
+        });
+        var del = sh.querySelector('[data-del]');
+        if (del) del.addEventListener('click', function () {
+          D.chores = D.chores.filter(function (x) { return x !== c; });
+          App.Lists.remove('chores', [c.id]);
+          close();
+          render();
+          App.emit('data');
+          App.toast('<b>' + App.esc(c.title) + '</b> gelöscht', { icon: 'check', undo: function () {
+            D.chores.push(c);
+            App.Lists.upsert('chores', [c]);
+            render();
+          } });
+        });
+        if (!editing) setTimeout(function () { input.focus(); }, 300);
+      }
+    });
+  }
+
+  var longPress = { timer: null, fired: false };
+  function onDown(e) {
+    var t = e.target.closest('[data-ch]');
+    longPress.fired = false;
+    clearTimeout(longPress.timer);
+    if (!t) return;
+    longPress.timer = setTimeout(function () {
+      longPress.fired = true;
+      var c = D.chores.filter(function (x) { return x.id === t.dataset.ch; })[0];
+      if (c) choreSheet(c);
+    }, 700);
+  }
+  function onUp() { clearTimeout(longPress.timer); }
+
   function onClick(e) {
+    if (longPress.fired) { longPress.fired = false; return; }
+    if (e.target.closest('[data-add-chore]')) return choreSheet();
     var t;
     if ((t = e.target.closest('[data-r]'))) { V.routine = t.dataset.r === App.currentRoutine().id ? null : t.dataset.r; return render(); }
     if ((t = e.target.closest('[data-ch]'))) {
@@ -123,6 +210,7 @@
         var earner = D.stars[c.who] != null ? c.who : (c.doneBy && D.stars[c.doneBy] != null ? c.doneBy : null);
         if (earner && c.stars) D.stars[earner] -= c.stars;
         delete c.doneBy;
+        App.Lists.upsert('chores', [c]);
         render();
         App.emit('data');
         return;
@@ -134,9 +222,21 @@
 
   App.register('tasks', {
     show: function (el) {
-      if (!V.el) { V.el = el; el.addEventListener('click', onClick); }
+      if (!V.el) {
+        V.el = el;
+        el.addEventListener('click', onClick);
+        el.addEventListener('pointerdown', onDown);
+        el.addEventListener('pointerup', onUp);
+        el.addEventListener('pointercancel', onUp);
+        el.addEventListener('pointermove', onUp);
+      }
       render();
     }
   });
   App.on('time', function () { V.routine = null; });
+  App.on('lists', function (name) {
+    if (name !== 'chores' || !V.el || !V.el.firstChild || App.current !== 'tasks') return;
+    if (Object.keys(V.pending).length) return;
+    render();
+  });
 })();

@@ -4,6 +4,11 @@
   var D = window.DATA;
   var V = { el: null, store: 'all', query: '', drawer: false, pending: {}, flash: null };
 
+  // Vom Handy hinzugefügte Artikel haben noch keine Kategorie: hier einsortieren (nur lokal).
+  function fixCats() {
+    D.groceries.forEach(function (g) { if (!g.cat || g.cat === 'Sonstiges') g.cat = categorize(g.name); });
+  }
+
   function open() { return D.groceries.filter(function (g) { return !g.done && (V.store === 'all' || g.store === V.store); }); }
   function done() { return D.groceries.filter(function (g) { return g.done && (V.store === 'all' || g.store === V.store); }); }
   function storeName(id) { return D.stores.filter(function (s) { return s.id === id; })[0].name; }
@@ -110,7 +115,7 @@
     setTimeout(function () { r.classList.remove('is-flash'); }, 1200);
   }
 
-  function paintList() { var l = V.el.querySelector('.s-list'); var st = l.scrollTop; l.innerHTML = listHTML(); l.scrollTop = st; paintHead(); }
+  function paintList() { fixCats(); var l = V.el.querySelector('.s-list'); var st = l.scrollTop; l.innerHTML = listHTML(); l.scrollTop = st; paintHead(); }
   function paintSuggest() { V.el.querySelector('.s-suggest').innerHTML = suggestHTML(); }
   function paintHead() {
     var all = D.groceries.filter(function (g) { return !g.done; });
@@ -156,6 +161,7 @@
       msg = '<b>' + App.esc(g.name) + '</b> hinzugefügt zu ' + g.cat;
       insertRow(g);
     }
+    App.Lists.upsert('groceries', [g]);
     var hadQuery = !!V.query.trim();
     V.query = '';
     var input = V.el.querySelector('.s-input');
@@ -174,6 +180,7 @@
       if (!V.pending[g.id]) return;
       delete V.pending[g.id];
       g.done = true;
+      App.Lists.upsert('groceries', [g]);
       removeRow(g);
       refreshSuggestFor(g);
       App.emit('data');
@@ -184,6 +191,7 @@
         var wasDone = g.done;
         delete V.pending[g.id];
         g.done = false;
+        App.Lists.upsert('groceries', [g]);
         if (wasDone) paintList();
         else { var r = V.el.querySelector('.s-list [data-id="' + g.id + '"]'); if (r) r.classList.remove('is-checking'); }
         refreshSuggestFor(g);
@@ -203,6 +211,7 @@
     if ((t = e.target.closest('[data-qty]'))) {
       var q = D.groceries.filter(function (x) { return x.id === t.dataset.id; })[0];
       q.qty = Math.max(1, q.qty + +t.dataset.qty);
+      App.Lists.upsert('groceries', [q]);
       t.parentNode.querySelector('.num').textContent = q.qty;
       refreshSuggestFor(q);
       return;
@@ -212,19 +221,26 @@
     if ((t = e.target.closest('[data-drawer]'))) { V.drawer = !V.drawer; return paintList(); }
     if ((t = e.target.closest('[data-revive]'))) {
       var r = D.groceries.filter(function (x) { return x.id === t.dataset.revive; })[0];
-      r.done = false; paintList(); paintSuggest(); App.emit('data');
+      r.done = false; App.Lists.upsert('groceries', [r]); paintList(); paintSuggest(); App.emit('data');
       return App.toast('Wieder hinzugefügt: <b>' + App.esc(r.name) + '</b>', { icon: 'cart', ms: 2500 });
     }
     if ((t = e.target.closest('[data-clear]'))) {
       var gone = done();
       D.groceries = D.groceries.filter(function (x) { return gone.indexOf(x) < 0; });
+      App.Lists.remove('groceries', gone.map(function (x) { return x.id; }));
       V.drawer = false;
       paintList();
       App.toast(gone.length + ' Artikel gelöscht', {
-        icon: 'check', undo: function () { D.groceries = D.groceries.concat(gone); paintList(); }
+        icon: 'check', undo: function () { D.groceries = D.groceries.concat(gone); App.Lists.upsert('groceries', gone); paintList(); }
       });
     }
   }
+
+  App.on('lists', function (name) {
+    if (name !== 'groceries' || !V.el || !V.el.firstChild || App.current !== 'shopping') return;
+    if (Object.keys(V.pending).length) return;
+    paintList(); paintSuggest();
+  });
 
   App.register('shopping', {
     show: function (el) {

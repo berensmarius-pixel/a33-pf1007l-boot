@@ -36,23 +36,10 @@ window.DATA = (function () {
     { id: 'after', name: 'Nachmittag', range: '11 – 17 Uhr', from: 11, to: 17 },
     { id: 'evening', name: 'Abend', range: '17 – 24 Uhr', from: 17, to: 24 }
   ];
-  var cid = 0;
-  function chore(r, who, title, emoji, stars, done, extra) {
-    return Object.assign({ id: 'c' + (++cid), r: r, who: who, title: title, emoji: emoji, stars: stars, done: !!done }, extra || {});
-  }
-  var chores = [
-    chore('morning', 'marius', 'Kaffee kochen', '☕', 1, true),
-    chore('morning', 'soraya', 'Frühstück machen', '🥐', 1, true),
-    chore('morning', 'any', 'Lüften', '🪟', 1, true),
-    chore('after', 'marius', 'Müll rausbringen', '🗑️', 1, false),
-    chore('after', 'soraya', 'Spülmaschine', '🍽️', 1, false),
-    chore('after', 'any', 'Einkaufen', '🛒', 1, false),
-    chore('evening', 'marius', 'Abschließen', '🔐', 0, false),
-    chore('evening', 'soraya', 'Küche aufräumen', '🧽', 1, false)
-  ];
-  var stars = { marius: 25, soraya: 28 };
-  // Mon..Sun, 1 = all chores done, 0 = missed, null = future
-  var week = { marius: [1, 1, 1, 1, 1, 0, 1], soraya: [1, 1, 1, 1, 1, 1, 1] };
+  // Aufgaben kommen vom Server (js/lists.js), nicht mehr aus dieser Datei.
+  var chores = [];
+  var stars = {};
+  var week = {};
 
   // ---------------------------------------------------------------- shopping
   var stores = [{ id: 'rewe', name: 'REWE' }, { id: 'dm', name: 'dm' }, { id: 'edeka', name: 'EDEKA' }];
@@ -62,36 +49,7 @@ window.DATA = (function () {
     dm: ['Drogerie & Haushalt', 'Snacks', 'Vorrat', 'Milchprodukte & Eier', 'Obst & Gemüse', 'Bäckerei', 'Fleisch & Fisch', 'Tiefkühl'],
     edeka: ['Obst & Gemüse', 'Bäckerei', 'Fleisch & Fisch', 'Milchprodukte & Eier', 'Vorrat', 'Tiefkühl', 'Snacks', 'Drogerie & Haushalt']
   };
-  var gid = 0;
-  function g(name, cat, qty, store, done, note) {
-    return { id: 'g' + (++gid), name: name, cat: cat, qty: qty, store: store, done: !!done, note: note || '' };
-  }
-  var groceries = [
-    g('Bananen', 'Obst & Gemüse', 1, 'rewe', false, 'Nicht zu reif'),
-    g('Babyspinat', 'Obst & Gemüse', 1, 'rewe'),
-    g('Avocados', 'Obst & Gemüse', 3, 'rewe'),
-    g('Äpfel', 'Obst & Gemüse', 6, 'rewe'),
-    g('Sauerteigbrot', 'Bäckerei', 1, 'rewe'),
-    g('Brötchen', 'Bäckerei', 4, 'edeka', false, 'Knusprig'),
-    g('Hähnchenbrust', 'Fleisch & Fisch', 1, 'rewe', false, 'Bio'),
-    g('Lachsfilet', 'Fleisch & Fisch', 2, 'edeka'),
-    g('Milch 3,8%', 'Milchprodukte & Eier', 2, 'rewe'),
-    g('Eier', 'Milchprodukte & Eier', 1, 'rewe', false, '10er Freiland'),
-    g('Griechischer Joghurt', 'Milchprodukte & Eier', 1, 'rewe'),
-    g('Gouda', 'Milchprodukte & Eier', 1, 'rewe'),
-    g('Nudeln', 'Vorrat', 2, 'rewe'),
-    g('Olivenöl', 'Vorrat', 1, 'edeka'),
-    g('Kaffeebohnen', 'Vorrat', 1, 'rewe', false, 'Espresso'),
-    g('Erbsen TK', 'Tiefkühl', 1, 'rewe'),
-    g('Pizza TK', 'Tiefkühl', 2, 'rewe'),
-    g('Chips', 'Snacks', 1, 'rewe'),
-    g('Müsliriegel', 'Snacks', 1, 'dm'),
-    g('Küchenrolle', 'Drogerie & Haushalt', 1, 'dm'),
-    g('Spülmittel', 'Drogerie & Haushalt', 1, 'dm'),
-    g('Zitronen', 'Obst & Gemüse', 2, 'rewe', true),
-    g('Butter', 'Milchprodukte & Eier', 1, 'rewe', true),
-    g('Toastbrot', 'Bäckerei', 1, 'rewe', true)
-  ];
+  var groceries = []; // kommt vom Server (js/lists.js)
   var catalog = [
     ['Äpfel', 'Obst & Gemüse'], ['Avocados', 'Obst & Gemüse'], ['Bananen', 'Obst & Gemüse'], ['Babyspinat', 'Obst & Gemüse'], ['Blaubeeren', 'Obst & Gemüse'],
     ['Brokkoli', 'Obst & Gemüse'], ['Karotten', 'Obst & Gemüse'], ['Gurke', 'Obst & Gemüse'], ['Knoblauch', 'Obst & Gemüse'], ['Weintrauben', 'Obst & Gemüse'],
@@ -213,7 +171,7 @@ window.DATA = (function () {
         { name: 'TotalEnergies', street: 'Donnersberger Str. 1', dist: 2.5, price: 1.759 }
       ]
     },
-    _gid: function () { return 'g' + (++gid); },
+    _gid: function () { return 'g' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4); },
     _eid: function () { return 'e' + (++n); }
   };
 })();

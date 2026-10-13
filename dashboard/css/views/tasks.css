@@ -68,3 +68,12 @@
 .ch-week-row .is-today i { box-shadow: inset 0 0 0 3px var(--ink); }
 .ch-week-row .is-today { color: var(--ink); }
 .ch-week-row .is-future i { opacity: .4; }
+
+.t-add { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; }
+.ch-form .ch-title { width: 100%; font: inherit; font-size: 26px; padding: 14px 18px; border-radius: var(--r-s); border: 2px solid var(--line); background: var(--card); margin-bottom: 20px; }
+.ch-form .label { margin: 4px 0 8px; }
+.ch-form .seg { margin-bottom: 18px; }
+.ch-emojis { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+.ch-emojis button { width: 56px; height: 56px; font-size: 28px; border-radius: 14px; border: 2px solid transparent; background: var(--paper-2); }
+.ch-emojis button.is-on { border-color: var(--ink); background: var(--card); }
+.ch-actions { display: flex; gap: 12px; justify-content: flex-end; }

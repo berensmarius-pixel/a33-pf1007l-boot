@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#121214">
+  <title>Listen · Marius &amp; Soraya</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: #121214; color: #F4F4F6; min-height: 100vh; padding: 16px 14px 90px; }
+    .wrap { max-width: 480px; margin: 0 auto; }
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    h1 { font-size: 21px; letter-spacing: -0.02em; }
+    .tabs { display: flex; gap: 6px; background: #1C1C21; padding: 4px; border-radius: 14px; margin-bottom: 16px; }
+    .tabs button { flex: 1; padding: 11px; border: 0; border-radius: 10px; background: transparent; color: #A0A0AB; font-size: 15px; font-weight: 700; }
+    .tabs button.on { background: #2563eb; color: #fff; }
+    .add { display: flex; gap: 8px; margin-bottom: 16px; }
+    .add input, .add select { flex: 1; min-width: 0; padding: 13px 14px; border-radius: 12px; border: 1px solid #2E2E38; background: #1C1C21; color: #F4F4F6; font-size: 16px; outline: none; }
+    .add select { flex: none; width: auto; }
+    .add button { padding: 0 18px; border: 0; border-radius: 12px; background: #2563eb; color: #fff; font-size: 22px; font-weight: 700; }
+    .row { display: flex; align-items: center; gap: 12px; padding: 13px 12px; background: #1C1C21; border: 1px solid #2E2E38; border-radius: 14px; margin-bottom: 8px; }
+    .box { width: 26px; height: 26px; border-radius: 8px; border: 2px solid #4A4A58; flex: none; display: grid; place-items: center; color: transparent; font-size: 16px; font-weight: 900; }
+    .row.done .box { background: #22c55e; border-color: #22c55e; color: #000; }
+    .row.done .name { text-decoration: line-through; color: #8E8E9A; }
+    .name { flex: 1; font-size: 16px; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+    .meta { font-size: 12px; color: #8E8E9A; font-weight: 600; }
+    .qty { display: flex; align-items: center; gap: 8px; }
+    .qty button, .del { width: 32px; height: 32px; border: 0; border-radius: 10px; background: #26262E; color: #E0E0E8; font-size: 18px; font-weight: 700; }
+    .del { background: rgba(239, 68, 68, 0.18); color: #f87171; }
+    .qty span { min-width: 18px; text-align: center; font-weight: 700; }
+    .sec { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #8E8E9A; margin: 18px 4px 8px; display: flex; justify-content: space-between; align-items: center; }
+    .sec button { border: 0; background: none; color: #60a5fa; font-size: 13px; font-weight: 700; }
+    .empty { text-align: center; color: #8E8E9A; padding: 36px 10px; font-size: 15px; }
+    .who-m { color: #60a5fa; } .who-s { color: #f472b6; } .who-a { color: #fbbf24; }
+    .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: #ef4444; color: #fff; padding: 11px 20px; border-radius: 24px; font-size: 14px; font-weight: 700; opacity: 0; pointer-events: none; transition: opacity .2s; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1 id="title">Einkaufsliste</h1>
+      <button id="edit" style="border:0;background:none;color:#60a5fa;font-size:14px;font-weight:700;display:none">Bearbeiten</button>
+    </header>
+    <div class="tabs">
+      <button id="tabShop" class="on">Einkauf</button>
+      <button id="tabTasks">Aufgaben</button>
+    </div>
+    <div id="app"></div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    var NAMES = ['groceries', 'chores'];
+    var data = { groceries: [], chores: [] };
+    var tab = 'groceries', editMode = false, busy = 0, loaded = false;
+    var ROUTINES = { morning: 'Morgen', after: 'Nachmittag', evening: 'Abend' };
+
+    function today() {
+      var n = new Date(), p = function (x) { return (x < 10 ? '0' : '') + x; };
+      return n.getFullYear() + '-' + p(n.getMonth() + 1) + '-' + p(n.getDate());
+    }
+    function uid(prefix) { return prefix + Date.now().toString(36) + Math.random().toString(36).substr(2, 4); }
+    function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function toast(msg) {
+      var t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(function () { t.classList.remove('show'); }, 3000);
+    }
+
+    function inflate(name, items) {
+      if (name === 'chores') {
+        var t = today();
+        items.forEach(function (c) { c.done = c.doneOn === t; });
+      }
+      return items;
+    }
+
+    function load(name) {
+      return fetch('/api/list/' + name, { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+        if (busy) return;
+        data[name] = inflate(name, d.items || []);
+        loaded = true;
+        render();
+      }).catch(function () {});
+    }
+    function loadAll() { NAMES.forEach(load); }
+
+    function post(name, op) {
+      function go() {
+        return fetch('/api/list/' + name, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Pin': localStorage.getItem('upload_pin') || '' },
+          body: JSON.stringify(op)
+        });
+      }
+      busy++;
+      return go().then(function (r) {
+        if (r.status !== 401) return r;
+        var pin = prompt('PIN zum Speichern:');
+        if (!pin) return r;
+        localStorage.setItem('upload_pin', pin);
+        return go();
+      }).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      }).then(function (d) {
+        busy--;
+        if (!busy) { data[name] = inflate(name, d.items || []); render(); }
+      }).catch(function () {
+        busy--;
+        toast('Nicht gespeichert (PIN oder Netz)');
+        load(name);
+      });
+    }
+    function save(name, items) {
+      var out = items.map(function (i) {
+        var o = {};
+        Object.keys(i).forEach(function (k) { if (k !== 'done' || name === 'groceries') o[k] = i[k]; });
+        if (name === 'chores') o.doneOn = i.done ? today() : null;
+        return o;
+      });
+      post(name, { upsert: out });
+    }
+    function remove(name, ids) {
+      data[name] = data[name].filter(function (i) { return ids.indexOf(i.id) < 0; });
+      render();
+      post(name, { remove: ids });
+    }
+
+    // ---------------- Einkauf
+    function addGrocery(text) {
+      text = text.trim();
+      if (!text) return;
+      var low = text.toLowerCase();
+      var hit = data.groceries.filter(function (g) { return g.name.toLowerCase() === low; })[0];
+      if (hit) { hit.done ? (hit.done = false, hit.qty = 1) : hit.qty++; save('groceries', [hit]); }
+      else {
+        hit = { id: uid('g'), name: text.charAt(0).toUpperCase() + text.slice(1), cat: 'Sonstiges', qty: 1, store: 'rewe', done: false, note: '' };
+        data.groceries.push(hit);
+        save('groceries', [hit]);
+      }
+      render();
+    }
+    function renderShop(el) {
+      var open = data.groceries.filter(function (g) { return !g.done; });
+      var done = data.groceries.filter(function (g) { return g.done; });
+      var h = '<form class="add" id="addForm"><input id="addInput" placeholder="Artikel hinzufügen…" autocomplete="off" enterkeyhint="done"><button type="submit">+</button></form>';
+      if (!open.length) h += '<div class="empty">Nichts auf der Liste 🎉</div>';
+      open.forEach(function (g) {
+        h += '<div class="row" data-id="' + g.id + '"><div class="box" data-toggle>✓</div><div class="name" data-toggle>' + esc(g.name) + (g.note ? '<div class="meta">' + esc(g.note) + '</div>' : '') + '</div>' +
+          '<div class="qty"><button data-q="-1">−</button><span>' + g.qty + '</span><button data-q="1">+</button></div></div>';
+      });
+      if (done.length) {
+        h += '<div class="sec"><span>Erledigt (' + done.length + ')</span><button id="clearDone">Löschen</button></div>';
+        done.forEach(function (g) { h += '<div class="row done" data-id="' + g.id + '"><div class="box" data-toggle>✓</div><div class="name" data-toggle>' + esc(g.name) + '</div></div>'; });
+      }
+      el.innerHTML = h;
+      document.getElementById('addForm').onsubmit = function (e) {
+        e.preventDefault();
+        var i = document.getElementById('addInput');
+        var text = i.value;
+        i.value = '';
+        addGrocery(text);
+        var n = document.getElementById('addInput'); if (n) n.focus();
+      };
+      var c = document.getElementById('clearDone');
+      if (c) c.onclick = function () { remove('groceries', done.map(function (g) { return g.id; })); };
+    }
+
+    // ---------------- Aufgaben
+    function renderTasks(el) {
+      var h = '<form class="add" id="addForm"><input id="addInput" placeholder="Neue Aufgabe…" autocomplete="off" maxlength="40">' +
+        '<select id="addWho"><option value="marius">Marius</option><option value="soraya">Soraya</option><option value="any">Offen</option></select>' +
+        '<select id="addWhen"><option value="morning">Morgen</option><option value="after">Nachmittag</option><option value="evening">Abend</option></select>' +
+        '<button type="submit">+</button></form>';
+      var groups = [['marius', 'Marius', 'who-m'], ['soraya', 'Soraya', 'who-s'], ['any', 'Offen', 'who-a']];
+      var any = false;
+      groups.forEach(function (g) {
+        var list = data.chores.filter(function (c) { return c.who === g[0]; });
+        if (!list.length) return;
+        any = true;
+        h += '<div class="sec"><span class="' + g[2] + '">' + g[1] + '</span><span>' + list.filter(function (c) { return c.done; }).length + '/' + list.length + '</span></div>';
+        list.sort(function (a, b) { return (a.done - b.done) || String(a.r).localeCompare(b.r); }).forEach(function (c) {
+          h += '<div class="row' + (c.done ? ' done' : '') + '" data-id="' + c.id + '"><div class="box" data-toggle>✓</div>' +
+            '<div class="name" data-toggle>' + esc(c.emoji || '') + ' ' + esc(c.title) + '<div class="meta">' + (ROUTINES[c.r] || '') + '</div></div>' +
+            (editMode ? '<button class="del" data-del>✕</button>' : '') + '</div>';
+        });
+      });
+      if (!any) h += '<div class="empty">Noch keine Aufgaben.<br>Lege oben die erste an.</div>';
+      el.innerHTML = h;
+      document.getElementById('addForm').onsubmit = function (e) {
+        e.preventDefault();
+        var inp = document.getElementById('addInput');
+        var t = inp.value.trim();
+        if (!t) return;
+        inp.value = '';
+        var c = { id: uid('c'), r: document.getElementById('addWhen').value, who: document.getElementById('addWho').value, title: t, emoji: '✅', stars: 0, done: false };
+        data.chores.push(c);
+        save('chores', [c]);
+        render();
+      };
+    }
+
+    function render() {
+      var el = document.getElementById('app');
+      var focused = document.activeElement && document.activeElement.id === 'addInput';
+      var typed = focused ? document.activeElement.value : '';
+      var keepSel = focused ? [document.getElementById('addInput').selectionStart] : null;
+      document.getElementById('title').textContent = tab === 'groceries' ? 'Einkaufsliste' : 'Aufgaben heute';
+      document.getElementById('edit').style.display = tab === 'chores' ? '' : 'none';
+      document.getElementById('edit').textContent = editMode ? 'Fertig' : 'Bearbeiten';
+      document.getElementById('tabShop').className = tab === 'groceries' ? 'on' : '';
+      document.getElementById('tabTasks').className = tab === 'chores' ? 'on' : '';
+      if (!loaded) { el.innerHTML = '<div class="empty">Lade…</div>'; return; }
+      tab === 'groceries' ? renderShop(el) : renderTasks(el);
+      if (focused) { var i = document.getElementById('addInput'); i.value = typed; i.focus(); try { i.setSelectionRange(keepSel[0], keepSel[0]); } catch (e) {} }
+    }
+
+    document.getElementById('app').addEventListener('click', function (e) {
+      var row = e.target.closest('.row');
+      if (!row) return;
+      var item = data[tab].filter(function (i) { return i.id === row.dataset.id; })[0];
+      if (!item) return;
+      if (e.target.closest('[data-del]')) return remove(tab, [item.id]);
+      var q = e.target.closest('[data-q]');
+      if (q) { item.qty = Math.max(1, item.qty + parseInt(q.dataset.q, 10)); save(tab, [item]); return render(); }
+      if (e.target.closest('[data-toggle]')) { item.done = !item.done; save(tab, [item]); render(); }
+    });
+    document.getElementById('tabShop').onclick = function () { tab = 'groceries'; render(); };
+    document.getElementById('tabTasks').onclick = function () { tab = 'chores'; render(); };
+    document.getElementById('edit').onclick = function () { editMode = !editMode; render(); };
+
+    loadAll();
+    setInterval(function () { if (!document.hidden) loadAll(); }, 10000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) loadAll(); });
+  </script>
+</body>
+</html>
