@@ -27,8 +27,29 @@
       }).join('') + '</div>';
   }
 
+  // Termin, der gerade läuft (z. B. ein ganztägiger Arbeitstermin)
+  function ongoingEvent() {
+    var now = App.now();
+    return App.timedOn(now).filter(function (e) { return e.start <= now && e.end > now; })
+      .sort(function (a, b) { return a.end - b.end; })[0] || null;
+  }
+
+  function heroOngoing(e) {
+    var p = App.evColor(e);
+    var who = e.people.map(function (id) { return App.person(id).name; });
+    var whoText = App.isFamily(e) ? 'Alle' : who.join(' + ');
+    return '<button class="h-hero" style="' + App.pstyle(p) + '" data-ev="' + e.id + '">' +
+      '<div class="h-hero-main">' +
+      '  <div class="label label--on">Läuft gerade · ' + App.esc(whoText) + '</div>' +
+      '  <div class="h-hero-title serif">' + App.esc(e.title) + '</div>' +
+      '  <div class="h-hero-meta">' + App.fmt.range(e.start, e.end) + (e.loc ? ' · ' + App.esc(e.loc) : '') + '</div>' +
+      '  <div class="h-hero-foot">' + (e.people.length > 1 ? App.dots(e.people, 22) : '') + '</div>' +
+      '</div><div class="h-hero-count num">' + App.fmt.time(e.end, false) + '<small>Bis</small></div></button>';
+  }
+
   function hero() {
     var e = App.nextEvent(), now = App.now();
+    if (!e && ongoingEvent()) return heroOngoing(ongoingEvent());
     if (!e) {
       var tomorrow = App.timedOn(App.addDays(now, 1))[0];
       return '<div class="h-hero h-hero--empty" data-go="calendar">' +
