@@ -43,7 +43,7 @@ const memoryCache = {
   usage: { text: null, ts: 0 },
   geo: new Map(),
   geminiKey: null,
-  livetrack: { session: null, ts: 0 }
+  livetrack: { session: null, ts: 0, cookie: '', csrfToken: '', cookieTs: 0 }
 };
 
 function simpleHash(str) {
@@ -65,6 +65,13 @@ function gate(request, url, env) {
   if (p === '/api/usage' && request.method === 'POST') return null;
   if (p.startsWith('/api/livetrack')) return null;
   if (p === '/api/version') return null;
+  if (p.startsWith('/session/')) return null;
+  if (p.startsWith('/_next/')) return null;
+  if (p.startsWith('/api/sessions/') || p.startsWith('/api/v1/sessions/') || p.startsWith('/api/v2/sessions/')) return null;
+  if (p.startsWith('/api/user/') || p.startsWith('/api/v1/user/') || p.startsWith('/api/v2/user/')) return null;
+  if (p.startsWith('/api/device/')) return null;
+  if (p.startsWith('/api/personal-url/')) return null;
+  if (p.startsWith('/api/messages/')) return null;
 
   const given = url.searchParams.get('k');
   if (given && safeEqual(given, key)) {
@@ -114,6 +121,50 @@ async function placeName(lat, lon, env) {
     return name;
   } catch (e) {
     return '';
+  }
+}
+
+// Garmin LiveTrack Cookie & CSRF-Token Helper
+async function getGarminCookie(session, env) {
+  const now = Date.now();
+  if (memoryCache.livetrack.cookie && (now - (memoryCache.livetrack.cookieTs || 0) < 60 * 60 * 1000)) {
+    return { cookie: memoryCache.livetrack.cookie, csrfToken: memoryCache.livetrack.csrfToken };
+  }
+  if (session && session.cookie && session.csrfToken && (now - (session.cookieTs || 0) < 60 * 60 * 1000)) {
+    memoryCache.livetrack.cookie = session.cookie;
+    memoryCache.livetrack.csrfToken = session.csrfToken;
+    memoryCache.livetrack.cookieTs = session.cookieTs || now;
+    return { cookie: session.cookie, csrfToken: session.csrfToken };
+  }
+  if (!session || !session.url) return { cookie: '', csrfToken: '' };
+
+  try {
+    const resp = await fetch(session.url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
+      }
+    });
+    const setCookie = resp.headers.get('set-cookie') || '';
+    const cookieMatch = setCookie.match(/livetrack_csrf=[^;]+/);
+    const cookie = cookieMatch ? cookieMatch[0] : '';
+    const html = await resp.text();
+    const csrfMatch = html.match(/name="csrf-token" content="([^"]+)"/);
+    const csrfToken = csrfMatch ? csrfMatch[1] : '';
+
+    if (cookie) {
+      memoryCache.livetrack.cookie = cookie;
+      memoryCache.livetrack.csrfToken = csrfToken;
+      memoryCache.livetrack.cookieTs = now;
+      session.cookie = cookie;
+      session.csrfToken = csrfToken;
+      session.cookieTs = now;
+      if (env.PHOTOS_KV) {
+        await env.PHOTOS_KV.put('garmin_livetrack', JSON.stringify(session), { expirationTtl: 4 * 60 * 60 });
+      }
+    }
+    return { cookie, csrfToken, html };
+  } catch (e) {
+    return { cookie: '', csrfToken: '' };
   }
 }
 
@@ -285,7 +336,7 @@ export default {
     // 3. Foto-Upload API & Storage (KV / R2)
     // ------------------------------------------------------------
     if (url.pathname === '/api/version') {
-      return json({ ok: true, version: '2026-10-13-18-50' }, 200, {
+      return json({ ok: true, version: '2026-10-13-19-30' }, 200, {
         'Cache-Control': 'no-store',
         'Access-Control-Allow-Origin': '*'
       });
@@ -891,6 +942,9 @@ export default {
           title: 'Marius auf dem Rad 🚴'
         };
 
+        // Sofort Cookie & CSRF-Token für diese Session vorab abrufen und cachen
+        await getGarminCookie(session, env);
+
         memoryCache.livetrack.session = session;
         memoryCache.livetrack.ts = now;
         if (env.PHOTOS_KV) {
@@ -903,41 +957,132 @@ export default {
       return json({ error: 'Methode nicht erlaubt' }, 405);
     }
 
-    // Garmin LiveTrack Iframe-Proxy (entfernt X-Frame-Options und CSP-Blocker)
+    // ------------------------------------------------------------
+    // 8. Garmin LiveTrack Same-Origin Reverse Proxy
+    //    Löst das "Sitzung ist privat"-Problem (Third-Party-Cookie Blocking):
+    //    Alle Next.js Chunks, Pages und APIs werden über die eigene Domain ausgeliefert.
+    // ------------------------------------------------------------
+
+    // Garmin LiveTrack Session Page: /session/:sessionId/token/:token
+    if (url.pathname.startsWith('/session/')) {
+      let session = memoryCache.livetrack.session;
+      if (!session && env.PHOTOS_KV) {
+        session = await env.PHOTOS_KV.get('garmin_livetrack', { type: 'json' });
+      }
+      const gUrl = `https://livetrack.garmin.com${url.pathname}${url.search}`;
+      try {
+        const resp = await fetch(gUrl, {
+          headers: {
+            'User-Agent': request.headers.get('User-Agent') || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+        const setCookie = resp.headers.get('set-cookie') || '';
+        const cookieMatch = setCookie.match(/livetrack_csrf=[^;]+/);
+        const cookie = cookieMatch ? cookieMatch[0] : (session ? session.cookie : '');
+        let html = await resp.text();
+        const csrfMatch = html.match(/name="csrf-token" content="([^"]+)"/);
+        const csrfToken = csrfMatch ? csrfMatch[1] : '';
+
+        if (cookie && session) {
+          memoryCache.livetrack.cookie = cookie;
+          memoryCache.livetrack.csrfToken = csrfToken;
+          memoryCache.livetrack.cookieTs = Date.now();
+          session.cookie = cookie;
+          session.csrfToken = csrfToken;
+          session.cookieTs = Date.now();
+          if (env.PHOTOS_KV) {
+            await env.PHOTOS_KV.put('garmin_livetrack', JSON.stringify(session), { expirationTtl: 4 * 60 * 60 });
+          }
+        }
+
+        const headers = new Headers();
+        headers.set('Content-Type', 'text/html; charset=utf-8');
+        if (cookie) {
+          headers.set('Set-Cookie', `${cookie}; Path=/; SameSite=Lax`);
+        }
+        return new Response(html, { status: resp.status, headers });
+      } catch (err) {
+        return new Response('Fehler beim Laden von Garmin LiveTrack: ' + err.message, { status: 502 });
+      }
+    }
+
+    // Garmin Next.js statische Assets mit 24h Edge Caching
+    if (url.pathname.startsWith('/_next/')) {
+      const gUrl = `https://livetrack.garmin.com${url.pathname}${url.search}`;
+      const resp = await fetch(gUrl, {
+        cf: { cacheTtlByStatus: { '200-299': 86400, '400-599': 0 } }
+      });
+      const headers = new Headers(resp.headers);
+      headers.set('Cache-Control', 'public, max-age=86400, immutable');
+      return new Response(resp.body, { status: resp.status, headers });
+    }
+
+    // Garmin LiveTrack Backend API Proxy (fügt Cookie und CSRF-Token serverseitig hinzu)
+    const isGarminApi = url.pathname.startsWith('/api/sessions/') ||
+      url.pathname.startsWith('/api/v1/sessions/') ||
+      url.pathname.startsWith('/api/v2/sessions/') ||
+      url.pathname.startsWith('/api/user/') ||
+      url.pathname.startsWith('/api/v1/user/') ||
+      url.pathname.startsWith('/api/v2/user/') ||
+      url.pathname.startsWith('/api/device/') ||
+      url.pathname.startsWith('/api/personal-url/') ||
+      url.pathname.startsWith('/api/messages/');
+
+    if (isGarminApi) {
+      let session = memoryCache.livetrack.session;
+      if (!session && env.PHOTOS_KV) {
+        session = await env.PHOTOS_KV.get('garmin_livetrack', { type: 'json' });
+      }
+      const { cookie, csrfToken } = await getGarminCookie(session, env);
+      const gUrl = `https://livetrack.garmin.com${url.pathname}${url.search}`;
+
+      const fHeaders = new Headers();
+      fHeaders.set('User-Agent', request.headers.get('User-Agent') || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+      if (cookie) fHeaders.set('Cookie', cookie);
+      const clientCsrf = request.headers.get('Livetrack-Csrf-Token');
+      fHeaders.set('Livetrack-Csrf-Token', clientCsrf || csrfToken || '');
+      const passCode = request.headers.get('X-Garmin-LiveTrack-Passcode');
+      if (passCode) fHeaders.set('X-Garmin-LiveTrack-Passcode', passCode);
+      const ct = request.headers.get('Content-Type');
+      if (ct) fHeaders.set('Content-Type', ct);
+
+      const fInit = {
+        method: request.method,
+        headers: fHeaders
+      };
+      if (request.method !== 'GET' && request.method !== 'HEAD') {
+        fInit.body = await request.clone().arrayBuffer();
+      }
+
+      try {
+        const resp = await fetch(gUrl, fInit);
+        const headers = new Headers();
+        headers.set('Content-Type', resp.headers.get('Content-Type') || 'application/json');
+        headers.set('Access-Control-Allow-Origin', '*');
+        headers.set('Cache-Control', 'no-cache');
+        return new Response(resp.body, { status: resp.status, headers });
+      } catch (err) {
+        return json({ error: err.message }, 502, { 'Access-Control-Allow-Origin': '*' });
+      }
+    }
+
+    // Garmin LiveTrack Iframe-Einstieg
     if (url.pathname === '/api/livetrack/view') {
       let session = memoryCache.livetrack.session;
       if (!session && env.PHOTOS_KV) {
         session = await env.PHOTOS_KV.get('garmin_livetrack', { type: 'json' });
       }
-      if (!session || !session.url) {
-        return new Response('<!doctype html><html><body style="font-family:sans-serif;background:#18181b;color:#fff;display:grid;place-items:center;height:100vh;margin:0"><h3>Keine aktive LiveTrack-Fahrt</h3><p>Sobald Marius losfährt, erscheint hier die Live-Karte.</p></body></html>', {
-          headers: { 'Content-Type': 'text/html; charset=utf-8' }
-        });
-      }
-
-      try {
-        const resp = await fetch(session.url, {
+      if (session && session.active && session.sessionId && session.token) {
+        return new Response(null, {
+          status: 302,
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
+            Location: `/session/${session.sessionId}/token/${session.token}`
           }
         });
-
-        let html = await resp.text();
-        if (html.includes('<head>')) {
-          html = html.replace('<head>', '<head><base href="https://livetrack.garmin.com/">');
-        } else if (html.includes('<head ')) {
-          html = html.replace(/<head[^>]*>/, '$&<base href="https://livetrack.garmin.com/">');
-        }
-
-        const headers = new Headers();
-        headers.set('Content-Type', 'text/html; charset=utf-8');
-        headers.set('Access-Control-Allow-Origin', '*');
-        return new Response(html, { headers });
-      } catch (e) {
-        return new Response('<!doctype html><html><body style="font-family:sans-serif;background:#18181b;color:#fff;display:grid;place-items:center;height:100vh;margin:0"><h3>Fehler beim Laden von Garmin LiveTrack</h3><p>' + e.message + '</p></body></html>', {
-          headers: { 'Content-Type': 'text/html; charset=utf-8' }
-        });
       }
+      return new Response('<!doctype html><html><body style="font-family:sans-serif;background:#18181b;color:#fff;display:grid;place-items:center;height:100vh;margin:0;text-align:center"><div><h3>Keine aktive LiveTrack-Fahrt</h3><p style="color:#a1a1aa">Sobald Marius losfährt, erscheint hier die Live-Karte.</p></div></body></html>', {
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      });
     }
 
     // ------------------------------------------------------------

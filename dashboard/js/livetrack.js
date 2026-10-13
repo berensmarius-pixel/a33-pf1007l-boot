@@ -21,6 +21,7 @@
     }
 
     var startedAt = tr.startedAt || Date.now();
+    var iframeSrc = (tr.sessionId && tr.token) ? ('/session/' + tr.sessionId + '/token/' + tr.token) : '/api/livetrack/view';
     var html = '<div class="livetrack-takeover">' +
       '<div class="livetrack-bar">' +
       '  <div class="livetrack-bar-title">' +
@@ -35,7 +36,7 @@
       '  </div>' +
       '</div>' +
       '<div class="livetrack-frame-full">' +
-      '  <iframe class="livetrack-iframe-full" id="livetrackFullIframe" src="' + (tr.url || '/api/livetrack/view') + '" allow="geolocation"></iframe>' +
+      '  <iframe class="livetrack-iframe-full" id="livetrackFullIframe" src="' + iframeSrc + '" allow="geolocation"></iframe>' +
       '</div>' +
       '</div>';
 
