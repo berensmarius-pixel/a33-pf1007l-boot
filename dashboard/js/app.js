@@ -279,7 +279,7 @@
     box.className = 'takeover is-open ' + (opts.cls || '');
     function close() {
       if (!box.classList.contains('is-open')) return;
-      box.classList.remove('is-open');
+      box.className = 'takeover';
       box.innerHTML = '';
       if (opts.onClose) opts.onClose();
     }
@@ -290,7 +290,7 @@
   };
   App.closeTakeover = function () {
     var box = $('#takeover');
-    if (box) { box.classList.remove('is-open'); box.innerHTML = ''; }
+    if (box) { box.className = 'takeover'; box.innerHTML = ''; }
   };
 
   // Stage-local coordinates for an element's center (stage may be scaled on desktop)

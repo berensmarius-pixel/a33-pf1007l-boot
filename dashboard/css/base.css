@@ -396,11 +396,15 @@ button.card:active, .h-hero:active, .h-photo:active { transform: scale(.985); }
 .f-hint { font-size: 13px; color: var(--mute); background: var(--paper-2); padding: 10px 14px; border-radius: 10px; margin-top: 8px; }
 
 /* ---------------------------------------------------------------- Garmin LiveTrack Fullscreen Takeover (1280x800) */
-.takeover--livetrack {
+.takeover:not(.is-open) {
+  display: none !important;
+}
+
+.takeover.is-open.takeover--livetrack {
   z-index: 100;
   background: #0f172a;
   color: #fff;
-  display: flex;
+  display: flex !important;
   flex-direction: column;
   overflow: hidden;
   width: 1280px;

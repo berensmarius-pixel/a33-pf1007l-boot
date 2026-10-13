@@ -52,6 +52,11 @@
           minimizeBtn.onclick = function () {
             userDismissed = true;
             close();
+            if (window.App) {
+              window.App.go('home');
+              window.App.setMode('day');
+              window.App.rerender();
+            }
           };
         }
 
@@ -63,8 +68,13 @@
               if (window.DATA) window.DATA.livetrack = null;
               clearInterval(timer);
               close();
-              App.emit('data');
-              App.toast('Live-Tracking beendet', { icon: 'check' });
+              if (window.App) {
+                window.App.go('home');
+                window.App.setMode('day');
+                window.App.emit('data');
+                window.App.rerender();
+                window.App.toast('Live-Tracking beendet', { icon: 'check' });
+              }
             }
           };
         }
@@ -73,13 +83,24 @@
       },
       onClose: function () {
         var box = document.getElementById('takeover');
-        if (box && box.dataset.timerId) {
-          clearInterval(parseInt(box.dataset.timerId, 10));
+        if (box) {
+          if (box.dataset.timerId) {
+            clearInterval(parseInt(box.dataset.timerId, 10));
+            delete box.dataset.timerId;
+          }
+          box.className = 'takeover';
+          box.innerHTML = '';
         }
         var ifr = document.getElementById('livetrackFullIframe');
         if (ifr) {
           ifr.src = 'about:blank';
           ifr.remove();
+        }
+        if (window.App) {
+          window.App.resetIdle();
+          window.App.go('home');
+          window.App.setMode('day');
+          window.App.rerender();
         }
       }
     });
