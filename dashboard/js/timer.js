@@ -143,11 +143,10 @@
   }
 
   function openTimerSheet() {
-    var sheet = App.sheet(
+    App.sheet(
       '<div class="timer-sheet">' +
       '<div class="t-sheet-head">' +
       '  <div><b>Küchen-Timer & Wecker</b><small>Tippen zum Starten</small></div>' +
-      '  <button class="btn-close" id="tClose">✕</button>' +
       '</div>' +
 
       // Active Timers
@@ -180,41 +179,42 @@
       '  <button class="t-cust-btn" data-sec="600">+10 Min</button>' +
       '  <button class="t-cust-btn" data-sec="1200">+20 Min</button>' +
       '</div>' +
-      '</div>'
+      '</div>',
+      {
+        onMount: function (el, close) {
+          el.querySelectorAll('[data-pre]').forEach(function (btn) {
+            btn.onclick = function () {
+              var p = PRESETS[parseInt(btn.dataset.pre, 10)];
+              startTimer(p.label, p.emoji, p.sec);
+              close();
+            };
+          });
+
+          el.querySelectorAll('[data-sec]').forEach(function (btn) {
+            btn.onclick = function () {
+              var sec = parseInt(btn.dataset.sec, 10);
+              var label = 'Timer (' + Math.round(sec / 60) + 'm)';
+              startTimer(label, '⏱️', sec);
+              close();
+            };
+          });
+
+          el.querySelectorAll('.t-btn-add').forEach(function (btn) {
+            btn.onclick = function () {
+              addMinutes(btn.dataset.tid, 1);
+              openTimerSheet();
+            };
+          });
+
+          el.querySelectorAll('.t-btn-del').forEach(function (btn) {
+            btn.onclick = function () {
+              stopTimer(btn.dataset.tid);
+              openTimerSheet();
+            };
+          });
+        }
+      }
     );
-
-    $('#tClose').onclick = function () { sheet.close(); };
-
-    sheet.el.querySelectorAll('[data-pre]').forEach(function (btn) {
-      btn.onclick = function () {
-        var p = PRESETS[parseInt(btn.dataset.pre, 10)];
-        startTimer(p.label, p.emoji, p.sec);
-        sheet.close();
-      };
-    });
-
-    sheet.el.querySelectorAll('[data-sec]').forEach(function (btn) {
-      btn.onclick = function () {
-        var sec = parseInt(btn.dataset.sec, 10);
-        var label = 'Timer (' + Math.round(sec / 60) + 'm)';
-        startTimer(label, '⏱️', sec);
-        sheet.close();
-      };
-    });
-
-    sheet.el.querySelectorAll('.t-btn-add').forEach(function (btn) {
-      btn.onclick = function () {
-        addMinutes(btn.dataset.tid, 1);
-        openTimerSheet();
-      };
-    });
-
-    sheet.el.querySelectorAll('.t-btn-del').forEach(function (btn) {
-      btn.onclick = function () {
-        stopTimer(btn.dataset.tid);
-        openTimerSheet();
-      };
-    });
   }
 
   // Export Timer API

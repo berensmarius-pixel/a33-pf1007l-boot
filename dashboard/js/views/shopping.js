@@ -25,15 +25,18 @@
     return D.groceries.filter(function (g) { return !!g.done === isDone && g.name.toLowerCase() === name.toLowerCase(); })[0];
   }
 
-  function mealsHTML() {
+  function mealsViewHTML(isStandalone) {
     var curDay = (App.now().getDay() + 6) % 7;
     var mealsMap = {};
     (D.meals || []).forEach(function (m) { mealsMap[m.day] = m; });
-    return '<div class="s-meals-topbar">' +
+    return '<div class="meals-view">' +
+      '<header class="meals-head"><div><div class="label">Kochen &amp; Planen</div><h1 class="serif">Wochen-Essensplan</h1></div>' +
+      '<div class="meals-actions">' +
       '  <button class="s-m-btn" data-rcp-action="browse">📖 Rezepte stöbern</button>' +
       '  <button class="s-m-btn" data-rcp-action="dice">🎲 Schnelle Idee</button>' +
-      '  <button class="s-m-btn s-m-btn--ai" data-rcp-action="ai">✨ KI-Rezept (Gemini)</button>' +
-      '</div>' +
+      '  <button class="s-m-btn s-m-btn--ai" data-rcp-action="ai">✨ KI-Rezept</button>' +
+      (isStandalone ? '  <button class="s-m-btn s-m-btn--cart" data-go="shopping">🛒 Einkaufsliste</button>' : '  <button class="s-m-btn s-m-btn--cart" data-subtab="groceries">🛒 Einkaufsliste</button>') +
+      '</div></header>' +
       '<div class="s-meals-wrap">' + DAYS.map(function (dayName, idx) {
       var m = mealsMap[idx] || { id: 'm_' + idx, day: idx, title: '', ingredients: '' };
       var isToday = idx === curDay;
@@ -49,13 +52,14 @@
         (m.ingredients ? '  <button class="s-meal-btn s-meal-btn--cart" data-cart-meal="' + idx + '">🛒 Auf Liste</button>' : '') +
         '</div>' +
         '</div>';
-    }).join('') + '</div>';
+    }).join('') + '</div>' +
+    '</div>';
   }
 
   function openMealSheet(dayIdx) {
     var dayName = DAYS[dayIdx];
     var m = (D.meals || []).filter(function (x) { return x.day === dayIdx; })[0] || { id: 'm_' + dayIdx, day: dayIdx, title: '', ingredients: '' };
-    var html = '<div class="t-sheet-head"><div><b>' + App.esc(dayName) + '</b><small>Gericht &amp; Zutaten planen</small></div><button class="btn-close" id="mClose">✕</button></div>' +
+    var html = '<div class="t-sheet-head"><div><b>' + App.esc(dayName) + '</b><small>Gericht &amp; Zutaten planen</small></div></div>' +
       '<div style="padding:16px 0;display:flex;flex-direction:column;gap:12px">' +
       '<button id="mPickRcp" class="btn btn--ghost" style="border:1px solid #3b82f6;color:#3b82f6;margin-bottom:6px">💡 Aus Rezept-Datenbank wählen</button>' +
       '<label class="label">Gericht</label>' +
@@ -71,7 +75,6 @@
         var dishInp = el.querySelector('#mDish');
         var ingInp = el.querySelector('#mIng');
         dishInp.focus();
-        el.querySelector('#mClose').onclick = close;
         el.querySelector('#mPickRcp').onclick = function () {
           close();
           openRecipeFinderSheet(dayIdx, 'browse');
@@ -124,7 +127,6 @@
 
     var html = '<div class="t-sheet-head">' +
       '<div><b>High-Protein Rezepte &amp; Inspiration</b><small>Für ' + App.esc(targetDayName) + ' · Airfryer, Reiskocher, Backofen, Pfanne</small></div>' +
-      '<button class="btn-close" id="rClose">✕</button>' +
       '</div>' +
       '<div class="rcp-sheet">' +
       '  <div class="rcp-nav">' +
@@ -161,7 +163,7 @@
       '</div>';
 
     App.sheet(html, {
-      cls: 'sheet--wide',
+      cls: 'sheet--wide sheet-pad',
       onMount: function (el, close) {
         var catView = el.querySelector('#rcpCatView');
         var aiView = el.querySelector('#rcpAiView');
@@ -173,8 +175,6 @@
         var aiBtn = el.querySelector('#aiBtn');
         var aiOut = el.querySelector('#aiOut');
         var aiKeyBtn = el.querySelector('#aiKeyBtn');
-
-        el.querySelector('#rClose').onclick = close;
 
         function setTab(t) {
           currentTab = t;
@@ -473,14 +473,7 @@
   }
   function render() {
     if (V.subtab === 'meals') {
-      V.el.innerHTML = '<div class="shop" style="grid-template-columns:1fr;grid-template-rows:auto 1fr">' +
-        '<header class="s-head"><div><div class="label">Kochen &amp; Planen</div><h1 class="serif">Wochen-Essensplan</h1></div>' +
-        '<div class="s-tab-bar">' +
-        '  <button class="' + (V.subtab === 'groceries' ? 'is-on' : '') + '" data-subtab="groceries">Einkaufsliste</button>' +
-        '  <button class="' + (V.subtab === 'meals' ? 'is-on' : '') + '" data-subtab="meals">Wochenplan</button>' +
-        '</div></header>' +
-        mealsHTML() +
-        '</div>';
+      V.el.innerHTML = mealsViewHTML(false);
       return;
     }
 
@@ -631,13 +624,7 @@
   var M = { el: null };
   function renderMeals() {
     if (!M.el) return;
-    M.el.innerHTML = '<div class="shop" style="grid-template-columns:1fr;grid-template-rows:auto 1fr">' +
-      '<header class="s-head"><div><div class="label">Kochen &amp; Planen</div><h1 class="serif">Wochen-Essensplan</h1></div>' +
-      '<div class="s-tab-bar">' +
-      '  <button class="s-m-btn" data-go="shopping">🛒 Zur Einkaufsliste</button>' +
-      '</div></header>' +
-      mealsHTML() +
-      '</div>';
+    M.el.innerHTML = mealsViewHTML(true);
   }
 
   App.on('lists', function (name) {

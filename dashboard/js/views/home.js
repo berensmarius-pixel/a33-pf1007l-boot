@@ -146,7 +146,6 @@
       '<div class="fuel-sheet">' +
       '<div class="t-sheet-head">' +
       '  <div><b>Spritpreise Kaiserslautern</b><small>Super E5 (Super 95) · Günstigste Tankstellen</small></div>' +
-      '  <button class="btn-close" data-close>✕</button>' +
       '</div>' +
       '<div class="f-list">' + stations.map(function (s, idx) {
         return '<div class="f-item' + (idx === 0 ? ' is-best' : '') + '">' +
@@ -176,7 +175,6 @@
       '<div class="radar-sheet">' +
       '<div class="t-sheet-head">' +
       '  <div><b>Regenradar &amp; Kurzzeit-Vorschau</b><small>Kaiserslautern · RainViewer Live-Radar</small></div>' +
-      '  <button class="btn-close" data-close>✕</button>' +
       '</div>' +
       '<div class="radar-frame-box">' +
       '  <iframe class="radar-iframe" id="radarIframe" src="https://www.rainviewer.com/map.html?loc=49.4447,7.7690,9&oColor=1&c=1&o=85&layer=radar&sm=1&sn=1" loading="lazy"></iframe>' +
