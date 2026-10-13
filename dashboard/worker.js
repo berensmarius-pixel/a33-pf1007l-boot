@@ -512,7 +512,7 @@ export default {
 
       const promptText = 'Erstelle ein schnelles, leckeres High-Protein-Rezept auf Deutsch für folgende Anfrage: "' + (userPrompt || 'Ein kreatives, schnelles High-Protein-Alltagsgericht') + '". Bevorzugte Zubereitung: ' + cat + '.';
 
-      const models = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+      const models = ['gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.8-flash'];
       let aiResult = null;
       let lastErr = null;
 
