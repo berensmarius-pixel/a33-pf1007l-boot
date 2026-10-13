@@ -35,8 +35,13 @@
   }
 
   function load(name) {
-    return fetch('/api/list/' + name, { cache: 'no-store' })
-      .then(function (r) { return r.ok ? r.json() : null; })
+    var headers = {};
+    if (state.rev[name]) headers['If-None-Match'] = '"rev-' + state.rev[name] + '"';
+    return fetch('/api/list/' + name, { headers: headers, cache: 'default' })
+      .then(function (r) {
+        if (r.status === 304) return null;
+        return r.ok ? r.json() : null;
+      })
       .then(function (d) { if (d && state.pending === 0 && d.rev !== state.rev[name]) apply(name, d); })
       .catch(function () {});
   }
@@ -103,10 +108,13 @@
       App.emit('lists', 'chores');
     }
   });
+  var pollTick = 0;
   setInterval(function () {
     if (window.App && window.App.mode === 'night') return; // Nachts Server-Polling pausieren
-    NAMES.forEach(load);
-  }, 20000);
+    pollTick++;
+    ['groceries', 'chores', 'meals'].forEach(load);
+    if (pollTick % 10 === 0) load('recipes');
+  }, 45000);
   App.on('mode', function (m) {
     if (m === 'day') NAMES.forEach(load);
   });

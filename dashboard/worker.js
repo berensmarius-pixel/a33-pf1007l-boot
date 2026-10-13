@@ -34,6 +34,26 @@ const LOCKED_HTML = '<!doctype html><html lang="de"><head><meta charset="utf-8">
   '<style>body{font-family:system-ui,sans-serif;background:#121214;color:#F4F4F6;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center;padding:24px}p{color:#A0A0AB;max-width:320px}</style></head>' +
   '<body><div><h1>🔒 Gesperrt</h1><p>Diese Seite ist privat. Öffne sie über den persönlichen Link mit Schlüssel.</p></div></body></html>';
 
+// In-Memory-Caches im Worker-Isolate zur drastischen Reduzierung der Cloudflare KV Free-Tier Zugriffe
+// (Cloudflare Free Limit: 1.000 Lists / 1.000 Writes / 100.000 Reads pro Tag)
+const memoryCache = {
+  photos: { data: null, ts: 0 },
+  lists: new Map(), // name -> { doc, ts }
+  calendar: { text: null, hash: 0, ts: 0 },
+  usage: { text: null, ts: 0 },
+  geo: new Map(),
+  geminiKey: null
+};
+
+function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash;
+}
+
 // Zugangsschutz: nur mit Cookie (oder einmaligem ?k=...) kommt man an Seite und Daten.
 // Ausnahmen: Symbole/Manifest und der Nutzungs-Upload des PCs (hat ein eigenes Token).
 function gate(request, url, env) {
@@ -68,9 +88,13 @@ async function placeName(lat, lon, env) {
   if (!isFinite(la) || !isFinite(lo) || Math.abs(la) > 90 || Math.abs(lo) > 180) return '';
   const rl = la.toFixed(2), ro = lo.toFixed(2);
   const cacheKey = 'geo_' + rl + '_' + ro;
+  if (memoryCache.geo.has(cacheKey)) return memoryCache.geo.get(cacheKey);
   if (env.PHOTOS_KV) {
     const hit = await env.PHOTOS_KV.get(cacheKey);
-    if (hit !== null) return hit;
+    if (hit !== null) {
+      memoryCache.geo.set(cacheKey, hit);
+      return hit;
+    }
   }
   try {
     const resp = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=12&accept-language=de&lat=' + rl + '&lon=' + ro, {
@@ -82,6 +106,7 @@ async function placeName(lat, lon, env) {
     const city = a.city || a.town || a.village || a.municipality || a.suburb || a.county || '';
     const country = a.country_code && a.country_code !== 'de' ? a.country : '';
     const name = [city, country].filter(Boolean).join(', ');
+    memoryCache.geo.set(cacheKey, name);
     if (env.PHOTOS_KV && name) await env.PHOTOS_KV.put(cacheKey, name, { expirationTtl: 60 * 60 * 24 * 365 });
     return name;
   } catch (e) {
@@ -112,10 +137,25 @@ export default {
         'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'public, max-age=300'
       };
-      // Bei Google-Fehlern (z. B. 429 auf geteilten Cloudflare-IPs) den letzten guten Stand aus KV liefern.
+
+      const now = Date.now();
+      // Wenn der Kalender im Arbeitsspeicher jünger als 4 Minuten ist, sofort ausliefern (0 Upstream, 0 KV)
+      if (memoryCache.calendar.text && (now - memoryCache.calendar.ts < 4 * 60 * 1000)) {
+        return new Response(memoryCache.calendar.text, { headers: icsHeaders });
+      }
+
+      // Bei Google-Fehlern den letzten guten Stand aus Speicher oder KV liefern
       const stale = async (reason) => {
+        if (memoryCache.calendar.text) {
+          return new Response(memoryCache.calendar.text, { headers: { ...icsHeaders, 'X-Stale': reason, 'Cache-Control': 'no-cache' } });
+        }
         const cached = env.PHOTOS_KV ? await env.PHOTOS_KV.get('calendar_cache') : null;
-        if (cached) return new Response(cached, { headers: { ...icsHeaders, 'X-Stale': reason, 'Cache-Control': 'no-cache' } });
+        if (cached) {
+          memoryCache.calendar.text = cached;
+          memoryCache.calendar.hash = simpleHash(cached);
+          memoryCache.calendar.ts = now;
+          return new Response(cached, { headers: { ...icsHeaders, 'X-Stale': reason, 'Cache-Control': 'no-cache' } });
+        }
         return json({ error: reason }, 502, { 'Access-Control-Allow-Origin': '*' });
       };
 
@@ -128,7 +168,17 @@ export default {
 
         const icsText = await resp.text();
         if (!icsText.includes('BEGIN:VCALENDAR')) return stale('Ungültige Kalenderantwort');
-        if (env.PHOTOS_KV) await env.PHOTOS_KV.put('calendar_cache', icsText);
+
+        const newHash = simpleHash(icsText);
+        // KV Write NUR dann ausführen, wenn sich der Kalenderinhalt tatsächlich geändert hat!
+        // Spart ~280 unnötige KV-Schreibvorgänge pro Tag!
+        if (env.PHOTOS_KV && newHash !== memoryCache.calendar.hash) {
+          await env.PHOTOS_KV.put('calendar_cache', icsText);
+        }
+        memoryCache.calendar.text = icsText;
+        memoryCache.calendar.hash = newHash;
+        memoryCache.calendar.ts = now;
+
         return new Response(icsText, { headers: icsHeaders });
       } catch (err) {
         return stale(err.message);
@@ -293,6 +343,8 @@ export default {
             customMetadata: { who: String(who), title: String(title), taken: taken, place: place, uploadedAt: new Date().toISOString() }
           });
         }
+        memoryCache.photos.data = null;
+        memoryCache.photos.ts = 0;
 
         return new Response(JSON.stringify({
           ok: true,
@@ -316,6 +368,19 @@ export default {
     // API: Fotos auflisten
     if (url.pathname === '/api/photos' && request.method === 'GET') {
       try {
+        const now = Date.now();
+        // In-Memory-Cache: Wenn Fotos jünger als 3 Minuten sind, sofort ausliefern.
+        // Verhindert das Aufbrauchen des täglichen 1.000er kv.list() Limits!
+        if (memoryCache.photos.data && (now - memoryCache.photos.ts < 3 * 60 * 1000)) {
+          return new Response(JSON.stringify({ ok: true, photos: memoryCache.photos.data }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+              'Cache-Control': 'public, max-age=120, stale-while-revalidate=300'
+            }
+          });
+        }
+
         const kv = env.PHOTOS_KV;
         const photos = [];
         if (kv) {
@@ -353,9 +418,15 @@ export default {
         }
 
         photos.sort((a, b) => (b.uploadedAt || '').localeCompare(a.uploadedAt || ''));
+        memoryCache.photos.data = photos;
+        memoryCache.photos.ts = now;
 
         return new Response(JSON.stringify({ ok: true, photos }), {
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-cache' }
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Cache-Control': 'public, max-age=120, stale-while-revalidate=300'
+          }
         });
       } catch (err) {
         return new Response(JSON.stringify({ ok: false, error: err.message, photos: [] }), {
@@ -374,6 +445,8 @@ export default {
         if (!isAuthorized(request, env)) return json({ error: 'PIN falsch oder fehlt' }, 401);
         if (kv) await kv.delete(key);
         else if (env.PHOTOS_BUCKET) await env.PHOTOS_BUCKET.delete(key);
+        memoryCache.photos.data = null;
+        memoryCache.photos.ts = 0;
         return new Response(JSON.stringify({ ok: true }), {
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
@@ -416,11 +489,19 @@ export default {
         const body = await request.text();
         if (body.length > 20000) return json({ error: 'Zu groß' }, 413);
         try { JSON.parse(body); } catch (e) { return json({ error: 'Kein JSON' }, 400); }
+        memoryCache.usage.text = body;
+        memoryCache.usage.ts = Date.now();
         await env.PHOTOS_KV.put('usage', body);
         return json({ ok: true });
       }
+      const now = Date.now();
+      if (memoryCache.usage.text && (now - memoryCache.usage.ts < 60 * 1000)) {
+        return new Response(memoryCache.usage.text, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=30' } });
+      }
       const raw = await env.PHOTOS_KV.get('usage');
-      return new Response(raw || '{}', { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' } });
+      memoryCache.usage.text = raw || '{}';
+      memoryCache.usage.ts = now;
+      return new Response(raw || '{}', { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=30' } });
     }
 
     // ------------------------------------------------------------
@@ -432,10 +513,36 @@ export default {
       if (!LIST_NAMES.includes(name)) return json({ error: 'Unbekannte Liste' }, 404);
       if (!env.PHOTOS_KV) return json({ error: 'KV fehlt' }, 500);
       const key = 'list_' + name;
-      const load = async () => (await env.PHOTOS_KV.get(key, { type: 'json' })) || { rev: 0, items: [] };
+      const now = Date.now();
+
+      const load = async () => {
+        const cached = memoryCache.lists.get(name);
+        // 30 Sekunden In-Memory-Cache: Spart zehntausende KV-Reads pro Tag!
+        if (cached && (now - cached.ts < 30 * 1000)) {
+          return cached.doc;
+        }
+        const doc = (await env.PHOTOS_KV.get(key, { type: 'json' })) || { rev: 0, items: [] };
+        memoryCache.lists.set(name, { doc, ts: now });
+        return doc;
+      };
 
       if (request.method === 'GET') {
-        return new Response(JSON.stringify(await load()), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+        const doc = await load();
+        const ifNoneMatch = request.headers.get('If-None-Match');
+        const etag = `"rev-${doc.rev || 0}"`;
+        if (ifNoneMatch && ifNoneMatch === etag) {
+          return new Response(null, {
+            status: 304,
+            headers: { 'ETag': etag, 'Cache-Control': 'private, max-age=10, stale-while-revalidate=20' }
+          });
+        }
+        return new Response(JSON.stringify(doc), {
+          headers: {
+            'Content-Type': 'application/json',
+            'ETag': etag,
+            'Cache-Control': 'private, max-age=10, stale-while-revalidate=20'
+          }
+        });
       }
       if (request.method === 'POST') {
         if (!isAuthorized(request, env)) return json({ error: 'PIN falsch oder fehlt' }, 401);
@@ -455,9 +562,10 @@ export default {
           byId.set(item.id, item);
         }
         if (byId.size > 500) return json({ error: 'Liste zu lang' }, 413);
-        const next = { rev: doc.rev + 1, items: [...byId.values()] };
+        const next = { rev: (doc.rev || 0) + 1, items: [...byId.values()] };
+        memoryCache.lists.set(name, { doc: next, ts: Date.now() });
         await env.PHOTOS_KV.put(key, JSON.stringify(next));
-        return json(next, 200, { 'Cache-Control': 'no-store' });
+        return json(next, 200, { 'ETag': `"rev-${next.rev}"`, 'Cache-Control': 'no-store' });
       }
       return json({ error: 'Methode nicht erlaubt' }, 405);
     }
@@ -466,7 +574,8 @@ export default {
     // 6. Google Gemini AI Rezepte & Einstellungen
     // ------------------------------------------------------------
     if (url.pathname === '/api/settings/gemini') {
-      const storedKey = (env.PHOTOS_KV ? await env.PHOTOS_KV.get('gemini_api_key') : null) || env.GEMINI_API_KEY || '';
+      const storedKey = memoryCache.geminiKey || (env.PHOTOS_KV ? await env.PHOTOS_KV.get('gemini_api_key') : null) || env.GEMINI_API_KEY || '';
+      memoryCache.geminiKey = storedKey;
       if (request.method === 'GET') {
         return json({ ok: true, hasKey: Boolean(storedKey && storedKey.trim()) });
       }
@@ -475,6 +584,7 @@ export default {
         let b = {};
         try { b = await request.json(); } catch (e) {}
         const k = String(b.key || '').trim();
+        memoryCache.geminiKey = k;
         if (env.PHOTOS_KV) {
           if (k) await env.PHOTOS_KV.put('gemini_api_key', k);
           else await env.PHOTOS_KV.delete('gemini_api_key');
@@ -489,7 +599,8 @@ export default {
       try { b = await request.json(); } catch (e) {}
       const userPrompt = String(b.prompt || '').trim();
       const cat = String(b.category || 'all');
-      const apiKey = b.apiKey || (env.PHOTOS_KV ? await env.PHOTOS_KV.get('gemini_api_key') : null) || env.GEMINI_API_KEY || request.headers.get('X-Gemini-Key') || '';
+      const apiKey = b.apiKey || memoryCache.geminiKey || (env.PHOTOS_KV ? await env.PHOTOS_KV.get('gemini_api_key') : null) || env.GEMINI_API_KEY || request.headers.get('X-Gemini-Key') || '';
+      if (apiKey) memoryCache.geminiKey = apiKey;
 
       if (!apiKey || !apiKey.trim()) {
         return json({ ok: false, error: 'Kein Google AI Studio API-Key hinterlegt. Trage ihn in den Einstellungen ein oder setze GEMINI_API_KEY.' }, 400);

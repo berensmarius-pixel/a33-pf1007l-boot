@@ -489,8 +489,8 @@
     setInterval(updateFuel, 15 * 60 * 1000);
     // Calendar refresh every 5 minutes
     setInterval(updateCalendar, 5 * 60 * 1000);
-    // Mobile R2 Photos refresh every 30 seconds
-    setInterval(updatePhotos, 30 * 1000);
+    // Mobile R2/KV Photos refresh alle 5 Minuten (drastische KV-Entlastung)
+    setInterval(updatePhotos, 5 * 60 * 1000);
 
     if (window.App) {
       window.App.on('mode', function (m) {
