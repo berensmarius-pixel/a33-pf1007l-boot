@@ -202,7 +202,7 @@
       '  <div><b>🚴 Live-Tracking · Marius</b><small>Garmin LiveTrack · Echtzeit-Standort &amp; Strecke</small></div>' +
       '</div>' +
       '<div class="livetrack-frame-box">' +
-      '  <iframe class="livetrack-iframe" id="livetrackIframe" src="/api/livetrack/view"></iframe>' +
+      '  <iframe class="livetrack-iframe" id="livetrackIframe" src="' + (tr.url || '/api/livetrack/view') + '" allow="geolocation"></iframe>' +
       '</div>' +
       '<div class="livetrack-actions">' +
       '  <a href="' + (tr.url || '#') + '" target="_blank" rel="noopener noreferrer" class="btn btn--ghost" style="padding:10px 16px;text-decoration:none;">↗️ Im Browser öffnen</a>' +

@@ -35,7 +35,7 @@
       '  </div>' +
       '</div>' +
       '<div class="livetrack-frame-full">' +
-      '  <iframe class="livetrack-iframe-full" id="livetrackFullIframe" src="/api/livetrack/view"></iframe>' +
+      '  <iframe class="livetrack-iframe-full" id="livetrackFullIframe" src="' + (tr.url || '/api/livetrack/view') + '" allow="geolocation"></iframe>' +
       '</div>' +
       '</div>';
 

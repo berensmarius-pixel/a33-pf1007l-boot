@@ -285,7 +285,7 @@ export default {
     // 3. Foto-Upload API & Storage (KV / R2)
     // ------------------------------------------------------------
     if (url.pathname === '/api/version') {
-      return json({ ok: true, version: '2026-10-13-18-35' }, 200, {
+      return json({ ok: true, version: '2026-10-13-18-40' }, 200, {
         'Cache-Control': 'no-store',
         'Access-Control-Allow-Origin': '*'
       });
@@ -770,11 +770,15 @@ export default {
           if (lastWebhook) memoryCache.livetrack.lastWebhook = lastWebhook;
         }
 
+        const ua = request.headers.get('User-Agent') || '';
+        memoryCache.livetrack.lastPoll = { time: new Date().toISOString(), ua: ua.slice(0, 100) };
+
         return json({
           ok: true,
           active: Boolean(session && session.active),
           session: session || null,
           lastWebhook: lastWebhook || null,
+          lastPoll: memoryCache.livetrack.lastPoll,
           serverTime: new Date().toISOString()
         }, 200, { 'Cache-Control': 'no-cache', 'Access-Control-Allow-Origin': '*' });
       }
