@@ -63,8 +63,7 @@ function gate(request, url, env) {
   const p = url.pathname;
   if (p === '/manifest.webmanifest' || /^\/icon-\d+\.png$/.test(p)) return null;
   if (p === '/api/usage' && request.method === 'POST') return null;
-  if (p === '/api/livetrack' && request.method === 'POST') return null;
-  if (p === '/api/livetrack/view') return null;
+  if (p.startsWith('/api/livetrack')) return null;
 
   const given = url.searchParams.get('k');
   if (given && safeEqual(given, key)) {
