@@ -746,14 +746,17 @@ export default {
       // Status abfragen
       if (request.method === 'GET') {
         let session = memoryCache.livetrack.session;
-        if (!session && env.PHOTOS_KV) {
+        if (!session && (now - (memoryCache.livetrack.ts || 0) > 30 * 1000) && env.PHOTOS_KV) {
           session = await env.PHOTOS_KV.get('garmin_livetrack', { type: 'json' });
-          if (session) memoryCache.livetrack.session = session;
+          memoryCache.livetrack.session = session;
+          memoryCache.livetrack.ts = now;
         }
 
         // Auto-Expire nach 4 Stunden
         if (session && session.active && session.startedAt && (now - session.startedAt > 4 * 60 * 60 * 1000)) {
           session.active = false;
+          memoryCache.livetrack.session = session;
+          memoryCache.livetrack.ts = now;
           if (env.PHOTOS_KV) await env.PHOTOS_KV.put('garmin_livetrack', JSON.stringify(session));
         }
 
@@ -768,6 +771,7 @@ export default {
       if (request.method === 'DELETE' || (request.method === 'POST' && url.searchParams.get('action') === 'stop')) {
         const session = { active: false, stoppedAt: now };
         memoryCache.livetrack.session = session;
+        memoryCache.livetrack.ts = now;
         if (env.PHOTOS_KV) await env.PHOTOS_KV.put('garmin_livetrack', JSON.stringify(session));
         return json({ ok: true, active: false });
       }
@@ -791,6 +795,7 @@ export default {
             title: 'Marius auf dem Rad 🚴 (Demo)'
           };
           memoryCache.livetrack.session = testSession;
+          memoryCache.livetrack.ts = now;
           if (env.PHOTOS_KV) await env.PHOTOS_KV.put('garmin_livetrack', JSON.stringify(testSession), { expirationTtl: 2 * 60 * 60 });
           return json({ ok: true, active: true, session: testSession }, 200, { 'Access-Control-Allow-Origin': '*' });
         }
@@ -824,6 +829,7 @@ export default {
         };
 
         memoryCache.livetrack.session = session;
+        memoryCache.livetrack.ts = now;
         if (env.PHOTOS_KV) {
           await env.PHOTOS_KV.put('garmin_livetrack', JSON.stringify(session), { expirationTtl: 4 * 60 * 60 });
         }

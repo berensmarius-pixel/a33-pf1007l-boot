@@ -528,11 +528,20 @@
       D.livetrack = isActive ? data.session : null;
 
       if (isActive && !lastLiveTrackActive) {
+        // Neuer Start: Automatisch direkt im Vollbild auf dem Tablet öffnen!
         if (window.App) {
-          window.App.toast('🚴 Marius ist auf dem Rad unterwegs! LiveTrack aktiv.', { icon: 'bike', ms: 8000 });
+          if (window.App.LiveTrack) window.App.LiveTrack.openFull();
+          window.App.toast('🚴 Marius ist auf dem Rad unterwegs! LiveTrack geöffnet.', { icon: 'bike', ms: 8000 });
+        }
+      } else if (isActive && lastLiveTrackActive) {
+        // Läuft bereits: Falls noch nicht offen und nicht von Soraya manuell minimiert
+        if (window.App && window.App.LiveTrack && !window.App.LiveTrack.isOpen() && !window.App.LiveTrack.isDismissed()) {
+          window.App.LiveTrack.openFull();
         }
       } else if (!isActive && lastLiveTrackActive) {
+        // Fahrt beendet: Automatisch Vollbild schließen!
         if (window.App) {
+          if (window.App.LiveTrack && window.App.LiveTrack.isOpen()) window.App.LiveTrack.close();
           window.App.toast('🏁 Marius hat die Fahrt beendet.', { icon: 'check', ms: 5000 });
         }
       }

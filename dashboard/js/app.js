@@ -271,6 +271,28 @@
   };
   App.closeSheet = function () {};
 
+  // ------------------------------------------------------------ takeovers (full-screen overlays)
+  App.takeover = function (html, opts) {
+    opts = opts || {};
+    var box = $('#takeover');
+    box.innerHTML = html;
+    box.className = 'takeover is-open ' + (opts.cls || '');
+    function close() {
+      if (!box.classList.contains('is-open')) return;
+      box.classList.remove('is-open');
+      box.innerHTML = '';
+      if (opts.onClose) opts.onClose();
+    }
+    App.closeTakeover = close;
+    App.$$('[data-close]', box).forEach(function (b) { b.addEventListener('click', close); });
+    if (opts.onMount) opts.onMount(box, close);
+    return close;
+  };
+  App.closeTakeover = function () {
+    var box = $('#takeover');
+    if (box) { box.classList.remove('is-open'); box.innerHTML = ''; }
+  };
+
   // Stage-local coordinates for an element's center (stage may be scaled on desktop)
   App.centerOf = function (el) {
     var stage = $('#stage').getBoundingClientRect(), r = el.getBoundingClientRect(), k = stage.width / 1280;

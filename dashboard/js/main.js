@@ -7,6 +7,7 @@ import './lists.js';
 import './system.js';
 import './slideshow.js';
 import './timer.js';
+import './livetrack.js';
 import './views/home.js';
 import './views/calendar.js';
 import './views/tasks.js';

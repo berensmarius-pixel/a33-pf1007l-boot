@@ -344,7 +344,14 @@
           '</div></div>';
         el.addEventListener('click', function (e) {
           var trk = e.target.closest('[data-action="livetrack"]');
-          if (trk) { openLiveTrackSheet(); return; }
+          if (trk) {
+            if (window.App && window.App.LiveTrack) {
+              window.App.LiveTrack.openFull(true);
+            } else {
+              openLiveTrackSheet();
+            }
+            return;
+          }
           var rad = e.target.closest('[data-action="radar"], .h-weather');
           if (rad) { openRadarSheet(); return; }
           var fc = e.target.closest('.h-fuel');

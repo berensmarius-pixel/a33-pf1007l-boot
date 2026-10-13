@@ -395,3 +395,141 @@ button.card:active, .h-hero:active, .h-photo:active { transform: scale(.985); }
 .f-price { font-size: 26px; font-weight: 900; }
 .f-hint { font-size: 13px; color: var(--mute); background: var(--paper-2); padding: 10px 14px; border-radius: 10px; margin-top: 8px; }
 
+/* ---------------------------------------------------------------- Garmin LiveTrack Fullscreen Takeover (1280x800) */
+.takeover--livetrack {
+  z-index: 100;
+  background: #0f172a;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 1280px;
+  height: 800px;
+}
+
+.livetrack-takeover {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #0f172a;
+}
+
+.livetrack-bar {
+  height: 56px;
+  flex: none;
+  background: #1e293b;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.livetrack-bar-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 19px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.live-pulse-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  animation: live-pulse 1.8s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes live-pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+.livetrack-badge {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.livetrack-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  box-sizing: border-box;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.lt-btn:active {
+  transform: scale(0.97);
+}
+
+.lt-btn--ghost {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+.lt-btn--ghost:hover, .lt-btn--ghost:active {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.lt-btn--solid {
+  background: #3b82f6;
+  color: #ffffff;
+}
+.lt-btn--solid:active {
+  background: #2563eb;
+}
+
+.lt-btn--danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.lt-btn--danger:active {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.livetrack-frame-full {
+  flex: 1;
+  width: 1280px;
+  height: 744px;
+  background: #0f172a;
+  position: relative;
+  overflow: hidden;
+}
+
+.livetrack-iframe-full {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+
