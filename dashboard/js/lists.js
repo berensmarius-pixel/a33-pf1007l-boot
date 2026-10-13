@@ -96,6 +96,12 @@
       App.emit('lists', 'chores');
     }
   });
-  setInterval(function () { NAMES.forEach(load); }, 15000);
+  setInterval(function () {
+    if (window.App && window.App.mode === 'night') return; // Nachts Server-Polling pausieren
+    NAMES.forEach(load);
+  }, 20000);
+  App.on('mode', function (m) {
+    if (m === 'day') NAMES.forEach(load);
+  });
   NAMES.forEach(load);
 })();

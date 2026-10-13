@@ -51,7 +51,7 @@
     cover: function (ps, o) {
       var p = ps[0];
       if (p.o === 'p') {
-        return '<div class="slide slide--fit"><img class="blurfill" src="' + src(p) + '" alt=""><img class="fitimg" src="' + src(p, true) + '" alt="">' + (o.captions ? caption(ps) : '') + '</div>';
+        return '<div class="slide slide--fit"><img class="fitimg" src="' + src(p, true) + '" alt="">' + (o.captions ? caption(ps) : '') + '</div>';
       }
       return '<div class="slide slide--cover">' + kb(p) + (o.captions ? caption(ps) : '') + '</div>';
     },
@@ -136,6 +136,8 @@
     var node = wrap.firstChild;
     node.style.opacity = '0';
     node.style.transition = 'opacity 1.4s ease-in-out';
+    node.style.willChange = 'opacity';
+    node.style.transform = 'translateZ(0)';
     // Fallback look if images can't load (offline)
     Array.prototype.forEach.call(node.querySelectorAll('img'), function (im) {
       im.addEventListener('error', function () { im.classList.add('is-broken'); });
@@ -150,7 +152,10 @@
       void node.offsetWidth;
       node.style.opacity = '1';
       setTimeout(function () {
-        old.forEach(function (o) { o.remove(); });
+        old.forEach(function (o) {
+          Array.prototype.forEach.call(o.querySelectorAll('img'), function (im) { im.src = ''; });
+          o.remove();
+        });
       }, 1500);
     }
     if (first && !first.complete) { first.addEventListener('load', show); first.addEventListener('error', show); setTimeout(show, 2500); }
@@ -161,7 +166,10 @@
   S.next = function () {
     var s = this.pick();
     if (!s) return;
-    if (this.current) this.history.push(this.current);
+    if (this.current) {
+      this.history.push(this.current);
+      if (this.history.length > 25) this.history.shift();
+    }
     this.render(s);
     this.restart();
   };

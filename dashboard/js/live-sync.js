@@ -41,6 +41,10 @@
   }
 
   async function updateWeather() {
+    if (window.App && window.App.mode === 'night') {
+      var syncD = window.DATA;
+      if (syncD && syncD.sync && syncD.sync.weather && (Date.now() - syncD.sync.weather) < 60 * 60 * 1000) return;
+    }
     try {
       var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + KAISERSLAUTERN_LAT +
         '&longitude=' + KAISERSLAUTERN_LON +
@@ -345,6 +349,10 @@
   }
 
   async function updateCalendar() {
+    if (window.App && window.App.mode === 'night') {
+      var syncD = window.DATA;
+      if (syncD && syncD.sync && syncD.sync.calendar && (Date.now() - syncD.sync.calendar) < 45 * 60 * 1000) return;
+    }
     var fetchUrl = '/api/calendar';
 
     try {
@@ -373,6 +381,7 @@
 
   // ------------------------------------------------------------ Fuel Price Sync (Kaiserslautern)
   async function updateFuel() {
+    if (window.App && window.App.mode === 'night') return;
     try {
       var resp = await fetch('/api/fuel?type=e5');
       if (!resp.ok) return;
@@ -392,6 +401,7 @@
 
   // ------------------------------------------------------------ KI-Nutzung (Claude Code, echte Daten)
   async function updateUsage() {
+    if (window.App && window.App.mode === 'night') return;
     try {
       var resp = await fetch('/api/usage');
       if (!resp.ok) return;
@@ -421,6 +431,7 @@
   var knownPhotoIds = new Set();
   var firstPhotoRun = true;
   async function updatePhotos() {
+    if (window.App && window.App.mode === 'night') return;
     try {
       var resp = await fetch('/api/photos');
       if (!resp.ok) return;
@@ -480,6 +491,19 @@
     setInterval(updateCalendar, 5 * 60 * 1000);
     // Mobile R2 Photos refresh every 30 seconds
     setInterval(updatePhotos, 30 * 1000);
+
+    if (window.App) {
+      window.App.on('mode', function (m) {
+        if (m === 'day') {
+          // Morgens beim Aufwachen sofort alles frisch ziehen
+          updateWeather();
+          updateCalendar();
+          updatePhotos();
+          updateFuel();
+          updateUsage();
+        }
+      });
+    }
   }
 
   window.LiveSync = {

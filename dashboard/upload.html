@@ -47,7 +47,10 @@
 <body>
   <div class="wrap">
     <header>
-      <h1>📸 Foto an Rahmen senden</h1>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <h1>📸 Foto an Rahmen senden</h1>
+        <a href="/liste" style="color:#A0A0AB;font-size:13px;font-weight:600;text-decoration:none;padding:5px 10px;background:#1C1C21;border-radius:10px;border:1px solid #2E2E38;display:flex;align-items:center;gap:4px">🛒 Listen</a>
+      </div>
       <p class="sub">Erscheint sofort in der Diashow in der Küche</p>
     </header>
 
@@ -179,14 +182,12 @@
     // Verkleinert Handyfotos vor dem Upload (max. 1920 px, WebP oder JPEG). Bei Fehlern (z. B. HEIC) geht das Original raus.
     async function shrinkImage(file) {
       const MAX = 1920;
-      try {
-        const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
-        const scale = Math.min(1, MAX / Math.max(bmp.width, bmp.height));
+      async function drawAndExport(source, w, h) {
+        const scale = Math.min(1, MAX / Math.max(w, h));
         const canvas = document.createElement('canvas');
-        canvas.width = Math.round(bmp.width * scale);
-        canvas.height = Math.round(bmp.height * scale);
-        canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height);
-        bmp.close();
+        canvas.width = Math.round(w * scale);
+        canvas.height = Math.round(h * scale);
+        canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height);
         let blob = await new Promise((res) => canvas.toBlob(res, 'image/webp', 0.82));
         let ext = 'webp';
         if (!blob || blob.type !== 'image/webp') {
@@ -195,7 +196,42 @@
         }
         if (!blob || blob.size >= file.size) return file;
         return new File([blob], 'photo.' + ext, { type: blob.type });
-      } catch (e) {
+      }
+
+      try {
+        if ('createImageBitmap' in window) {
+          let bmp;
+          try {
+            bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+          } catch (e1) {
+            bmp = await createImageBitmap(file);
+          }
+          const out = await drawAndExport(bmp, bmp.width, bmp.height);
+          bmp.close();
+          return out;
+        }
+      } catch (e) {}
+
+      // Fallback via Image-Element für ältere Browser
+      try {
+        return await new Promise((resolve) => {
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = async () => {
+            URL.revokeObjectURL(url);
+            try {
+              resolve(await drawAndExport(img, img.naturalWidth, img.naturalHeight));
+            } catch (err) {
+              resolve(file);
+            }
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve(file);
+          };
+          img.src = url;
+        });
+      } catch (e2) {
         return file;
       }
     }

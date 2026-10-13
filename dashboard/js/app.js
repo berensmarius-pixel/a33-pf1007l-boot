@@ -204,7 +204,9 @@
   var refreshTimer = null;
   function refreshStale(delay) {
     clearTimeout(refreshTimer);
+    if (App.mode !== 'day') return;
     refreshTimer = setTimeout(function next() {
+      if (App.mode !== 'day') return;
       var name = Object.keys(App.views).filter(function (k) {
         var v = App.views[k];
         return k !== App.current && (!v._built || v._dirty);
@@ -214,9 +216,13 @@
       refreshTimer = setTimeout(next, 400);
     }, delay);
   }
+  var staleDebounce = null;
   function markStale() {
-    Object.keys(App.views).forEach(function (k) { if (k !== App.current) App.views[k]._dirty = true; });
-    refreshStale(1500);
+    clearTimeout(staleDebounce);
+    staleDebounce = setTimeout(function () {
+      Object.keys(App.views).forEach(function (k) { if (k !== App.current) App.views[k]._dirty = true; });
+      refreshStale(1500);
+    }, 150);
   }
   App.on('data', markStale);
   App.on('time', markStale);
