@@ -173,3 +173,56 @@
 .r-bar-mm { font-size: 11px; font-weight: 800; }
 .r-bar-t { font-size: 11px; color: var(--mute); font-weight: 600; }
 .radar-hint { font-size: 12px; color: var(--mute); }
+
+/* ---- Garmin LiveTrack Modal on 1280x800 display ---- */
+.livetrack-sheet {
+  width: 1040px;
+  height: 680px;
+  max-width: 95vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+}
+.livetrack-frame-box {
+  flex: 1;
+  min-height: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #18181b;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  border: 1px solid var(--line);
+}
+.livetrack-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+.livetrack-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+}
+.h-note--track {
+  background: #2563eb !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+  animation: pulse-track 2s infinite alternate;
+}
+.h-note--track b { color: #fff !important; }
+.h-note--track span { color: rgba(255, 255, 255, 0.9) !important; }
+.h-note--track .h-note-when {
+  color: #fff !important;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 16px;
+}
+@keyframes pulse-track {
+  from { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+  to { box-shadow: 0 0 0 5px rgba(37, 99, 235, 0); }
+}

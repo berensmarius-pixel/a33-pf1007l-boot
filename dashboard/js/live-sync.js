@@ -504,10 +504,44 @@
           updatePhotos();
           updateFuel();
           updateUsage();
+          updateLiveTrack();
           checkVersion();
         }
       });
     }
+
+    updateLiveTrack();
+    // LiveTrack alle 30 Sekunden prüfen
+    setInterval(updateLiveTrack, 30 * 1000);
+  }
+
+  // ------------------------------------------------------------ Garmin LiveTrack Sync
+  var lastLiveTrackActive = false;
+  async function updateLiveTrack() {
+    try {
+      var resp = await fetch('/api/livetrack', { cache: 'no-store' });
+      if (!resp.ok) return;
+      var data = await resp.json();
+      var D = window.DATA;
+      if (!D) return;
+      var isActive = Boolean(data && data.active && data.session);
+      D.livetrack = isActive ? data.session : null;
+
+      if (isActive && !lastLiveTrackActive) {
+        if (window.App) {
+          window.App.toast('🚴 Marius ist auf dem Rad unterwegs! LiveTrack aktiv.', { icon: 'bike', ms: 8000 });
+        }
+      } else if (!isActive && lastLiveTrackActive) {
+        if (window.App) {
+          window.App.toast('🏁 Marius hat die Fahrt beendet.', { icon: 'check', ms: 5000 });
+        }
+      }
+      lastLiveTrackActive = isActive;
+      if (window.App) {
+        window.App.emit('data');
+        window.App.emit('livetrack-update');
+      }
+    } catch (e) {}
   }
 
   var currentVersion = null;
@@ -529,6 +563,7 @@
     updateCalendar: updateCalendar,
     updateFuel: updateFuel,
     updatePhotos: updatePhotos,
-    updateUsage: updateUsage
+    updateUsage: updateUsage,
+    updateLiveTrack: updateLiveTrack
   };
 })();

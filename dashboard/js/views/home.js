@@ -194,6 +194,49 @@
     );
   }
 
+  function openLiveTrackSheet() {
+    var tr = D.livetrack || {};
+    App.sheet(
+      '<div class="livetrack-sheet">' +
+      '<div class="t-sheet-head">' +
+      '  <div><b>🚴 Live-Tracking · Marius</b><small>Garmin LiveTrack · Echtzeit-Standort &amp; Strecke</small></div>' +
+      '</div>' +
+      '<div class="livetrack-frame-box">' +
+      '  <iframe class="livetrack-iframe" id="livetrackIframe" src="/api/livetrack/view"></iframe>' +
+      '</div>' +
+      '<div class="livetrack-actions">' +
+      '  <a href="' + (tr.url || '#') + '" target="_blank" rel="noopener noreferrer" class="btn btn--ghost" style="padding:10px 16px;text-decoration:none;">↗️ Im Browser öffnen</a>' +
+      '  <button class="btn btn--ghost" id="btnStopTrack" style="color:var(--alert);padding:10px 16px;">Tracking beenden</button>' +
+      '  <button class="btn btn--solid" data-close style="margin-left:auto;padding:10px 24px;">Schließen</button>' +
+      '</div>' +
+      '</div>',
+      {
+        cls: 'sheet--wide',
+        onMount: function (el, close) {
+          var stopBtn = el.querySelector('#btnStopTrack');
+          if (stopBtn) {
+            stopBtn.onclick = async function () {
+              if (confirm('Live-Tracking auf dem Tablet beenden?')) {
+                await fetch('/api/livetrack?action=stop', { method: 'POST' }).catch(function () {});
+                D.livetrack = null;
+                close();
+                App.emit('data');
+                App.toast('Live-Tracking beendet', { icon: 'check' });
+              }
+            };
+          }
+        },
+        onClose: function () {
+          var ifr = document.getElementById('livetrackIframe');
+          if (ifr) {
+            ifr.src = 'about:blank';
+            ifr.remove();
+          }
+        }
+      }
+    );
+  }
+
   // Banner: Geburtstage/Jahrestage (ganztägige Termine, nächste 14 Tage) und Wetterwarnungen
   var BDAY_RE = /geburtstag|\bgebi\b|birthday|bday|🎂|🎈/i, ANNIV_RE = /jahrestag|hochzeit|anniversary|💍|❤/i;
   function occasions() {
@@ -226,6 +269,17 @@
   // Höchstens zwei Banner, sortiert nach Wichtigkeit (Unwetter, Geburtstag heute, Warnung, Geburtstag bald)
   function notices() {
     var items = [];
+    if (D.livetrack && D.livetrack.active) {
+      var diffMin = Math.max(0, Math.round((Date.now() - (D.livetrack.startedAt || Date.now())) / 60000));
+      var timeStr = diffMin < 60 ? (diffMin + 'm') : (Math.floor(diffMin / 60) + 'h ' + (diffMin % 60) + 'm');
+      items.push({
+        prio: -1,
+        html: '<div class="h-note h-note--track" data-action="livetrack" style="cursor:pointer">' +
+          '<span class="h-note-emoji">🚴</span>' +
+          '<div class="h-note-txt"><b>Marius auf dem Rad · LiveTrack</b><span>Tippen für Live-Karte &amp; Route</span></div>' +
+          '<div class="h-note-when num">' + timeStr + '</div></div>'
+      });
+    }
     (D.weather && D.weather.alerts || []).forEach(function (a) {
       items.push({ prio: a.level === 'alert' ? 0 : 2, html: '<div class="h-note h-note--' + a.level + '">' + App.icon(a.icon, 24) +
         '<div class="h-note-txt"><b>' + App.esc(a.title) + '</b><span>' + App.esc(a.text) + '</span></div></div>' });
@@ -289,6 +343,8 @@
           '  <button class="h-photo" data-go="photos"><div class="h-photo-stage"></div><div class="h-photo-cap"></div></button>' +
           '</div></div>';
         el.addEventListener('click', function (e) {
+          var trk = e.target.closest('[data-action="livetrack"]');
+          if (trk) { openLiveTrackSheet(); return; }
           var rad = e.target.closest('[data-action="radar"], .h-weather');
           if (rad) { openRadarSheet(); return; }
           var fc = e.target.closest('.h-fuel');
@@ -325,6 +381,7 @@
   });
   App.on('data', function () { if (App.current === 'home') paint(); });
   App.on('lists', function () { if (App.current === 'home') paint(); });
+  App.on('livetrack-update', function () { if (App.current === 'home') paint(); });
   App.on('timer-update', function () {
     if (App.current === 'home' && V.el && V.el.querySelector('.h-timer')) {
       V.el.querySelector('.h-timer').innerHTML = timerCard();
