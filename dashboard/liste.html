@@ -16,9 +16,9 @@
     body { background: #121214; color: #F4F4F6; min-height: 100vh; padding: 16px 14px 90px; }
     .wrap { max-width: 480px; margin: 0 auto; }
     header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-    h1 { font-size: 21px; letter-spacing: -0.02em; }
-    .tabs { display: flex; gap: 6px; background: #1C1C21; padding: 4px; border-radius: 14px; margin-bottom: 16px; }
-    .tabs button { flex: 1; padding: 10px 6px; border: 0; border-radius: 10px; background: transparent; color: #A0A0AB; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    h1 { font-size: 20px; letter-spacing: -0.02em; }
+    .tabs { display: flex; gap: 4px; background: #1C1C21; padding: 4px; border-radius: 14px; margin-bottom: 16px; }
+    .tabs button { flex: 1; padding: 9px 4px; border: 0; border-radius: 10px; background: transparent; color: #A0A0AB; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
     .tabs button.on { background: #2563eb; color: #fff; }
     .chips-wrap { margin-bottom: 12px; }
     .chips-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #8E8E9A; margin-bottom: 6px; padding-left: 2px; }
@@ -45,8 +45,10 @@
     .cat-head { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #8E8E9A; margin: 16px 4px 6px; display: flex; justify-content: space-between; }
     .empty { text-align: center; color: #8E8E9A; padding: 36px 10px; font-size: 15px; }
     .who-m { color: #60a5fa; } .who-s { color: #f472b6; } .who-a { color: #fbbf24; }
-    .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: #2563eb; color: #fff; padding: 11px 20px; border-radius: 24px; font-size: 14px; font-weight: 700; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 99; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+    .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: #2563eb; color: #fff; padding: 11px 20px; border-radius: 24px; font-size: 14px; font-weight: 700; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 99; box-shadow: 0 4px 14px rgba(0,0,0,0.4); text-align: center; }
     .toast.show { opacity: 1; }
+    
+    /* Wochenplan */
     .meal-card { background: #1C1C21; border: 1px solid #2E2E38; border-radius: 14px; padding: 14px; margin-bottom: 10px; }
     .meal-card.is-today { border-color: #3b82f6; background: rgba(59, 130, 246, 0.08); }
     .meal-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
@@ -55,12 +57,53 @@
     .meal-dish { font-size: 16px; font-weight: 700; color: #F4F4F6; margin-bottom: 4px; }
     .meal-dish.empty-dish { color: #6E6E78; font-weight: 500; font-style: italic; }
     .meal-ing { font-size: 13px; color: #8E8E9A; margin-bottom: 10px; line-height: 1.35; }
-    .meal-actions { display: flex; gap: 8px; }
+    .meal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .meal-btn { padding: 7px 12px; border-radius: 8px; border: 1px solid #3E3E4C; background: #26262E; color: #E0E0E8; font-size: 12px; font-weight: 600; cursor: pointer; }
     .meal-btn--cart { background: rgba(37, 99, 235, 0.2); border-color: #2563eb; color: #60a5fa; }
     .meal-edit-box { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #2E2E38; }
     .meal-edit-box input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #3E3E4C; background: #121214; color: #fff; font-size: 14px; margin-bottom: 8px; outline: none; }
     .meal-edit-box input:focus { border-color: #2563eb; }
+
+    /* Rezepte & KI */
+    .rcp-filter-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; scrollbar-width: none; }
+    .rcp-filter-row::-webkit-scrollbar { display: none; }
+    .rcp-actions-row { display: flex; gap: 8px; margin-bottom: 14px; }
+    .rcp-search { flex: 1; padding: 11px 14px; border-radius: 12px; border: 1px solid #2E2E38; background: #1C1C21; color: #F4F4F6; font-size: 14px; outline: none; }
+    .rcp-search:focus { border-color: #2563eb; }
+    .rcp-top-btn { padding: 0 12px; border-radius: 12px; border: 1px solid #2E2E38; background: #1C1C21; color: #E0E0E8; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .rcp-top-btn--ai { background: rgba(139, 92, 246, 0.18); border-color: #8b5cf6; color: #c084fc; }
+
+    .rcp-card { background: #1C1C21; border: 1px solid #2E2E38; border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+    .rcp-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+    .rcp-title { font-size: 16px; font-weight: 700; color: #F4F4F6; line-height: 1.3; }
+    .rcp-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; }
+    .badge-airfryer { background: rgba(249, 115, 22, 0.2); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.4); }
+    .badge-ricecooker { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .badge-oven { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .badge-pan { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+
+    .rcp-meta-pills { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+    .rcp-pill { font-size: 11px; font-weight: 600; padding: 3px 7px; border-radius: 6px; background: #26262E; color: #A0A0AB; }
+    .rcp-pill--prot { background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700; }
+
+    .rcp-desc { font-size: 13px; color: #A0A0AB; line-height: 1.35; margin-bottom: 10px; }
+    .rcp-details { font-size: 12px; color: #CBD5E1; margin-bottom: 12px; border-top: 1px solid #282830; padding-top: 8px; display: none; }
+    .rcp-details.open { display: block; }
+    .rcp-section-title { font-weight: 700; color: #8E8E9A; text-transform: uppercase; letter-spacing: 0.05em; font-size: 10px; margin: 6px 0 3px; }
+    .rcp-ing-list { list-style: disc inside; margin-bottom: 8px; line-height: 1.45; color: #D1D5DB; }
+    .rcp-step-list { list-style: decimal inside; line-height: 1.45; color: #9CA3AF; }
+
+    .rcp-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .rcp-select-day { padding: 7px 8px; border-radius: 8px; border: 1px solid #3E3E4C; background: #26262E; color: #E0E0E8; font-size: 12px; font-weight: 600; outline: none; }
+
+    .rcp-ai-panel { background: #19152B; border: 1px solid rgba(139, 92, 246, 0.4); border-radius: 14px; padding: 14px; margin-bottom: 16px; }
+    .rcp-ai-panel h3 { font-size: 15px; font-weight: 700; color: #c084fc; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; }
+    .rcp-ai-panel p { font-size: 12px; color: #a78bfa; margin-bottom: 10px; line-height: 1.35; }
+    .rcp-ai-panel textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(139, 92, 246, 0.4); background: #12101F; color: #F4F4F6; font-size: 14px; resize: vertical; min-height: 54px; outline: none; margin-bottom: 8px; }
+    .rcp-ai-panel select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(139, 92, 246, 0.4); background: #12101F; color: #F4F4F6; font-size: 13px; outline: none; margin-bottom: 8px; }
+    .rcp-ai-btn { width: 100%; padding: 11px; border: 0; border-radius: 10px; background: linear-gradient(135deg, #7c3aed, #2563eb); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .rcp-ai-btn:disabled { opacity: 0.6; }
+    .rcp-ai-res { margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(139, 92, 246, 0.4); }
   </style>
 </head>
 <body>
@@ -76,33 +119,195 @@
       <button id="tabShop" class="on">Einkauf</button>
       <button id="tabTasks">Aufgaben</button>
       <button id="tabMeals">Wochenplan</button>
+      <button id="tabRecipes">Rezepte 🍗</button>
     </div>
     <div id="app"></div>
   </div>
   <div class="toast" id="toast"></div>
 
   <script>
-    var NAMES = ['groceries', 'chores', 'meals'];
-    var data = { groceries: [], chores: [], meals: [] };
+    var NAMES = ['groceries', 'chores', 'meals', 'recipes'];
+    var data = { groceries: [], chores: [], meals: [], recipes: [] };
     var tab = 'groceries', editMode = false, busy = 0, loaded = false;
     var ROUTINES = { morning: 'Morgen', after: 'Nachmittag', evening: 'Abend' };
     var DAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+
+    var rcpFilter = 'all';
+    var rcpSearch = '';
+    var aiOpen = false;
+    var aiBusy = false;
+    var aiRecipe = null;
+    var hasGeminiKey = null;
+
+    var BASE_RECIPES = [
+      // 🍟 Airfryer
+      {
+        id: 'rcp_af_1', title: 'Crispy Cornflakes Chicken Strips', category: 'airfryer', badge: 'Airfryer', time: 15, protein: 48, calories: 420,
+        description: 'Super knusprig ohne Öl – außen kross, innen saftig.',
+        ingredients: ['350g Hähnchenbrustfilet', '45g ungesüßte Cornflakes', '1 Ei', '1 TL Paprikapulver edelsüß', '1/2 TL Knoblauchpulver', 'Salz & Pfeffer'],
+        steps: ['Hähnchenbrust in fingerdicke Streifen schneiden und mit Paprika, Knoblauch, Salz würzen.', 'Ei verquirlen. Cornflakes grob zerbröseln.', 'Hähnchen erst im Ei, dann in den Cornflakes wenden.', '12 Minuten bei 195°C im Airfryer backen.']
+      },
+      {
+        id: 'rcp_af_2', title: 'Lachsfilet mit knusprigem Brokkoli', category: 'airfryer', badge: 'Airfryer', time: 12, protein: 44, calories: 460,
+        description: 'In 12 Minuten perfekt glasig mit feinen Röstnoten am Brokkoli.',
+        ingredients: ['250g Lachsfilet', '200g Brokkoliröschen', '1 EL Sojasauce', '1 TL Honig', '1 Spritzer Zitronensaft', 'Salz'],
+        steps: ['Lachs mit Sojasauce und Honig dünn bestreichen.', 'Brokkoli mit etwas Salz vermengen.', 'Beides nebeneinander in den Airfryer-Korb legen.', 'Bei 180°C für 10-12 Minuten garen.']
+      },
+      {
+        id: 'rcp_af_3', title: 'High-Protein Cheeseburger Tacos', category: 'airfryer', badge: 'Airfryer', time: 12, protein: 52, calories: 530,
+        description: 'Der virale Smash-Taco Trend – saftig und in 10 Min fertig.',
+        ingredients: ['250g Rinderhack mager', '2 Mini-Tortilla-Wraps', '2 Scheiben fettarmer Cheddar (oder Gouda)', '2 Gewürzgurken', '1 EL Senf & Ketchup', 'Salz & Pfeffer'],
+        steps: ['Hackfleisch mit Salz und Pfeffer direkt auf die Wraps drücken.', 'Mit der Fleischseite nach unten 6 Min bei 200°C in den Airfryer legen.', 'Wenden, Käse auflegen und 2 Min schmelzen lassen.', 'Mit Gurken und Sauce zusammenklappen.']
+      },
+      {
+        id: 'rcp_af_4', title: 'Knuspriges Teriyaki-Hähnchen mit Paprika', category: 'airfryer', badge: 'Airfryer', time: 15, protein: 46, calories: 410,
+        description: 'Würzige Hähnchenbites mit knackiger Paprika und Sesam.',
+        ingredients: ['350g Hähnchenbrust', '1 rote Paprika', '3 EL Teriyaki-Sauce', '1 TL Sesam', '1 Knoblauchzehe'],
+        steps: ['Hähnchen und Paprika in mundgerechte Stücke schneiden.', 'Mit Teriyaki und Knoblauch kurz vermengen.', '14 Minuten bei 190°C in den Airfryer geben (nach 7 Min schütteln).', 'Mit Sesam bestreuen.']
+      },
+      {
+        id: 'rcp_af_5', title: 'Gefüllte Protein-Burritos mit Hack & Skyr', category: 'airfryer', badge: 'Airfryer', time: 10, protein: 48, calories: 490,
+        description: 'Außen wie ein krosser Chimichanga, innen cremig und vollgepackt.',
+        ingredients: ['200g Rinderhack mager angebraten', '1 Vollkornwrap', '50g Reibekäse leicht', '2 EL Skyr oder Magerquark', '2 EL Salsa-Sauce'],
+        steps: ['Wrap mittig mit Hackfleisch, Salsa, Skyr und Käse belegen.', 'Seiten einschlagen und stramm einrollen.', 'Mit der Naht nach unten bei 185°C 8-10 Min in den Airfryer legen.', 'In der Mitte durchschneiden.']
+      },
+      {
+        id: 'rcp_af_6', title: 'Griechische Feta-Hähnchen Bites', category: 'airfryer', badge: 'Airfryer', time: 14, protein: 45, calories: 430,
+        description: 'Mediterrane Aromen mit warmem, cremigem Feta.',
+        ingredients: ['300g Hähnchenbrust', '80g Feta leicht', '100g Cherrytomaten', '1 TL Oregano', '1 EL Olivenöl', 'Salz'],
+        steps: ['Hähnchenbrust würfeln, mit Olivenöl, Oregano und Salz marinieren.', 'Mit ganzen Tomaten und Feta in den Korb geben.', '12-14 Minuten bei 190°C backen.']
+      },
+
+      // 🍚 Reiskocher One-Pot
+      {
+        id: 'rcp_rc_1', title: 'Teriyaki-Lachs mit Jasminreis & Edamame', category: 'ricecooker', badge: 'Reiskocher', time: 20, protein: 44, calories: 540,
+        description: 'Alles in einem Durchgang gegart – Lachs dämpft saftig auf dem Reis.',
+        ingredients: ['250g Lachsfilet', '150g Jasminreis', '100g TK-Edamame', '3 EL Teriyaki-Sauce', '1 Frühlingszwiebel'],
+        steps: ['Reis waschen und mit Wasser in den Reiskocher füllen.', 'Edamame darüberstreuen.', 'Lachs mit Teriyaki bestreichen und oben auflegen.', 'Reiskocher starten. Nach Ende der Garzeit servieren.']
+      },
+      {
+        id: 'rcp_rc_2', title: 'Cremiges Hähnchen-Pilz-Reis One-Pot', category: 'ricecooker', badge: 'Reiskocher', time: 22, protein: 48, calories: 510,
+        description: 'Schmeckt wie ein sündiges Risotto, hat aber Top-Makros.',
+        ingredients: ['300g Hähnchenbrust gewürfelt', '150g Reis', '150g Champignons', '200ml Gemüsebrühe', '2 EL Frischkäse leicht', 'Petersilie'],
+        steps: ['Reis, Champignons und Brühe in den Reiskocher geben.', 'Gewürfeltes Hähnchen oben auflegen.', 'Starten. Danach Frischkäse für samtige Cremigkeit unterrühren.']
+      },
+      {
+        id: 'rcp_rc_3', title: 'Mexikanische Beef-Reis-Bowl', category: 'ricecooker', badge: 'Reiskocher', time: 20, protein: 47, calories: 530,
+        description: 'Würzige Burrito-Bowl ohne Pfannen-Chaos – alles aus einem Topf.',
+        ingredients: ['250g Rinderhack mager', '150g Reis', '1/2 Dose Kidneybohnen', '1/2 Dose Mais', '200ml stückige Tomaten', '1 EL Taco-Gewürz'],
+        steps: ['Reis mit stückigen Tomaten und Wasser in den Topf füllen.', 'Hackfleisch mit Taco-Gewürz als kleine Bällchen auflegen.', 'Bohnen und Mais zugeben und Reiskocher starten.']
+      },
+      {
+        id: 'rcp_rc_4', title: 'Tomaten-Hähnchenreis mit Kräutern & Feta', category: 'ricecooker', badge: 'Reiskocher', time: 20, protein: 45, calories: 490,
+        description: 'Der Reis saugt den vollen Tomatengeschmack auf.',
+        ingredients: ['300g Hähnchenbrust', '150g Reis', '1 Dose gehackte Tomaten', '70g Feta leicht', '1 TL italienische Kräuter', 'Salz'],
+        steps: ['Reis mit Dose Tomaten und etwas Wasser verrühren.', 'Hähnchenbrust würzen und auflegen.', 'Kochen lassen. Zum Schluss Feta zerbröseln und unterheben.']
+      },
+      {
+        id: 'rcp_rc_5', title: 'Curry-Hähnchen mit Kokosreis & Erbsen', category: 'ricecooker', badge: 'Reiskocher', time: 22, protein: 46, calories: 520,
+        description: 'Aromatisches gelbes Curry mit zarter Hähnchenbrust.',
+        ingredients: ['300g Hähnchenbrust', '150g Basmatireis', '100ml fettarme Kokosmilch', '150ml Brühe', '1 EL mildes Currypulver', '80g TK-Erbsen'],
+        steps: ['Reis, Kokosmilch, Brühe und Currypulver verrühren.', 'Erbsen und gewürfelte Hähnchenbrust zugeben.', 'Programm starten. Vor dem Essen kurz durchmischen.']
+      },
+      {
+        id: 'rcp_rc_6', title: 'Thunfisch-Zucchini-Reisbowl mit Soja & Sesam', category: 'ricecooker', badge: 'Reiskocher', time: 18, protein: 42, calories: 460,
+        description: 'Einfacher geht es nicht – blitzschnell, leicht und proteinreich.',
+        ingredients: ['2 Dosen Thunfisch im eigenen Saft', '150g Reis', '1 Zucchini geraspelt', '2 EL Sojasauce', '1 TL Sesamöl'],
+        steps: ['Reis und geraspelte Zucchini mit Wasser im Reiskocher kochen.', 'Sobald fertig: Thunfisch, Sojasauce und Sesamöl unterheben.', '2 Minuten ziehen lassen.']
+      },
+
+      // 🥘 Backofen / Blech
+      {
+        id: 'rcp_ov_1', title: 'Griechisches Zitronen-Hähnchen mit Feta & Zucchini', category: 'oven', badge: 'Backofen', time: 25, protein: 48, calories: 470,
+        description: 'Alles auf ein Backblech werfen, Backofen an, fertig. Null Aufwand.',
+        ingredients: ['400g Hähnchenbrust', '1 Zucchini', '1 Paprika', '100g Feta leicht', '1/2 Zitrone', '1 TL Oregano', '1 EL Olivenöl'],
+        steps: ['Hähnchen, Zucchini und Paprika mundgerecht schneiden.', 'Auf ein Blech geben. Mit Öl, Zitronensaft, Oregano würzen.', 'Feta darüberbröseln.', 'Bei 200°C für 22 Minuten backen.']
+      },
+      {
+        id: 'rcp_ov_2', title: 'Bunte Fajita-Blechpfanne mit Hähnchen', category: 'oven', badge: 'Backofen', time: 20, protein: 46, calories: 440,
+        description: 'Rauchig-würziges Fajita-Hähnchen mit gerösteter Paprika.',
+        ingredients: ['350g Hähnchenbrust in Streifen', '2 Paprika bunt', '1 rote Zwiebel', '1 EL Fajita-Gewürz', '1 EL Öl', '1 Limette'],
+        steps: ['Hähnchen und Gemüse in Streifen schneiden.', 'Mit Öl und Fajita-Gewürz direkt auf dem Blech vermengen.', 'Bei 200°C für 20 Minuten backen.', 'Mit Limettensaft beträufeln.']
+      },
+      {
+        id: 'rcp_ov_3', title: 'Knuspriges Lachs-Kartoffel-Blech', category: 'oven', badge: 'Backofen', time: 22, protein: 42, calories: 490,
+        description: 'Frischer Lachs mit Röstkartoffeln und grünen Bohnen.',
+        ingredients: ['250g Lachsfilet', '300g kleine Kartoffeln', '150g grüne Bohnen', '1 Zweig Rosmarin', '1 EL Öl', 'Salz'],
+        steps: ['Kartoffeln geviertelt mit Öl und Rosmarin 10 Min bei 200°C vorbacken.', 'Lachs und Bohnen dazulegen.', 'Weitere 12 Minuten backen, bis der Lachs saftig ist.']
+      },
+      {
+        id: 'rcp_ov_4', title: 'High-Protein Quark-Pizza auf Blech', category: 'oven', badge: 'Backofen', time: 20, protein: 54, calories: 520,
+        description: 'Echter Pizzageschmack mit 54g Protein und ohne Hefe-Wartezeit.',
+        ingredients: ['200g Magerquark', '1 Ei', '70g Dinkelmehl', '1 TL Backpulver', '60ml Tomatensauce', '80g Reibekäse leicht', '50g Kochschinken'],
+        steps: ['Quark, Ei, Mehl und Backpulver zu einem streichbaren Teig verrühren.', 'Dünn auf Backpapier streichen und 10 Min bei 200°C vorbacken.', 'Mit Tomatensauce, Schinken und Käse belegen und 8 Min fertigbacken.']
+      },
+      {
+        id: 'rcp_ov_5', title: 'Mediterranes Putensteak mit Mozzarella', category: 'oven', badge: 'Backofen', time: 22, protein: 50, calories: 460,
+        description: 'Zartes Fleisch unter einer geschmolzenen Mozzarelladecke.',
+        ingredients: ['350g Putensteaks', '200g Cherrytomaten', '1 Kugel Mozzarella leicht', '1 TL Kräuter', 'Balsamico-Creme'],
+        steps: ['Putensteaks würzen und aufs Blech legen.', 'Cherrytomaten halbieren und drumherum verteilen.', 'Mozzarella in Scheiben auf das Fleisch legen.', '20 Minuten bei 195°C überbacken.']
+      },
+      {
+        id: 'rcp_ov_6', title: 'Cottage Cheese & Hackfleisch-Gratin', category: 'oven', badge: 'Backofen', time: 25, protein: 52, calories: 490,
+        description: 'Cremig wie Lasagne, aber mit körnigem Frischkäse und Low-Carb.',
+        ingredients: ['300g Rinderhack mager', '200g Körniger Frischkäse', '1 Zucchini gewürfelt', '1 Dose gehackte Tomaten', '1 TL Kräuter', 'Salz'],
+        steps: ['Hackfleisch und Zucchini in eine Form geben.', 'Tomaten und Kräuter unterrühren.', 'Körnigen Frischkäse als Schicht obenauf verstreichen.', '22 Minuten bei 200°C backen.']
+      },
+
+      // 🍳 15-Minuten Pfanne
+      {
+        id: 'rcp_pan_1', title: 'Cremige High-Protein Hähnchen-Penne', category: 'pan', badge: 'Schnell', time: 15, protein: 50, calories: 530,
+        description: 'Restaurant-Niveau in 15 Minuten mit samtiger Frischkäse-Tomatensauce.',
+        ingredients: ['300g Hähnchenbrust', '120g Penne', '150ml passierte Tomaten', '2 EL Frischkäse leicht', '1 TL italienische Kräuter', 'Salz & Pfeffer'],
+        steps: ['Penne al dente kochen.', 'Hähnchenstreifen 5 Minuten scharf anbraten.', 'Passierte Tomaten, Frischkäse und Kräuter unterrühren.', 'Nudeln unterheben und kurz einkochen.']
+      },
+      {
+        id: 'rcp_pan_2', title: 'Rinderhack-Zucchini-Pfanne mit Feta', category: 'pan', badge: 'Schnell', time: 12, protein: 46, calories: 450,
+        description: 'Deftig, würzig und in 12 Minuten auf dem Tisch.',
+        ingredients: ['250g Rinderhack mager', '1 große Zucchini', '80g Feta leicht', '1 Knoblauchzehe', '1/2 TL Kreuzkümmel', 'Salz & Pfeffer'],
+        steps: ['Hackfleisch krümelig anbraten.', 'Zucchini und Knoblauch 5 Min mitbraten.', 'Mit Kreuzkümmel, Salz und Pfeffer abschmecken.', 'Feta zerbröseln, Deckel drauf und 2 Min schmelzen lassen.']
+      },
+      {
+        id: 'rcp_pan_3', title: 'Asiatische Teriyaki-Hähnchen-Wokpfanne', category: 'pan', badge: 'Schnell', time: 14, protein: 45, calories: 430,
+        description: 'Knackiges Gemüse, zartes Hähnchen und knusprige Cashews.',
+        ingredients: ['300g Hähnchenbrust', '200g bunte Wok-Gemüsemischung', '3 EL Teriyaki-Sauce', '15g Cashewnüsse', '1 EL Öl'],
+        steps: ['Hähnchen in heißem Öl 4 Minuten scharf anbraten.', 'Gemüse dazugeben und 4 Minuten knackig braten.', 'Teriyaki-Sauce und Cashews unterrühren und kurz eindicken.']
+      },
+      {
+        id: 'rcp_pan_4', title: 'Shakshuka mit 3 Eiern & Feta', category: 'pan', badge: 'Schnell', time: 15, protein: 36, calories: 410,
+        description: 'Pochierte Eier in einer fruchtig-würzigen Tomaten-Paprika-Sauce.',
+        ingredients: ['3 Eier', '1 Dose stückige Tomaten', '1 Paprika', '50g Feta leicht', '1 TL Kreuzkümmel', '1 TL Paprikapulver'],
+        steps: ['Paprika anbraten, Tomaten und Gewürze 5 Min köcheln.', '3 Mulden formen und Eier hineinschlagen.', 'Feta darüberbröseln, Deckel auflegen und 5 Min stocken lassen.']
+      },
+      {
+        id: 'rcp_pan_5', title: 'Cremige Thunfisch-Nudeln mit Erbsen', category: 'pan', badge: 'Schnell', time: 12, protein: 44, calories: 480,
+        description: 'Schneller geht es kaum: Vorratskammer-Klassiker mit Top-Protein.',
+        ingredients: ['1 Dose Thunfisch im eigenen Saft', '100g Nudeln', '80g TK-Erbsen', '2 EL Frischkäse leicht', '1 Spritzer Zitronensaft', 'Pfeffer'],
+        steps: ['Nudeln mit Erbsen in einem Topf kochen.', 'Wasser abgießen.', 'Thunfisch, Frischkäse und Zitrone direkt unterrühren und pfeffern.']
+      },
+      {
+        id: 'rcp_pan_6', title: 'Fluffige Protein-Pancakes mit Beeren', category: 'pan', badge: 'Schnell', time: 10, protein: 42, calories: 380,
+        description: 'Süßes Abendessen oder schnelles Power-Frühstück ohne Proteinpulver.',
+        ingredients: ['150g Magerquark', '2 Eier', '40g gemahlene Haferflocken', '1/2 TL Backpulver', '100g Beeren', '1 Spritzer Süßstoff'],
+        steps: ['Quark, Eier, Haferflocken, Backpulver und Süßstoff glattrühren.', 'In beschichteter Pfanne bei mittlerer Hitze 3-4 Pancakes backen.', 'Wenden und mit Beeren anrichten.']
+      }
+    ];
 
     var CAT_ORDER = ['Obst & Gemüse', 'Bäckerei', 'Fleisch & Fisch', 'Milchprodukte & Eier', 'Vorrat', 'Tiefkühl', 'Snacks', 'Drogerie & Haushalt', 'Sonstiges'];
     var CATALOG = [
       ['Äpfel', 'Obst & Gemüse'], ['Avocados', 'Obst & Gemüse'], ['Bananen', 'Obst & Gemüse'], ['Babyspinat', 'Obst & Gemüse'], ['Blaubeeren', 'Obst & Gemüse'],
       ['Brokkoli', 'Obst & Gemüse'], ['Karotten', 'Obst & Gemüse'], ['Gurke', 'Obst & Gemüse'], ['Knoblauch', 'Obst & Gemüse'], ['Weintrauben', 'Obst & Gemüse'],
       ['Zitronen', 'Obst & Gemüse'], ['Limetten', 'Obst & Gemüse'], ['Zwiebeln', 'Obst & Gemüse'], ['Kartoffeln', 'Obst & Gemüse'], ['Erdbeeren', 'Obst & Gemüse'],
-      ['Tomaten', 'Obst & Gemüse'], ['Salat', 'Obst & Gemüse'], ['Paprika', 'Obst & Gemüse'], ['Pilze', 'Obst & Gemüse'],
-      ['Brot', 'Bäckerei'], ['Brötchen', 'Bäckerei'], ['Croissants', 'Bäckerei'], ['Sauerteigbrot', 'Bäckerei'], ['Toastbrot', 'Bäckerei'], ['Burger Buns', 'Bäckerei'],
-      ['Bacon', 'Fleisch & Fisch'], ['Hähnchenbrust', 'Fleisch & Fisch'], ['Hackfleisch', 'Fleisch & Fisch'], ['Lachsfilet', 'Fleisch & Fisch'], ['Garnelen', 'Fleisch & Fisch'], ['Wurst', 'Fleisch & Fisch'],
+      ['Tomaten', 'Obst & Gemüse'], ['Salat', 'Obst & Gemüse'], ['Paprika', 'Obst & Gemüse'], ['Pilze', 'Obst & Gemüse'], ['Zucchini', 'Obst & Gemüse'], ['Champignons', 'Obst & Gemüse'],
+      ['Brot', 'Bäckerei'], ['Brötchen', 'Bäckerei'], ['Croissants', 'Bäckerei'], ['Sauerteigbrot', 'Bäckerei'], ['Toastbrot', 'Bäckerei'], ['Burger Buns', 'Bäckerei'], ['Wraps', 'Bäckerei'],
+      ['Bacon', 'Fleisch & Fisch'], ['Hähnchenbrust', 'Fleisch & Fisch'], ['Hackfleisch', 'Fleisch & Fisch'], ['Lachsfilet', 'Fleisch & Fisch'], ['Garnelen', 'Fleisch & Fisch'], ['Wurst', 'Fleisch & Fisch'], ['Putensteaks', 'Fleisch & Fisch'],
       ['Butter', 'Milchprodukte & Eier'], ['Gouda', 'Milchprodukte & Eier'], ['Frischkäse', 'Milchprodukte & Eier'], ['Eier', 'Milchprodukte & Eier'],
       ['Griechischer Joghurt', 'Milchprodukte & Eier'], ['Parmesan', 'Milchprodukte & Eier'], ['Vollmilch', 'Milchprodukte & Eier'], ['Milch', 'Milchprodukte & Eier'],
-      ['Mozzarella', 'Milchprodukte & Eier'], ['Sahne', 'Milchprodukte & Eier'], ['Hafermilch', 'Milchprodukte & Eier'], ['Käse', 'Milchprodukte & Eier'],
+      ['Mozzarella', 'Milchprodukte & Eier'], ['Sahne', 'Milchprodukte & Eier'], ['Hafermilch', 'Milchprodukte & Eier'], ['Käse', 'Milchprodukte & Eier'], ['Magerquark', 'Milchprodukte & Eier'], ['Feta', 'Milchprodukte & Eier'], ['Skyr', 'Milchprodukte & Eier'], ['Körniger Frischkäse', 'Milchprodukte & Eier'],
       ['Olivenöl', 'Vorrat'], ['Penne', 'Vorrat'], ['Reis', 'Vorrat'], ['Haferflocken', 'Vorrat'], ['Kaffee', 'Vorrat'], ['Mehl', 'Vorrat'], ['Zucker', 'Vorrat'],
-      ['Passierte Tomaten', 'Vorrat'], ['Sojasauce', 'Vorrat'], ['Nudeln', 'Vorrat'], ['Spaghetti', 'Vorrat'], ['Pesto', 'Vorrat'],
-      ['TK-Erbsen', 'Tiefkühl'], ['TK-Beeren', 'Tiefkühl'], ['TK-Pizza', 'Tiefkühl'], ['Eis', 'Tiefkühl'],
-      ['Tortilla Chips', 'Snacks'], ['Dunkle Schokolade', 'Snacks'], ['Mandeln', 'Snacks'], ['Chips', 'Snacks'], ['Schokolade', 'Snacks'],
+      ['Passierte Tomaten', 'Vorrat'], ['Sojasauce', 'Vorrat'], ['Nudeln', 'Vorrat'], ['Spaghetti', 'Vorrat'], ['Pesto', 'Vorrat'], ['Thunfisch', 'Vorrat'], ['Kidneybohnen', 'Vorrat'], ['Mais', 'Vorrat'], ['Cornflakes', 'Vorrat'],
+      ['TK-Erbsen', 'Tiefkühl'], ['TK-Beeren', 'Tiefkühl'], ['TK-Pizza', 'Tiefkühl'], ['Eis', 'Tiefkühl'], ['TK-Edamame', 'Tiefkühl'],
+      ['Tortilla Chips', 'Snacks'], ['Dunkle Schokolade', 'Snacks'], ['Mandeln', 'Snacks'], ['Chips', 'Snacks'], ['Schokolade', 'Snacks'], ['Cashewnüsse', 'Snacks'],
       ['Spülmittel', 'Drogerie & Haushalt'], ['Küchenrolle', 'Drogerie & Haushalt'], ['Toilettenpapier', 'Drogerie & Haushalt'], ['Klopapier', 'Drogerie & Haushalt'],
       ['Backpapier', 'Drogerie & Haushalt'], ['Müllbeutel', 'Drogerie & Haushalt'], ['Seife', 'Drogerie & Haushalt'], ['Zahnpasta', 'Drogerie & Haushalt']
     ];
@@ -154,7 +359,16 @@
         render();
       }).catch(function () {});
     }
-    function loadAll() { NAMES.forEach(load); }
+    function loadAll() {
+      NAMES.forEach(load);
+      checkGeminiKey();
+    }
+
+    function checkGeminiKey() {
+      fetch('/api/settings/gemini').then(function (r) { return r.json(); }).then(function (res) {
+        if (res && res.ok) hasGeminiKey = Boolean(res.hasKey);
+      }).catch(function () {});
+    }
 
     function post(name, op) {
       function go() {
@@ -219,7 +433,6 @@
       var open = data.groceries.filter(function (g) { return !g.done; });
       var done = data.groceries.filter(function (g) { return g.done; });
 
-      // Schnellwahl Chips
       var chipsHtml = '<div class="chips-wrap"><div class="chips-title">Häufig gebraucht · 1-Tap</div><div class="chips">' + BASICS.map(function (b) {
         var on = open.filter(function (g) { return g.name.toLowerCase() === b.name.toLowerCase(); })[0];
         return '<button class="chip' + (on ? ' is-on' : '') + '" data-quick="' + esc(b.name) + '">' +
@@ -231,7 +444,6 @@
       if (!open.length) {
         h += '<div class="empty">Nichts auf der Liste 🎉</div>';
       } else {
-        // Nach Kategorien gruppieren
         open.forEach(function (g) { if (!g.cat) g.cat = categorize(g.name); });
         CAT_ORDER.forEach(function (cat) {
           var inCat = open.filter(function (g) { return (g.cat || 'Sonstiges') === cat; });
@@ -306,7 +518,13 @@
       var mealsMap = {};
       data.meals.forEach(function (m) { mealsMap[m.day] = m; });
 
-      var h = '<div class="sec" style="margin-top:0"><span>Wochenplaner · Mo – So</span></div>';
+      var h = '<div style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none">' +
+        '<button class="meal-btn" id="btnGoRecipes" style="background:#2563eb;color:#fff;border-color:#2563eb;font-weight:700">📖 Rezepte stöbern</button>' +
+        '<button class="meal-btn" id="btnRandomMealIdea">🎲 Schnelle Idee</button>' +
+        '<button class="meal-btn" id="btnAiMealIdea" style="background:rgba(139,92,246,0.18);border-color:#8b5cf6;color:#c084fc">✨ KI-Rezept</button>' +
+      '</div>' +
+      '<div class="sec" style="margin-top:0"><span>Wochenplaner · Mo – So</span></div>';
+
       DAYS.forEach(function (dayName, idx) {
         var m = mealsMap[idx] || { id: 'm_' + idx, day: idx, title: '', ingredients: '' };
         var isToday = idx === curDay;
@@ -331,6 +549,157 @@
       el.innerHTML = h;
     }
 
+    // ---------------- High-Protein Rezeptdatenbank
+    function getAllRecipes() {
+      var custom = (data.recipes || []).filter(function (r) {
+        return !BASE_RECIPES.some(function (b) { return b.id === r.id; });
+      });
+      return [].concat(BASE_RECIPES, custom);
+    }
+
+    function renderRecipes(el) {
+      var all = getAllRecipes();
+      var filtered = all.filter(function (r) {
+        if (rcpFilter !== 'all' && r.category !== rcpFilter) return false;
+        if (rcpSearch) {
+          var q = rcpSearch.toLowerCase();
+          var titleHit = (r.title || '').toLowerCase().indexOf(q) > -1;
+          var descHit = (r.description || '').toLowerCase().indexOf(q) > -1;
+          var ingHit = Array.isArray(r.ingredients) ? r.ingredients.some(function (i) { return i.toLowerCase().indexOf(q) > -1; }) : false;
+          return titleHit || descHit || ingHit;
+        }
+        return true;
+      });
+
+      var badgeClass = function (cat) {
+        if (cat === 'airfryer') return 'badge-airfryer';
+        if (cat === 'ricecooker') return 'badge-ricecooker';
+        if (cat === 'oven') return 'badge-oven';
+        return 'badge-pan';
+      };
+
+      // Filter Chips
+      var filters = [
+        ['all', 'Alle (' + all.length + ')'],
+        ['airfryer', '🍟 Airfryer'],
+        ['ricecooker', '🍚 Reiskocher'],
+        ['oven', '🥘 Backofen'],
+        ['pan', '🍳 Schnell']
+      ];
+
+      var filterHtml = '<div class="rcp-filter-row">' + filters.map(function (f) {
+        return '<button class="chip' + (rcpFilter === f[0] ? ' is-on' : '') + '" data-rcp-filter="' + f[0] + '">' + f[1] + '</button>';
+      }).join('') + '</div>';
+
+      // Such- & Aktionsleiste
+      var actionHtml = '<div class="rcp-actions-row">' +
+        '<input type="text" id="rcpSearchInput" class="rcp-search" placeholder="Rezept oder Zutat suchen…" value="' + esc(rcpSearch) + '">' +
+        '<button class="rcp-top-btn" id="btnRcpRandom">🎲 Zufall</button>' +
+        '<button class="rcp-top-btn rcp-top-btn--ai" id="btnToggleAi">✨ KI' + (aiOpen ? ' ▲' : ' ▼') + '</button>' +
+      '</div>';
+
+      // Gemini KI Panel
+      var aiHtml = '';
+      if (aiOpen) {
+        aiHtml = '<div class="rcp-ai-panel">' +
+          '<h3><span>✨ Gemini 2.5 KI-Chef</span>' +
+          '<button id="btnSetKey" style="background:none;border:0;color:#c084fc;font-size:11px;cursor:pointer;text-decoration:underline">' +
+          (hasGeminiKey ? '🔑 Key aktiv' : '🔑 Key hinterlegen') + '</button></h3>' +
+          '<p>Generiere ein maßgeschneidertes High-Protein Rezept für deine Küchengeräte:</p>' +
+          '<textarea id="aiPrompt" placeholder="z. B. Hähnchen mit Reis und Brokkoli, max. 15 Minuten Zubereitungszeit..."></textarea>' +
+          '<select id="aiCategory">' +
+          '  <option value="airfryer">🍟 Heißluftfritteuse (Airfryer)</option>' +
+          '  <option value="ricecooker">🍚 Reiskocher One-Pot</option>' +
+          '  <option value="oven">🥘 Backofen / Blechgericht</option>' +
+          '  <option value="pan">🍳 15-Minuten Pfanne / Wok</option>' +
+          '</select>' +
+          '<button class="rcp-ai-btn" id="btnGenAi"' + (aiBusy ? ' disabled' : '') + '>' +
+          (aiBusy ? '⏳ Gemini kreiert Rezept...' : '🚀 Rezept per KI zaubern') + '</button>';
+
+        if (aiRecipe) {
+          aiHtml += '<div class="rcp-ai-res">' +
+            '<div class="rcp-head">' +
+            '  <span class="rcp-title">' + esc(aiRecipe.title) + '</span>' +
+            '  <span class="rcp-badge ' + badgeClass(aiRecipe.category) + '">' + esc(aiRecipe.badge || 'KI-Rezept') + '</span>' +
+            '</div>' +
+            '<div class="rcp-meta-pills">' +
+            '  <span class="rcp-pill">⏱️ ' + (aiRecipe.time || 15) + ' Min</span>' +
+            '  <span class="rcp-pill rcp-pill--prot">💪 ' + (aiRecipe.protein || 45) + 'g Protein</span>' +
+            '  <span class="rcp-pill">🔥 ' + (aiRecipe.calories || 450) + ' kcal</span>' +
+            '</div>' +
+            '<p class="rcp-desc">' + esc(aiRecipe.description) + '</p>' +
+            '<div style="font-size:12px;margin-bottom:8px"><b>Zutaten:</b><ul style="list-style:disc inside;margin-top:4px">' +
+            (aiRecipe.ingredients || []).map(function (it) { return '<li>' + esc(it) + '</li>'; }).join('') +
+            '</ul></div>' +
+            '<div style="font-size:12px;margin-bottom:12px"><b>Zubereitung:</b><ol style="list-style:decimal inside;margin-top:4px">' +
+            (aiRecipe.steps || []).map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') +
+            '</ol></div>' +
+            '<div class="rcp-actions">' +
+            '  <button class="meal-btn" id="btnSaveAiRcp" style="background:#2563eb;color:#fff;border-color:#2563eb">⭐ In Sammlung speichern</button>' +
+            '  <button class="meal-btn meal-btn--cart" id="btnAiCart">🛒 Auf Einkaufsliste</button>' +
+            '  <select class="rcp-select-day" id="selectAiDay"><option value="">📅 Für Tag planen…</option>' +
+            DAYS.map(function (d, i) { return '<option value="' + i + '">' + d + '</option>'; }).join('') +
+            '  </select>' +
+            '</div>' +
+          '</div>';
+        }
+        aiHtml += '</div>';
+      }
+
+      // Rezeptkarten
+      var cardsHtml = '';
+      if (!filtered.length) {
+        cardsHtml = '<div class="empty">Keine passenden Rezepte gefunden 🔍</div>';
+      } else {
+        cardsHtml = filtered.map(function (r) {
+          var isCustom = !BASE_RECIPES.some(function (b) { return b.id === r.id; });
+          var ingLines = (r.ingredients || []).map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('');
+          var stepLines = (r.steps || []).map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('');
+
+          return '<div class="rcp-card" data-rcp-id="' + esc(r.id) + '">' +
+            '<div class="rcp-head">' +
+            '  <span class="rcp-title">' + esc(r.title) + '</span>' +
+            '  <span class="rcp-badge ' + badgeClass(r.category) + '">' + esc(r.badge || 'Rezept') + '</span>' +
+            '</div>' +
+            '<div class="rcp-meta-pills">' +
+            '  <span class="rcp-pill">⏱️ ' + (r.time || 15) + ' Min</span>' +
+            '  <span class="rcp-pill rcp-pill--prot">💪 ' + (r.protein || 40) + 'g Protein</span>' +
+            '  <span class="rcp-pill">🔥 ' + (r.calories || 450) + ' kcal</span>' +
+            (isCustom ? '  <span class="rcp-pill" style="color:#c084fc;background:rgba(139,92,246,0.2)">✨ Custom / KI</span>' : '') +
+            '</div>' +
+            '<p class="rcp-desc">' + esc(r.description) + '</p>' +
+            '<div class="rcp-details" id="details_' + esc(r.id) + '">' +
+            '  <div class="rcp-section-title">Zutaten:</div>' +
+            '  <ul class="rcp-ing-list">' + ingLines + '</ul>' +
+            '  <div class="rcp-section-title">Zubereitung:</div>' +
+            '  <ol class="rcp-step-list">' + stepLines + '</ol>' +
+            '</div>' +
+            '<div class="rcp-actions">' +
+            '  <button class="meal-btn" data-toggle-details="' + esc(r.id) + '">Schritte &amp; Zutaten</button>' +
+            '  <select class="rcp-select-day" data-plan-select="' + esc(r.id) + '">' +
+            '    <option value="">📅 In Wochenplan…</option>' +
+            DAYS.map(function (d, i) { return '<option value="' + i + '">' + d + '</option>'; }).join('') +
+            '  </select>' +
+            '  <button class="meal-btn meal-btn--cart" data-rcp-cart="' + esc(r.id) + '">🛒 Zutaten</button>' +
+            (isCustom ? '  <button class="meal-btn del" data-del-rcp="' + esc(r.id) + '" style="margin-left:auto">✕</button>' : '') +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+
+      el.innerHTML = filterHtml + actionHtml + aiHtml + cardsHtml;
+
+      var searchInp = document.getElementById('rcpSearchInput');
+      if (searchInp) {
+        searchInp.oninput = function () {
+          rcpSearch = this.value;
+          render();
+          var updatedInp = document.getElementById('rcpSearchInput');
+          if (updatedInp) { updatedInp.focus(); updatedInp.setSelectionRange(rcpSearch.length, rcpSearch.length); }
+        };
+      }
+    }
+
     function addIngredientsToCart(ingString) {
       if (!ingString) return;
       var items = ingString.split(/[,;\n]+/).map(function (s) { return s.trim(); }).filter(Boolean);
@@ -353,23 +722,72 @@
       toast(added + ' Zutaten auf die Einkaufsliste gesetzt! 🛒');
     }
 
+    function planRecipeForDay(rcp, dayIdx) {
+      var m = data.meals.filter(function (x) { return x.day === dayIdx; })[0];
+      var ingText = Array.isArray(rcp.ingredients) ? rcp.ingredients.join(', ') : (rcp.ingredients || '');
+      if (!m) {
+        m = { id: 'm_' + dayIdx, day: dayIdx, title: rcp.title, ingredients: ingText };
+        data.meals.push(m);
+      } else {
+        m.title = rcp.title;
+        m.ingredients = ingText;
+      }
+      save('meals', [m]);
+      toast('Für ' + DAYS[dayIdx] + ' eingeplant! 📅');
+    }
+
+    function generateAiRecipe() {
+      var p = document.getElementById('aiPrompt');
+      var cat = document.getElementById('aiCategory');
+      var promptText = p ? p.value.trim() : '';
+      var category = cat ? cat.value : 'airfryer';
+      if (!promptText) promptText = 'Schnelles High-Protein Gericht für ' + category;
+
+      aiBusy = true;
+      render();
+
+      fetch('/api/recipes/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Pin': localStorage.getItem('upload_pin') || '' },
+        body: JSON.stringify({ prompt: promptText, category: category })
+      }).then(function (r) {
+        return r.json();
+      }).then(function (res) {
+        aiBusy = false;
+        if (res.ok && res.recipe) {
+          aiRecipe = res.recipe;
+          aiRecipe.id = 'rcp_ai_' + Date.now();
+          toast('Neues KI-Rezept kreiert! ✨');
+        } else {
+          toast('Fehler: ' + (res.error || 'Generierung fehlgeschlagen'));
+        }
+        render();
+      }).catch(function (e) {
+        aiBusy = false;
+        toast('Netzwerkfehler bei KI-Generierung');
+        render();
+      });
+    }
+
     function render() {
       var el = document.getElementById('app');
       var focused = document.activeElement && document.activeElement.id === 'addInput';
       var typed = focused ? document.activeElement.value : '';
       var keepSel = focused ? [document.getElementById('addInput').selectionStart] : null;
 
-      document.getElementById('title').textContent = tab === 'groceries' ? 'Einkaufsliste' : tab === 'chores' ? 'Aufgaben heute' : 'Wochen-Essensplan';
+      document.getElementById('title').textContent = tab === 'groceries' ? 'Einkaufsliste' : tab === 'chores' ? 'Aufgaben heute' : tab === 'meals' ? 'Wochen-Essensplan' : 'High-Protein Rezepte';
       document.getElementById('edit').style.display = tab === 'chores' ? '' : 'none';
       document.getElementById('edit').textContent = editMode ? 'Fertig' : 'Bearbeiten';
       document.getElementById('tabShop').className = tab === 'groceries' ? 'on' : '';
       document.getElementById('tabTasks').className = tab === 'chores' ? 'on' : '';
       document.getElementById('tabMeals').className = tab === 'meals' ? 'on' : '';
+      document.getElementById('tabRecipes').className = tab === 'recipes' ? 'on' : '';
 
       if (!loaded) { el.innerHTML = '<div class="empty">Lade…</div>'; return; }
       if (tab === 'groceries') renderShop(el);
       else if (tab === 'chores') renderTasks(el);
-      else renderMeals(el);
+      else if (tab === 'meals') renderMeals(el);
+      else renderRecipes(el);
 
       if (focused) { var i = document.getElementById('addInput'); if (i) { i.value = typed; i.focus(); try { i.setSelectionRange(keepSel[0], keepSel[0]); } catch (e) {} } }
     }
@@ -390,7 +808,35 @@
         if (e.target.closest('[data-toggle]')) { item.done = !item.done; save(tab, [item]); render(); return; }
       }
 
-      // Wochenplan
+      // Wochenplan Quick Action Buttons
+      if (e.target.id === 'btnGoRecipes') {
+        tab = 'recipes';
+        render();
+        return;
+      }
+      if (e.target.id === 'btnRandomMealIdea') {
+        var pool = getAllRecipes();
+        var pick = pool[Math.floor(Math.random() * pool.length)];
+        var cur = currentDayIdx();
+        var targetDay = cur;
+        for (var d = 0; d < 7; d++) {
+          var checkDay = (cur + d) % 7;
+          var hasMeal = data.meals.some(function (m) { return m.day === checkDay && m.title; });
+          if (!hasMeal) { targetDay = checkDay; break; }
+        }
+        planRecipeForDay(pick, targetDay);
+        render();
+        return;
+      }
+      if (e.target.id === 'btnAiMealIdea') {
+        tab = 'recipes';
+        aiOpen = true;
+        render();
+        var p = document.getElementById('aiPrompt'); if (p) p.focus();
+        return;
+      }
+
+      // Wochenplan Events
       if (tab === 'meals') {
         var mealCard = e.target.closest('.meal-card');
         if (!mealCard) return;
@@ -444,11 +890,135 @@
           return;
         }
       }
+
+      // Rezepte Tab Events
+      if (tab === 'recipes') {
+        var chip = e.target.closest('[data-rcp-filter]');
+        if (chip) {
+          rcpFilter = chip.dataset.rcpFilter;
+          render();
+          return;
+        }
+
+        if (e.target.id === 'btnRcpRandom') {
+          var matching = getAllRecipes().filter(function (r) {
+            return rcpFilter === 'all' || r.category === rcpFilter;
+          });
+          if (matching.length) {
+            var lucky = matching[Math.floor(Math.random() * matching.length)];
+            toast('Zufallsidee: ' + lucky.title + ' 🎲');
+            var cardEl = document.querySelector('[data-rcp-id="' + lucky.id + '"]');
+            if (cardEl) {
+              cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              var det = document.getElementById('details_' + lucky.id);
+              if (det) det.classList.add('open');
+            }
+          }
+          return;
+        }
+
+        if (e.target.id === 'btnToggleAi') {
+          aiOpen = !aiOpen;
+          render();
+          return;
+        }
+
+        if (e.target.id === 'btnSetKey') {
+          var current = prompt('Google AI Studio API Key (AIza...):');
+          if (current !== null) {
+            fetch('/api/settings/gemini', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Pin': localStorage.getItem('upload_pin') || '' },
+              body: JSON.stringify({ key: current.trim() })
+            }).then(function (r) { return r.json(); }).then(function (res) {
+              if (res.ok) {
+                toast('Google AI Studio Key gespeichert! 🔑');
+                hasGeminiKey = Boolean(current.trim());
+                render();
+              } else {
+                toast('Fehler beim Speichern: ' + (res.error || ''));
+              }
+            });
+          }
+          return;
+        }
+
+        if (e.target.id === 'btnGenAi') {
+          generateAiRecipe();
+          return;
+        }
+
+        if (e.target.id === 'btnSaveAiRcp') {
+          if (aiRecipe) {
+            data.recipes.push(aiRecipe);
+            save('recipes', [aiRecipe]);
+            toast('Rezept in Datenbank gesichert! ⭐');
+            render();
+          }
+          return;
+        }
+
+        if (e.target.id === 'btnAiCart') {
+          if (aiRecipe && aiRecipe.ingredients) {
+            addIngredientsToCart(aiRecipe.ingredients.join(', '));
+          }
+          return;
+        }
+
+        var toggleDetails = e.target.closest('[data-toggle-details]');
+        if (toggleDetails) {
+          var id = toggleDetails.dataset.toggleDetails;
+          var detailsBox = document.getElementById('details_' + id);
+          if (detailsBox) detailsBox.classList.toggle('open');
+          return;
+        }
+
+        var rcpCart = e.target.closest('[data-rcp-cart]');
+        if (rcpCart) {
+          var rcpId = rcpCart.dataset.rcpCart;
+          var rcp = getAllRecipes().filter(function (x) { return x.id === rcpId; })[0];
+          if (rcp && rcp.ingredients) {
+            addIngredientsToCart(rcp.ingredients.join(', '));
+          }
+          return;
+        }
+
+        var delRcp = e.target.closest('[data-del-rcp]');
+        if (delRcp) {
+          var delId = delRcp.dataset.delRcp;
+          remove('recipes', [delId]);
+          toast('Rezept gelöscht');
+          return;
+        }
+      }
+    });
+
+    // Dropdown-Änderungen für Essensplaner
+    document.getElementById('app').addEventListener('change', function (e) {
+      if (e.target.id === 'selectAiDay') {
+        var day = parseInt(e.target.value, 10);
+        if (!isNaN(day) && aiRecipe) {
+          planRecipeForDay(aiRecipe, day);
+          e.target.value = '';
+        }
+        return;
+      }
+      var planSel = e.target.closest('[data-plan-select]');
+      if (planSel) {
+        var dIdx = parseInt(planSel.value, 10);
+        var rId = planSel.dataset.planSelect;
+        if (!isNaN(dIdx)) {
+          var r = getAllRecipes().filter(function (x) { return x.id === rId; })[0];
+          if (r) planRecipeForDay(r, dIdx);
+          planSel.value = '';
+        }
+      }
     });
 
     document.getElementById('tabShop').onclick = function () { tab = 'groceries'; render(); };
     document.getElementById('tabTasks').onclick = function () { tab = 'chores'; render(); };
     document.getElementById('tabMeals').onclick = function () { tab = 'meals'; render(); };
+    document.getElementById('tabRecipes').onclick = function () { tab = 'recipes'; render(); };
     document.getElementById('edit').onclick = function () { editMode = !editMode; render(); };
 
     loadAll();

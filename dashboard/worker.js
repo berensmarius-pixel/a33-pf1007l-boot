@@ -1,7 +1,7 @@
 import listeHtml from './liste.html';
 import uploadHtml from './upload.html';
 
-const LIST_NAMES = ['groceries', 'chores', 'meals'];
+const LIST_NAMES = ['groceries', 'chores', 'meals', 'recipes'];
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp', 'avif']; // HEIC kann das Tablet nicht anzeigen
 
@@ -460,6 +460,96 @@ export default {
         return json(next, 200, { 'Cache-Control': 'no-store' });
       }
       return json({ error: 'Methode nicht erlaubt' }, 405);
+    }
+
+    // ------------------------------------------------------------
+    // 6. Google Gemini AI Rezepte & Einstellungen
+    // ------------------------------------------------------------
+    if (url.pathname === '/api/settings/gemini') {
+      const storedKey = (env.PHOTOS_KV ? await env.PHOTOS_KV.get('gemini_api_key') : null) || env.GEMINI_API_KEY || '';
+      if (request.method === 'GET') {
+        return json({ ok: true, hasKey: Boolean(storedKey && storedKey.trim()) });
+      }
+      if (request.method === 'POST') {
+        if (!isAuthorized(request, env)) return json({ error: 'PIN falsch oder fehlt' }, 401);
+        let b = {};
+        try { b = await request.json(); } catch (e) {}
+        const k = String(b.key || '').trim();
+        if (env.PHOTOS_KV) {
+          if (k) await env.PHOTOS_KV.put('gemini_api_key', k);
+          else await env.PHOTOS_KV.delete('gemini_api_key');
+        }
+        return json({ ok: true, hasKey: Boolean(k) });
+      }
+      return json({ error: 'Methode nicht erlaubt' }, 405);
+    }
+
+    if (url.pathname === '/api/recipes/ai' && request.method === 'POST') {
+      let b = {};
+      try { b = await request.json(); } catch (e) {}
+      const userPrompt = String(b.prompt || '').trim();
+      const cat = String(b.category || 'all');
+      const apiKey = b.apiKey || (env.PHOTOS_KV ? await env.PHOTOS_KV.get('gemini_api_key') : null) || env.GEMINI_API_KEY || request.headers.get('X-Gemini-Key') || '';
+
+      if (!apiKey || !apiKey.trim()) {
+        return json({ ok: false, error: 'Kein Google AI Studio API-Key hinterlegt. Trage ihn in den Einstellungen ein oder setze GEMINI_API_KEY.' }, 400);
+      }
+
+      const systemInstruction = 'Du bist ein erfahrener Koch und Ernährungsberater, spezialisiert auf schnelle, alltagstaugliche High-Protein-Gerichte (mindestens 35-50g Protein pro Portion, wenig Fett, minimale Vorbereitung, minimaler Abwasch).\n' +
+        'Geräte-Schwerpunkte: Heißluftfritteuse (Airfryer), Reiskocher One-Pots, Backofen-Blechgerichte (Sheet Pan) oder schnelle Pfannengerichte (10-15 Min).\n' +
+        'Antworte IMMER im folgenden JSON-Format ohne Markdown-Codeblock:\n' +
+        '{\n' +
+        '  "title": "Appetitlicher, prägnanter Name",\n' +
+        '  "category": "airfryer" | "ricecooker" | "oven" | "pan",\n' +
+        '  "badge": "Airfryer" | "Reiskocher" | "Backofen" | "Schnell",\n' +
+        '  "time": 15,\n' +
+        '  "protein": 45,\n' +
+        '  "calories": 480,\n' +
+        '  "description": "1 kurzer, motivierender Satz zum Gericht",\n' +
+        '  "ingredients": ["300g Hähnchenbrust", "150g Reis", "..."],\n' +
+        '  "steps": ["Schritt 1", "Schritt 2", "Schritt 3"]\n' +
+        '}';
+
+      const promptText = 'Erstelle ein schnelles, leckeres High-Protein-Rezept auf Deutsch für folgende Anfrage: "' + (userPrompt || 'Ein kreatives, schnelles High-Protein-Alltagsgericht') + '". Bevorzugte Zubereitung: ' + cat + '.';
+
+      const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      let aiResult = null;
+      let lastErr = null;
+
+      for (const mName of models) {
+        try {
+          const gUrl = 'https://generativelanguage.googleapis.com/v1beta/models/' + mName + ':generateContent?key=' + encodeURIComponent(apiKey.trim());
+          const gResp = await fetch(gUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ role: 'user', parts: [{ text: systemInstruction + '\n\n' + promptText }] }],
+              generationConfig: { responseMimeType: 'application/json' }
+            })
+          });
+
+          if (gResp.ok) {
+            const gData = await gResp.json();
+            const rawText = gData?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (rawText) {
+              const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+              aiResult = JSON.parse(cleaned);
+              break;
+            }
+          } else {
+            const errBody = await gResp.json().catch(() => ({}));
+            lastErr = errBody?.error?.message || ('HTTP ' + gResp.status);
+          }
+        } catch (e) {
+          lastErr = e.message;
+        }
+      }
+
+      if (!aiResult) {
+        return json({ ok: false, error: 'Gemini-Generierung fehlgeschlagen: ' + (lastErr || 'Keine Antwort') }, 502);
+      }
+
+      return json({ ok: true, recipe: aiResult });
     }
 
     // ------------------------------------------------------------

@@ -88,4 +88,222 @@
 .s-meal-btn { width: 100%; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 700; background: var(--paper-2); color: var(--ink); text-align: center; cursor: pointer; }
 .s-meal-btn:active { transform: scale(.97); }
 .s-meal-btn--cart { background: var(--ink); color: var(--paper); }
+.s-meal-btn--rcp { background: #dbeafe; color: #1d4ed8; }
+
+/* Meal planner top bar */
+.s-meals-topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.s-m-btn {
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all .15s;
+}
+.s-m-btn:active { transform: scale(0.97); }
+.s-m-btn--ai {
+  background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+/* Recipe sheet & cards */
+.rcp-sheet {
+  width: 920px;
+  max-width: 92vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.rcp-nav {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 8px;
+}
+.rcp-nav-btn {
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--mute);
+  cursor: pointer;
+}
+.rcp-nav-btn.is-active {
+  background: var(--ink);
+  color: var(--paper);
+}
+.rcp-filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.rcp-chip {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+.rcp-chip.is-on {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.rcp-search {
+  flex: 1;
+  min-width: 220px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  font-size: 14px;
+  outline: none;
+}
+.rcp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.rcp-card {
+  background: var(--card);
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+.rcp-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rcp-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.rcp-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.rcp-badge--pro { background: #dcfce7; color: #15803d; }
+.rcp-badge--dev { background: #dbeafe; color: #1e40af; }
+.rcp-badge--time { background: #fef3c7; color: #92400e; }
+.rcp-badge--cal { background: var(--paper-2); color: var(--mute); }
+.rcp-card-title {
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.rcp-card-desc {
+  font-size: 13px;
+  color: var(--mute);
+  line-height: 1.35;
+}
+.rcp-card-steps {
+  display: none;
+  font-size: 13px;
+  background: var(--paper-2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 6px;
+}
+.rcp-card-steps.is-open { display: block; }
+.rcp-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.rcp-act-btn {
+  flex: 1;
+  min-height: 38px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: center;
+}
+.rcp-act-btn--primary {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.rcp-act-btn--cart {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+.rcp-ai-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+}
+.rcp-ai-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  font-size: 16px;
+  outline: none;
+}
+.rcp-ai-btn {
+  min-height: 48px;
+  padding: 0 24px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.rcp-ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.rcp-ai-res {
+  background: var(--card);
+  border-radius: var(--r);
+  border: 2px solid #3b82f6;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 

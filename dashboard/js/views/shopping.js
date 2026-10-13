@@ -29,7 +29,12 @@
     var curDay = (App.now().getDay() + 6) % 7;
     var mealsMap = {};
     (D.meals || []).forEach(function (m) { mealsMap[m.day] = m; });
-    return '<div class="s-meals-wrap">' + DAYS.map(function (dayName, idx) {
+    return '<div class="s-meals-topbar">' +
+      '  <button class="s-m-btn" data-rcp-action="browse">📖 Rezepte stöbern</button>' +
+      '  <button class="s-m-btn" data-rcp-action="dice">🎲 Schnelle Idee</button>' +
+      '  <button class="s-m-btn s-m-btn--ai" data-rcp-action="ai">✨ KI-Rezept (Gemini)</button>' +
+      '</div>' +
+      '<div class="s-meals-wrap">' + DAYS.map(function (dayName, idx) {
       var m = mealsMap[idx] || { id: 'm_' + idx, day: idx, title: '', ingredients: '' };
       var isToday = idx === curDay;
       return '<div class="s-meal-col' + (isToday ? ' is-today' : '') + '" data-day="' + idx + '">' +
@@ -40,6 +45,7 @@
         '</div>' +
         '<div class="s-meal-foot">' +
         '  <button class="s-meal-btn" data-edit-meal="' + idx + '">' + (m.title ? 'Bearbeiten' : 'Planen') + '</button>' +
+        '  <button class="s-meal-btn s-meal-btn--rcp" data-pick-rcp="' + idx + '">💡 Rezept</button>' +
         (m.ingredients ? '  <button class="s-meal-btn s-meal-btn--cart" data-cart-meal="' + idx + '">🛒 Auf Liste</button>' : '') +
         '</div>' +
         '</div>';
@@ -51,6 +57,7 @@
     var m = (D.meals || []).filter(function (x) { return x.day === dayIdx; })[0] || { id: 'm_' + dayIdx, day: dayIdx, title: '', ingredients: '' };
     var html = '<div class="t-sheet-head"><div><b>' + App.esc(dayName) + '</b><small>Gericht &amp; Zutaten planen</small></div><button class="btn-close" id="mClose">✕</button></div>' +
       '<div style="padding:16px 0;display:flex;flex-direction:column;gap:12px">' +
+      '<button id="mPickRcp" class="btn btn--ghost" style="border:1px solid #3b82f6;color:#3b82f6;margin-bottom:6px">💡 Aus Rezept-Datenbank wählen</button>' +
       '<label class="label">Gericht</label>' +
       '<input id="mDish" class="s-input" style="height:56px;padding:0 16px;background:var(--paper-2);border-radius:12px;border:1px solid var(--line);font-size:20px" placeholder="z. B. Pasta Carbonara, Ofengemüse..." value="' + App.esc(m.title) + '">' +
       '<label class="label">Zutaten (durch Komma getrennt)</label>' +
@@ -65,6 +72,10 @@
         var ingInp = el.querySelector('#mIng');
         dishInp.focus();
         el.querySelector('#mClose').onclick = close;
+        el.querySelector('#mPickRcp').onclick = function () {
+          close();
+          openRecipeFinderSheet(dayIdx, 'browse');
+        };
         el.querySelector('#mSave').onclick = function () {
           var title = dishInp.value.trim();
           var ing = ingInp.value.trim();
@@ -86,6 +97,262 @@
           render();
           App.toast('Gericht gelöscht', { icon: 'check' });
         };
+      }
+    });
+  }
+
+  function openRecipeFinderSheet(dayIdx, mode) {
+    if (dayIdx == null) dayIdx = (App.now().getDay() + 6) % 7;
+    var targetDayName = DAYS[dayIdx];
+    var currentTab = (mode === 'ai') ? 'ai' : 'catalog';
+    var curCategory = 'all';
+    var aiCategory = 'airfryer';
+    var aiResult = null;
+
+    function getRecipes() {
+      return (D.recipes && D.recipes.length) ? D.recipes : (window.BASE_RECIPES || []);
+    }
+
+    if (mode === 'dice') {
+      var all = getRecipes();
+      if (all.length) aiResult = all[Math.floor(Math.random() * all.length)];
+    }
+
+    var html = '<div class="t-sheet-head">' +
+      '<div><b>High-Protein Rezepte &amp; Inspiration</b><small>Für ' + App.esc(targetDayName) + ' · Airfryer, Reiskocher, Backofen, Pfanne</small></div>' +
+      '<button class="btn-close" id="rClose">✕</button>' +
+      '</div>' +
+      '<div class="rcp-sheet">' +
+      '  <div class="rcp-nav">' +
+      '    <button class="rcp-nav-btn is-active" id="rcpTabCat">📖 Rezept-Katalog (' + getRecipes().length + ')</button>' +
+      '    <button class="rcp-nav-btn" id="rcpTabAi">✨ KI-Chef (Gemini)</button>' +
+      '  </div>' +
+      '  <div id="rcpCatView">' +
+      '    <div class="rcp-filter-row">' +
+      '      <button class="rcp-chip is-on" data-cat="all">Alle</button>' +
+      '      <button class="rcp-chip" data-cat="airfryer">🍟 Airfryer</button>' +
+      '      <button class="rcp-chip" data-cat="ricecooker">🍚 Reiskocher</button>' +
+      '      <button class="rcp-chip" data-cat="oven">🥘 Backofen</button>' +
+      '      <button class="rcp-chip" data-cat="pan">🍳 Pfanne</button>' +
+      '      <input class="rcp-search" id="rcpSearch" placeholder="🔍 Suchen (z. B. Hähnchen, Lachs, Reis)...">' +
+      '    </div>' +
+      '    <div class="rcp-grid" id="rcpGrid"></div>' +
+      '  </div>' +
+      '  <div id="rcpAiView" style="display:none;" class="rcp-ai-box">' +
+      '    <div style="font-size:14px;color:var(--mute)">Gib deine Zutaten oder Gelüste ein – Gemini zaubert ein maßgeschneidertes High-Protein-Rezept:</div>' +
+      '    <input class="rcp-ai-input" id="aiInp" placeholder="z. B. Hähnchenbrust, Reis und Brokkoli im Reiskocher (min. 40g Protein)...">' +
+      '    <div class="rcp-filter-row">' +
+      '      <span class="label" style="margin-right:4px">Gerät:</span>' +
+      '      <button class="rcp-chip is-on" data-ai-cat="airfryer">🍟 Airfryer</button>' +
+      '      <button class="rcp-chip" data-ai-cat="ricecooker">🍚 Reiskocher</button>' +
+      '      <button class="rcp-chip" data-ai-cat="oven">🥘 Backofen</button>' +
+      '      <button class="rcp-chip" data-ai-cat="pan">🍳 Pfanne</button>' +
+      '    </div>' +
+      '    <div style="display:flex;gap:10px;align-items:center">' +
+      '      <button class="rcp-ai-btn" id="aiBtn" style="flex:1">Rezept kreieren ✨</button>' +
+      '      <button class="rcp-act-btn" id="aiKeyBtn" style="flex:none;padding:10px 14px">🔑 API-Key</button>' +
+      '    </div>' +
+      '    <div id="aiOut"></div>' +
+      '  </div>' +
+      '</div>';
+
+    App.sheet(html, {
+      cls: 'sheet--wide',
+      onMount: function (el, close) {
+        var catView = el.querySelector('#rcpCatView');
+        var aiView = el.querySelector('#rcpAiView');
+        var tabCat = el.querySelector('#rcpTabCat');
+        var tabAi = el.querySelector('#rcpTabAi');
+        var grid = el.querySelector('#rcpGrid');
+        var searchInp = el.querySelector('#rcpSearch');
+        var aiInp = el.querySelector('#aiInp');
+        var aiBtn = el.querySelector('#aiBtn');
+        var aiOut = el.querySelector('#aiOut');
+        var aiKeyBtn = el.querySelector('#aiKeyBtn');
+
+        el.querySelector('#rClose').onclick = close;
+
+        function setTab(t) {
+          currentTab = t;
+          tabCat.classList.toggle('is-active', t === 'catalog');
+          tabAi.classList.toggle('is-active', t === 'ai');
+          catView.style.display = t === 'catalog' ? 'block' : 'none';
+          aiView.style.display = t === 'ai' ? 'flex' : 'none';
+          if (t === 'ai' && aiInp) aiInp.focus();
+        }
+
+        tabCat.onclick = function () { setTab('catalog'); };
+        tabAi.onclick = function () { setTab('ai'); };
+
+        function applyRecipeToDay(r) {
+          var next = (D.meals || []).filter(function (x) { return x.day !== dayIdx; });
+          var m = {
+            id: 'm_' + dayIdx,
+            day: dayIdx,
+            title: r.title,
+            ingredients: (r.ingredients || []).join(', ')
+          };
+          next.push(m);
+          D.meals = next;
+          App.Lists.upsert('meals', [m]);
+          close();
+          render();
+          App.toast('<b>' + App.esc(r.title) + '</b> für ' + targetDayName + ' eingeplant! 🍳', { icon: 'check' });
+        }
+
+        function renderGrid() {
+          var q = (searchInp.value || '').toLowerCase().trim();
+          var list = getRecipes().filter(function (r) {
+            var mCat = curCategory === 'all' || r.category === curCategory;
+            var mQ = !q || r.title.toLowerCase().indexOf(q) > -1 ||
+              (r.description && r.description.toLowerCase().indexOf(q) > -1) ||
+              (r.ingredients && r.ingredients.some(function (i) { return i.toLowerCase().indexOf(q) > -1; }));
+            return mCat && mQ;
+          });
+
+          if (!list.length) {
+            grid.innerHTML = '<div style="grid-column:1/-1;padding:30px;text-align:center;color:var(--mute)">Keine Rezepte gefunden</div>';
+            return;
+          }
+
+          grid.innerHTML = list.map(function (r) {
+            return '<div class="rcp-card" data-rcp-id="' + r.id + '">' +
+              '  <div class="rcp-card-head">' +
+              '    <div class="rcp-badges">' +
+              '      <span class="rcp-badge rcp-badge--dev">' + App.esc(r.badge || r.category) + '</span>' +
+              '      <span class="rcp-badge rcp-badge--pro">🍗 ' + (r.protein || 40) + 'g Protein</span>' +
+              '      <span class="rcp-badge rcp-badge--time">⏱️ ' + (r.time || 15) + 'm</span>' +
+              (r.calories ? '      <span class="rcp-badge rcp-badge--cal">' + r.calories + ' kcal</span>' : '') +
+              '    </div>' +
+              '    <div class="rcp-card-title">' + App.esc(r.title) + '</div>' +
+              '    <div class="rcp-card-desc">' + App.esc(r.description || '') + '</div>' +
+              '    <div class="rcp-card-steps" id="steps_' + r.id + '">' +
+              '      <b>Zutaten:</b><br>' + (r.ingredients || []).map(function (i) { return '• ' + App.esc(i); }).join('<br>') +
+              '      <br><br><b>Zubereitung:</b><br>' + (r.steps || []).map(function (s, idx) { return (idx + 1) + '. ' + App.esc(s); }).join('<br>') +
+              '    </div>' +
+              '  </div>' +
+              '  <div class="rcp-card-actions">' +
+              '    <button class="rcp-act-btn" data-toggle-steps="' + r.id + '">📖 Zubereitung</button>' +
+              '    <button class="rcp-act-btn rcp-act-btn--primary" data-apply-rcp="' + r.id + '">📅 Für ' + targetDayName + '</button>' +
+              '    <button class="rcp-act-btn rcp-act-btn--cart" data-cart-rcp="' + r.id + '">🛒 Auf Liste</button>' +
+              '  </div>' +
+              '</div>';
+          }).join('');
+        }
+
+        searchInp.oninput = renderGrid;
+        el.querySelectorAll('#rcpCatView [data-cat]').forEach(function (btn) {
+          btn.onclick = function () {
+            el.querySelectorAll('#rcpCatView [data-cat]').forEach(function (b) { b.classList.remove('is-on'); });
+            btn.classList.add('is-on');
+            curCategory = btn.dataset.cat;
+            renderGrid();
+          };
+        });
+
+        grid.onclick = function (e) {
+          var tog = e.target.closest('[data-toggle-steps]');
+          if (tog) {
+            var st = el.querySelector('#steps_' + tog.dataset.toggleSteps);
+            if (st) st.classList.toggle('is-open');
+            return;
+          }
+          var ap = e.target.closest('[data-apply-rcp]');
+          if (ap) {
+            var r = getRecipes().filter(function (x) { return x.id === ap.dataset.applyRcp; })[0];
+            if (r) applyRecipeToDay(r);
+            return;
+          }
+          var crt = e.target.closest('[data-cart-rcp]');
+          if (crt) {
+            var rcp = getRecipes().filter(function (x) { return x.id === crt.dataset.cartRcp; })[0];
+            if (rcp && rcp.ingredients) addIngredientsToCart(rcp.ingredients.join(', '));
+            return;
+          }
+        };
+
+        // AI View handlers
+        el.querySelectorAll('#rcpAiView [data-ai-cat]').forEach(function (b) {
+          b.onclick = function () {
+            el.querySelectorAll('#rcpAiView [data-ai-cat]').forEach(function (x) { x.classList.remove('is-on'); });
+            b.classList.add('is-on');
+            aiCategory = b.dataset.aiCat;
+          };
+        });
+
+        aiKeyBtn.onclick = function () {
+          var curKey = localStorage.getItem('gemini_api_key') || '';
+          var newKey = prompt('Google AI Studio API-Key eingeben (kostenlos auf aistudio.google.com):', curKey);
+          if (newKey !== null) {
+            localStorage.setItem('gemini_api_key', newKey.trim());
+            fetch('/api/settings/gemini', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Pin': localStorage.getItem('upload_pin') || '' },
+              body: JSON.stringify({ key: newKey.trim() })
+            }).catch(function () {});
+            App.toast('API-Key gespeichert! ✨', { icon: 'check' });
+          }
+        };
+
+        function renderAiCard(res) {
+          aiOut.innerHTML = '<div class="rcp-ai-res">' +
+            '  <div class="rcp-badges">' +
+            '    <span class="rcp-badge rcp-badge--dev">' + App.esc(res.badge || res.category) + '</span>' +
+            '    <span class="rcp-badge rcp-badge--pro">🍗 ' + (res.protein || 45) + 'g Protein</span>' +
+            '    <span class="rcp-badge rcp-badge--time">⏱️ ' + (res.time || 15) + 'm</span>' +
+            (res.calories ? '    <span class="rcp-badge rcp-badge--cal">' + res.calories + ' kcal</span>' : '') +
+            '  </div>' +
+            '  <div style="font-size:22px;font-weight:800">' + App.esc(res.title) + '</div>' +
+            '  <div style="font-size:14px;color:var(--mute)">' + App.esc(res.description || '') + '</div>' +
+            '  <div style="background:var(--paper-2);padding:12px;border-radius:10px;font-size:14px">' +
+            '    <b>Zutaten:</b><br>' + (res.ingredients || []).map(function (i) { return '• ' + App.esc(i); }).join('<br>') +
+            '    <br><br><b>Zubereitung:</b><br>' + (res.steps || []).map(function (s, idx) { return (idx + 1) + '. ' + App.esc(s); }).join('<br>') +
+            '  </div>' +
+            '  <div style="display:flex;gap:8px;margin-top:6px">' +
+            '    <button class="rcp-act-btn rcp-act-btn--primary" id="aiApply">📅 Für ' + targetDayName + ' übernehmen</button>' +
+            '    <button class="rcp-act-btn rcp-act-btn--cart" id="aiCart">🛒 Zutaten auf Liste</button>' +
+            '  </div>' +
+            '</div>';
+
+          el.querySelector('#aiApply').onclick = function () { applyRecipeToDay(res); };
+          el.querySelector('#aiCart').onclick = function () { addIngredientsToCart((res.ingredients || []).join(', ')); };
+        }
+
+        aiBtn.onclick = async function () {
+          var promptVal = (aiInp.value || '').trim();
+          var localKey = localStorage.getItem('gemini_api_key') || '';
+          aiBtn.disabled = true;
+          aiBtn.textContent = '✨ Gemini kreiert dein High-Protein-Rezept...';
+          aiOut.innerHTML = '<div style="padding:20px;text-align:center;color:var(--mute)">Rezept wird berechnet...</div>';
+
+          try {
+            var resp = await fetch('/api/recipes/ai', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Gemini-Key': localKey },
+              body: JSON.stringify({ prompt: promptVal, category: aiCategory, apiKey: localKey })
+            });
+            var data = await resp.json();
+            if (data.ok && data.recipe) {
+              renderAiCard(data.recipe);
+            } else {
+              aiOut.innerHTML = '<div style="color:var(--alert);padding:12px;background:rgba(229,38,30,0.1);border-radius:10px">' +
+                App.esc(data.error || 'Fehler beim Generieren') + '<br><small>Tippe oben auf 🔑 API-Key, um deinen Google AI Studio Key zu hinterlegen.</small></div>';
+            }
+          } catch (err) {
+            aiOut.innerHTML = '<div style="color:var(--alert);padding:12px;background:rgba(229,38,30,0.1);border-radius:10px">Verbindungsfehler: ' + App.esc(err.message) + '</div>';
+          } finally {
+            aiBtn.disabled = false;
+            aiBtn.textContent = 'Rezept kreieren ✨';
+          }
+        };
+
+        if (mode === 'dice' && aiResult) {
+          renderAiCard(aiResult);
+          setTab('ai');
+        } else {
+          setTab(currentTab);
+          renderGrid();
+        }
       }
     });
   }
@@ -297,6 +564,18 @@
     if ((t = e.target.closest('[data-subtab]'))) {
       V.subtab = t.dataset.subtab;
       return render();
+    }
+    if ((t = e.target.closest('[data-rcp-action]'))) {
+      var act = t.dataset.rcpAction;
+      var curD = (App.now().getDay() + 6) % 7;
+      if (act === 'dice') openRecipeFinderSheet(curD, 'dice');
+      else if (act === 'ai') openRecipeFinderSheet(curD, 'ai');
+      else openRecipeFinderSheet(curD, 'catalog');
+      return;
+    }
+    if ((t = e.target.closest('[data-pick-rcp]'))) {
+      var pickDay = parseInt(t.dataset.pickRcp, 10);
+      return openRecipeFinderSheet(pickDay, 'catalog');
     }
     if ((t = e.target.closest('[data-edit-meal]'))) {
       return openMealSheet(parseInt(t.dataset.editMeal, 10));

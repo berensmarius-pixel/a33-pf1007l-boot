@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var D = window.DATA;
-  var NAMES = ['groceries', 'chores', 'meals'];
+  var NAMES = ['groceries', 'chores', 'meals', 'recipes'];
   var state = { rev: {}, queue: Promise.resolve(), pending: 0, failed: {}, day: '' };
 
   function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -23,7 +23,14 @@
 
   function apply(name, data) {
     state.rev[name] = data.rev || 0;
-    D[name] = inflate(name, data.items || []);
+    if (name === 'recipes') {
+      var custom = data.items || [];
+      var customIds = new Set(custom.map(function (c) { return c.id; }));
+      var base = (window.BASE_RECIPES || []).filter(function (b) { return !customIds.has(b.id); });
+      D.recipes = base.concat(custom);
+    } else {
+      D[name] = inflate(name, data.items || []);
+    }
     App.emit('lists', name);
   }
 
