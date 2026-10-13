@@ -225,6 +225,7 @@
       }
       const res = await resp.json();
       if (!res.ok) throw new Error(res.error || 'Upload fehlgeschlagen');
+      return { gps: meta.lat !== undefined, place: res.place || '' };
     }
 
     btnSubmit.addEventListener('click', async () => {
@@ -232,13 +233,15 @@
       btnSubmit.disabled = true;
       const total = selectedFiles.length;
       const title = noteInput.value.trim();
-      let done = 0;
+      let done = 0, withPlace = 0, withGps = 0;
       const failed = [];
       for (const file of selectedFiles) {
         btnSubmit.innerText = 'Foto ' + (done + failed.length + 1) + ' von ' + total + ' wird übertragen...';
         try {
-          await uploadOne(file, selectedWho, title);
+          const info = await uploadOne(file, selectedWho, title);
           done++;
+          if (info.place) withPlace++;
+          if (info.gps) withGps++;
         } catch (err) {
           failed.push(file);
           if (err.message && err.message.indexOf('PIN') > -1) break;
@@ -246,7 +249,8 @@
       }
       loadRecentPhotos();
       if (!failed.length) {
-        showToast(done === 1 ? 'Foto erfolgreich hochgeladen! 🎉' : done + ' Fotos erfolgreich hochgeladen! 🎉');
+        const where = withPlace ? ' · Ort bei ' + withPlace + ' erkannt' : (withGps ? ' · Ort nicht gefunden' : ' · kein Standort im Foto');
+        showToast((done === 1 ? 'Foto hochgeladen 🎉' : done + ' Fotos hochgeladen 🎉') + where);
         noteInput.value = '';
         resetSelection();
         btnSubmit.innerText = 'Fotos auf den Rahmen zaubern ✨';
@@ -260,7 +264,7 @@
     function showToast(msg) {
       toast.innerText = msg;
       toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 3500);
+      setTimeout(() => toast.classList.remove("show"), 5500);
     }
 
     async function loadRecentPhotos() {
