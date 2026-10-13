@@ -303,6 +303,10 @@
     }
   }
   App.resetIdle = function () { idleSec = 0; };
+  // Nachtuhr morgens von selbst beenden (sonst bleibt sie bis zur nächsten Berührung stehen)
+  App.on('minute', function () {
+    if (App.mode === 'night' && !App.isNight()) { App.go('home'); App.setMode('day'); }
+  });
 
   // ------------------------------------------------------------ stage scaling (desktop preview only)
   function fit() {

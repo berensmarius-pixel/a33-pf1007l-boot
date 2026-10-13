@@ -129,6 +129,91 @@
     return ['marius'];
   }
 
+  var DAY_MS = 86400000;
+  var WD = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+
+  function unescapeText(v) {
+    return v.replace(/\,/g, ',').replace(/\;/g, ';').replace(/\n/gi, ' ').trim();
+  }
+
+  function parseRrule(str) {
+    var r = { freq: '', interval: 1, byday: [], wkst: 1, until: null, count: 0 };
+    str.split(';').forEach(function (part) {
+      var kv = part.split('=');
+      var k = kv[0].toUpperCase(), v = kv[1] || '';
+      if (k === 'FREQ') r.freq = v.toUpperCase();
+      else if (k === 'INTERVAL') r.interval = Math.max(1, parseInt(v, 10) || 1);
+      else if (k === 'COUNT') r.count = parseInt(v, 10) || 0;
+      else if (k === 'UNTIL') { var u = parseIcsDate(v); if (u) r.until = u.date; }
+      else if (k === 'WKST') r.wkst = WD[v.toUpperCase()] != null ? WD[v.toUpperCase()] : 1;
+      else if (k === 'BYDAY') {
+        r.byday = v.split(',').map(function (d) { return WD[d.replace(/[^A-Z]/gi, '').toUpperCase()]; })
+          .filter(function (d) { return d != null; });
+      }
+    });
+    return r;
+  }
+
+  // Gleiche Uhrzeit (Wanduhr) an einem anderen Tag, damit Sommer-/Winterzeit nichts verschiebt.
+  function atDay(base, y, m, d) {
+    return new Date(y, m, d, base.getHours(), base.getMinutes(), base.getSeconds());
+  }
+
+  // Alle Vorkommen einer Terminserie im Zeitraum [from, to]
+  function expandSeries(e, from, to) {
+    var r = parseRrule(e.rrule), out = [], n = 0, guard = 0;
+    var s0 = e.start;
+    var limit = r.until && r.until < to ? r.until : to;
+
+    function emit(d) {
+      n++;
+      if (r.count && n > r.count) return false;
+      if (d > limit) return false;
+      out.push(d);
+      return true;
+    }
+
+    if (r.freq === 'WEEKLY') {
+      var days = r.byday.length ? r.byday.slice() : [s0.getDay()];
+      var offs = days.map(function (d) { return (d - r.wkst + 7) % 7; }).sort(function (x, y) { return x - y; });
+      var anchor = atDay(s0, s0.getFullYear(), s0.getMonth(), s0.getDate() - ((s0.getDay() - r.wkst + 7) % 7));
+      var k = 0;
+      if (!r.count) {
+        k = Math.max(0, Math.floor((from - anchor) / (r.interval * 7 * DAY_MS)) - 1);
+      }
+      for (; guard < 20000; guard++, k++) {
+        var wk = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + k * r.interval * 7);
+        if (wk > limit) break;
+        var stop = false;
+        for (var i = 0; i < offs.length; i++) {
+          var d = atDay(s0, wk.getFullYear(), wk.getMonth(), wk.getDate() + offs[i]);
+          if (d < s0) continue;
+          if (!emit(d)) { stop = true; break; }
+        }
+        if (stop) break;
+      }
+    } else if (r.freq === 'DAILY') {
+      for (var j = 0; guard < 20000; guard++, j += r.interval) {
+        var dd = atDay(s0, s0.getFullYear(), s0.getMonth(), s0.getDate() + j);
+        if (!emit(dd)) break;
+      }
+    } else if (r.freq === 'MONTHLY') {
+      for (var m = 0; guard < 2000; guard++, m += r.interval) {
+        var md = atDay(s0, s0.getFullYear(), s0.getMonth() + m, s0.getDate());
+        if (md.getDate() !== s0.getDate()) continue; // z. B. 31. in kurzen Monaten
+        if (!emit(md)) break;
+      }
+    } else if (r.freq === 'YEARLY') {
+      for (var y = 0; guard < 500; guard++, y += r.interval) {
+        var yd = atDay(s0, s0.getFullYear() + y, s0.getMonth(), s0.getDate());
+        if (!emit(yd)) break;
+      }
+    } else {
+      out.push(s0);
+    }
+    return out;
+  }
+
   function parseIcs(icsText) {
     var unfolded = icsText.replace(/\r?\n[ \t]/g, '');
     var lines = unfolded.split(/\r?\n/);
@@ -137,97 +222,83 @@
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
-      if (line === 'BEGIN:VEVENT') {
-        cur = {};
-        continue;
-      }
+      if (line === 'BEGIN:VEVENT') { cur = { exdates: [] }; continue; }
       if (line === 'END:VEVENT') {
-        if (cur && cur.title && cur.start) {
-          rawEvents.push(cur);
-        }
+        if (cur && cur.title !== undefined && cur.start) rawEvents.push(cur);
         cur = null;
         continue;
       }
       if (!cur) continue;
+      if (line.indexOf('BEGIN:') === 0) { cur.inAlarm = true; continue; }   // VALARM überspringen
+      if (line.indexOf('END:') === 0) { cur.inAlarm = false; continue; }
+      if (cur.inAlarm) continue;
 
       var colon = line.indexOf(':');
       if (colon === -1) continue;
-      var propFull = line.substr(0, colon);
+      var prop = line.substr(0, colon).split(';')[0].toUpperCase();
       var val = line.substr(colon + 1);
-      var prop = propFull.split(';')[0].toUpperCase();
 
-      if (prop === 'SUMMARY') {
-        cur.title = val.replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\n/g, ' ').trim();
-      } else if (prop === 'LOCATION') {
-        cur.loc = val.replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\n/g, ' ').trim();
-      } else if (prop === 'DESCRIPTION') {
-        cur.notes = val.replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\n/g, '\n').trim();
-      } else if (prop === 'RRULE') {
-        cur.rrule = val;
+      if (prop === 'SUMMARY') cur.title = unescapeText(val);
+      else if (prop === 'LOCATION') cur.loc = unescapeText(val);
+      else if (prop === 'DESCRIPTION') cur.notes = val.replace(/\,/g, ',').replace(/\;/g, ';').replace(/\n/gi, '\n').trim();
+      else if (prop === 'UID') cur.uid = val;
+      else if (prop === 'STATUS') cur.cancelled = /CANCELLED/i.test(val);
+      else if (prop === 'RRULE') cur.rrule = val;
+      else if (prop === 'EXDATE') {
+        val.split(',').forEach(function (v) { var x = parseIcsDate(v); if (x) cur.exdates.push(x.date.getTime()); });
+      } else if (prop === 'RECURRENCE-ID') {
+        var rid = parseIcsDate(val);
+        if (rid) cur.recId = rid.date.getTime();
       } else if (prop === 'DTSTART') {
-        var parsedStart = parseIcsDate(val);
-        if (parsedStart) {
-          cur.start = parsedStart.date;
-          if (parsedStart.allDay) cur.allDay = true;
-        }
+        var ps = parseIcsDate(val);
+        if (ps) { cur.start = ps.date; if (ps.allDay) cur.allDay = true; }
       } else if (prop === 'DTEND') {
-        var parsedEnd = parseIcsDate(val);
-        if (parsedEnd) {
-          cur.end = parsedEnd.date;
-        }
+        var pe = parseIcsDate(val);
+        if (pe) cur.end = pe.date;
       }
     }
 
     var now = new Date();
-    var currentYear = now.getFullYear();
-    var minDate = new Date(now.getTime() - 60 * 86400000); // 60 days past
-    var maxDate = new Date(now.getTime() + 365 * 86400000); // 365 days future
-
+    var minDate = new Date(now.getTime() - 60 * DAY_MS);
+    var maxDate = new Date(now.getTime() + 365 * DAY_MS);
     var expanded = [];
 
+    // Einzeln geänderte Vorkommen einer Serie (RECURRENCE-ID) ersetzen das jeweilige Original.
+    var overrides = {};
     rawEvents.forEach(function (e) {
-      if (!e.end) {
-        e.end = new Date(e.start.getTime() + (e.allDay ? 86400000 : 3600000));
-      }
+      if (e.recId != null && e.uid) overrides[e.uid + '|' + e.recId] = true;
+    });
+
+    function push(e, start, end, yearlyInfo) {
+      if (e.cancelled) return;
+      if (end < minDate || start > maxDate) return;
+      var ev = {
+        id: 'gcal_' + Math.random().toString(36).substr(2, 9),
+        title: e.title, start: start, end: end, allDay: !!e.allDay,
+        loc: e.loc, notes: e.notes, people: assignPeople(e.title)
+      };
+      if (yearlyInfo) { ev.yearly = true; ev.origYear = yearlyInfo; }
+      expanded.push(ev);
+    }
+
+    rawEvents.forEach(function (e) {
+      if (!e.end) e.end = new Date(e.start.getTime() + (e.allDay ? DAY_MS : 3600000));
       var duration = e.end.getTime() - e.start.getTime();
 
-      // Expand yearly recurring events (birthdays, anniversaries)
-      if (e.rrule && e.rrule.indexOf('FREQ=YEARLY') > -1) {
-        [-1, 0, 1, 2].forEach(function (yearOffset) {
-          var y = currentYear + yearOffset;
-          var newStart = new Date(e.start);
-          newStart.setFullYear(y);
-          var newEnd = new Date(newStart.getTime() + duration);
-          if (newEnd >= minDate && newStart <= maxDate) {
-            expanded.push({
-              id: 'gcal_y_' + Math.random().toString(36).substr(2, 9),
-              title: e.title,
-              start: newStart,
-              end: newEnd,
-              allDay: e.allDay,
-              yearly: true,
-              origYear: e.start.getFullYear(),
-              loc: e.loc,
-              notes: e.notes,
-              people: assignPeople(e.title)
-            });
-          }
+      if (e.rrule && e.recId == null) {
+        var isYearly = /FREQ=YEARLY/.test(e.rrule) && e.allDay;
+        expandSeries(e, minDate, maxDate).forEach(function (d) {
+          var ts = d.getTime();
+          if (e.exdates.indexOf(ts) > -1) return;
+          if (e.uid && overrides[e.uid + '|' + ts]) return;
+          push(e, d, new Date(ts + duration), isYearly ? e.start.getFullYear() : 0);
         });
         return;
       }
-
-      // Regular single events
-      if (e.end >= minDate && e.start <= maxDate) {
-        e.id = 'gcal_' + Math.random().toString(36).substr(2, 9);
-        e.people = assignPeople(e.title);
-        expanded.push(e);
-      }
+      push(e, e.start, e.end, 0);
     });
 
-    expanded.sort(function (a, b) {
-      return a.start - b.start;
-    });
-
+    expanded.sort(function (a, b) { return a.start - b.start; });
     return expanded;
   }
 
@@ -246,14 +317,12 @@
       }
 
       var parsed = parseIcs(icsText);
-      if (parsed.length > 0) {
-        window.DATA.events = parsed;
-        if (window.App) {
-          window.App.emit('data');
-          window.App.rerender();
-        }
-        console.log('[LiveSync] Loaded ' + parsed.length + ' real Google Calendar events for Marius & Soraya');
+      window.DATA.events = parsed;
+      if (window.App) {
+        window.App.emit('data');
+        window.App.rerender();
       }
+      console.log('[LiveSync] Loaded ' + parsed.length + ' real Google Calendar events for Marius & Soraya');
     } catch (err) {
       console.warn('[LiveSync] Calendar fetch failed:', err);
     }
