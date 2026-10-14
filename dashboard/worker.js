@@ -115,6 +115,27 @@ async function placeName(lat, lon, env) {
   }
 }
 
+// Garmins LiveTrack-Seite nutzt neuere JavaScript-Funktionen (z. B. Array.toSorted, ab Chrome 110).
+// Die WebView des Wandtablets ist Chrome 106 und stürzt sonst mit "client-side exception" ab.
+// Dieses kleine Skript wird in die durchgereichte Seite vor Garmins Code eingefügt.
+const GARMIN_POLYFILL = '<script>(function(){' +
+  'function d(o,n,f){if(!o[n])Object.defineProperty(o,n,{value:f,writable:true,configurable:true});}' +
+  'var A=Array.prototype;' +
+  'd(A,"toSorted",function(c){return this.slice().sort(c);});' +
+  'd(A,"toReversed",function(){return this.slice().reverse();});' +
+  'd(A,"toSpliced",function(){var a=this.slice();A.splice.apply(a,arguments);return a;});' +
+  'd(A,"with",function(i,v){var a=this.slice(),n=a.length;i=Math.trunc(i)||0;if(i<0)i+=n;if(i<0||i>=n)throw new RangeError("Invalid index");a[i]=v;return a;});' +
+  'd(A,"findLast",function(f,t){for(var i=this.length-1;i>=0;i--)if(f.call(t,this[i],i,this))return this[i];});' +
+  'd(A,"findLastIndex",function(f,t){for(var i=this.length-1;i>=0;i--)if(f.call(t,this[i],i,this))return i;return -1;});' +
+  'd(Object,"groupBy",function(it,f){var r=Object.create(null),i=0;for(var x of it){var k=f(x,i++);(r[k]||(r[k]=[])).push(x);}return r;});' +
+  'd(Map,"groupBy",function(it,f){var r=new Map(),i=0;for(var x of it){var k=f(x,i++);if(!r.has(k))r.set(k,[]);r.get(k).push(x);}return r;});' +
+  'd(Promise,"withResolvers",function(){var a,b,p=new Promise(function(y,n){a=y;b=n;});return{promise:p,resolve:a,reject:b};});' +
+  'd(URL,"canParse",function(u,b){try{new URL(u,b);return true;}catch(e){return false;}});' +
+  'd(String.prototype,"isWellFormed",function(){return true;});' +
+  'd(String.prototype,"toWellFormed",function(){return String(this);});' +
+  'd(self,"structuredClone",function(v){return JSON.parse(JSON.stringify(v));});' +
+  '})();</script>';
+
 // Garmin LiveTrack Cookie & CSRF-Token Helper
 async function getGarminCookie(session, env) {
   const now = Date.now();
@@ -334,7 +355,7 @@ export default {
     // 3. Foto-Upload API & Storage (KV / R2)
     // ------------------------------------------------------------
     if (url.pathname === '/api/version') {
-      return json({ ok: true, version: '2026-10-15-01-40' }, 200, {
+      return json({ ok: true, version: '2026-10-15-02-10' }, 200, {
         'Cache-Control': 'no-store',
         'Access-Control-Allow-Origin': '*'
       });
@@ -992,6 +1013,9 @@ export default {
             await env.PHOTOS_KV.put('garmin_livetrack', JSON.stringify(session), { expirationTtl: 4 * 60 * 60 });
           }
         }
+
+        // Fehlende JS-Funktionen für ältere WebViews vor Garmins Skripten ergänzen
+        html = html.replace(/<head[^>]*>/i, (m) => m + GARMIN_POLYFILL);
 
         const headers = new Headers();
         headers.set('Content-Type', 'text/html; charset=utf-8');
