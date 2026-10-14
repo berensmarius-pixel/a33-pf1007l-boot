@@ -8,6 +8,61 @@ const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp', 'avif']; // HEIC kann das Tab
 
 // In-Memory-Caches im Worker-Isolate zur drastischen Reduzierung der Cloudflare KV Free-Tier Zugriffe
 // (Cloudflare Free Limit: 1.000 Lists / 1.000 Writes / 100.000 Reads pro Tag)
+// ---------------------------------------------------------------- Google-Terminfarben (Dienstkonto, nur lesen)
+// Der private iCal-Feed enthält keine Farben. Die Calendar-API liefert pro Termin eine colorId.
+const GCAL_ID = 'berensmarius@gmail.com';
+const GCAL_COLORS = { 1: '#a4bdfc', 2: '#7ae7bf', 3: '#dbadff', 4: '#ff887c', 5: '#fbd75b', 6: '#ffb878', 7: '#46d6db', 8: '#e1e1e1', 9: '#5484ed', 10: '#51b749', 11: '#dc2127' };
+const gcalState = { token: null, tokenExp: 0, colors: null, ts: 0 };
+
+const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+async function gcalToken(env) {
+  if (gcalState.token && Date.now() < gcalState.tokenExp) return gcalState.token;
+  const key = JSON.parse(env.GOOGLE_SA_KEY);
+  const pem = key.private_key.replace(/-----[A-Z ]+-----/g, '').replace(/\s+/g, '');
+  const der = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0));
+  const pk = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+  const enc = (o) => b64url(new TextEncoder().encode(JSON.stringify(o)));
+  const now = Math.floor(Date.now() / 1000);
+  const unsigned = enc({ alg: 'RS256', typ: 'JWT' }) + '.' + enc({
+    iss: key.client_email, scope: 'https://www.googleapis.com/auth/calendar.readonly',
+    aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600
+  });
+  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', pk, new TextEncoder().encode(unsigned));
+  const r = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=' + unsigned + '.' + b64url(sig)
+  });
+  const j = await r.json();
+  if (!j.access_token) throw new Error('token ' + (j.error || r.status));
+  gcalState.token = j.access_token;
+  gcalState.tokenExp = Date.now() + 50 * 60 * 1000;
+  return gcalState.token;
+}
+
+// -> { "<iCalUID>": "#hex", "<iCalUID>|<Startzeit-ms>": "#hex" } nur für Termine mit eigener Farbe
+async function gcalColors(env) {
+  const token = await gcalToken(env);
+  const min = new Date(Date.now() - 60 * 864e5).toISOString(), max = new Date(Date.now() + 365 * 864e5).toISOString();
+  const out = {};
+  let page = '', guard = 0;
+  do {
+    const u = 'https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(GCAL_ID) + '/events?singleEvents=false&showDeleted=false&maxResults=2500&timeMin=' + min + '&timeMax=' + max +
+      '&fields=nextPageToken,items(iCalUID,colorId,status,originalStartTime)' + (page ? '&pageToken=' + page : '');
+    const r = await fetch(u, { headers: { authorization: 'Bearer ' + token } });
+    if (!r.ok) throw new Error('events ' + r.status);
+    const j = await r.json();
+    (j.items || []).forEach((e) => {
+      const hex = GCAL_COLORS[e.colorId];
+      if (!hex || !e.iCalUID || e.status === 'cancelled') return;
+      const o = e.originalStartTime && e.originalStartTime.dateTime;
+      out[e.iCalUID + (o ? '|' + new Date(o).getTime() : '')] = hex;
+    });
+    page = j.nextPageToken || '';
+  } while (page && ++guard < 5);
+  return out;
+}
+
 const memoryCache = {
   photos: { data: null, ts: 0 },
   lists: new Map(), // name -> { doc, ts }
@@ -113,6 +168,24 @@ export default {
     // ------------------------------------------------------------
     // 1. Google Calendar Proxy
     // ------------------------------------------------------------
+    if (url.pathname === '/api/calendar-colors') {
+      const hdr = { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' };
+      if (!env.GOOGLE_SA_KEY) return new Response(JSON.stringify({ ok: false, error: 'Kein Google-Schlüssel gesetzt' }), { status: 200, headers: hdr });
+      if (gcalState.colors && Date.now() - gcalState.ts < 5 * 60 * 1000) {
+        return new Response(JSON.stringify({ ok: true, colors: gcalState.colors }), { headers: hdr });
+      }
+      try {
+        gcalState.colors = await gcalColors(env);
+        gcalState.ts = Date.now();
+        if (env.PHOTOS_KV) await env.PHOTOS_KV.put('gcal_colors', JSON.stringify(gcalState.colors));
+        return new Response(JSON.stringify({ ok: true, colors: gcalState.colors }), { headers: hdr });
+      } catch (err) {
+        // Bei Google-Fehlern den letzten guten Stand liefern
+        const old = gcalState.colors || (env.PHOTOS_KV ? JSON.parse((await env.PHOTOS_KV.get('gcal_colors')) || 'null') : null);
+        return new Response(JSON.stringify({ ok: !!old, stale: true, colors: old || {}, error: String(err.message || err) }), { headers: hdr });
+      }
+    }
+
     if (url.pathname === '/api/calendar') {
       const icsUrl = env.CALENDAR_URL;
       if (!icsUrl) {
@@ -261,7 +334,7 @@ export default {
     // 3. Foto-Upload API & Storage (KV / R2)
     // ------------------------------------------------------------
     if (url.pathname === '/api/version') {
-      return json({ ok: true, version: '2026-10-14-23-20' }, 200, {
+      return json({ ok: true, version: '2026-10-14-23-40' }, 200, {
         'Cache-Control': 'no-store',
         'Access-Control-Allow-Origin': '*'
       });

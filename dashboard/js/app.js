@@ -110,7 +110,18 @@
     return list;
   };
   App.isFamily = function (e) { return e.people.length >= D.people.length; };
-  App.evColor = function (e) { return App.isFamily(e) ? D.family : App.person(e.people[0]); };
+  // Google-Terminfarbe als Farbobjekt (nur in der Einzelansicht eines Kalenders, sonst Personenfarbe)
+  var gcCache = {};
+  function gcColor(hex) {
+    if (gcCache[hex]) return gcCache[hex];
+    var r = parseInt(hex.substr(1, 2), 16), g = parseInt(hex.substr(3, 2), 16), b = parseInt(hex.substr(5, 2), 16);
+    var lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return (gcCache[hex] = { color: hex, rgb: r + ' ' + g + ' ' + b, ink: lum > 0.6 ? '#111111' : '#FFFFFF' });
+  }
+  App.evColor = function (e) {
+    if (App.calWho && e.gcolor) return gcColor(e.gcolor);
+    return App.isFamily(e) ? D.family : App.person(e.people[0]);
+  };
   App.timedOn = function (day, pid) {
     var s = App.dayStart(day), e = App.addDays(s, 1);
     return App.events().filter(function (ev) {

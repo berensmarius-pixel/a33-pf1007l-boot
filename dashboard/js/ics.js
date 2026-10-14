@@ -184,7 +184,7 @@ export function parseIcs(icsText, nowOverride) {
     var ev = {
       id: 'gcal_' + Math.random().toString(36).substr(2, 9),
       title: e.title, start: start, end: end, allDay: !!e.allDay,
-      loc: e.loc, notes: e.notes, people: assignPeople(e.title)
+      loc: e.loc, notes: e.notes, people: assignPeople(e.title), uid: e.uid, occ: e.recId != null ? e.recId : start.getTime()
     };
     if (yearlyInfo) { ev.yearly = true; ev.origYear = yearlyInfo; }
     expanded.push(ev);

@@ -147,6 +147,20 @@ import { computeAlerts } from './alerts.js';
     }
   }
 
+  // Google-Terminfarben (Dienstkonto im Worker); ohne eigene Farbe bleibt die Personenfarbe
+  async function applyGoogleColors(events) {
+    try {
+      var r = await fetch('/api/calendar-colors');
+      if (!r.ok) return;
+      var j = await r.json();
+      if (!j || !j.colors) return;
+      events.forEach(function (e) {
+        var hex = e.uid && (j.colors[e.uid + '|' + e.occ] || j.colors[e.uid]);
+        if (hex) e.gcolor = hex;
+      });
+    } catch (err) { console.warn('[LiveSync] Terminfarben:', err); }
+  }
+
   async function updateCalendar() {
     if (window.App && window.App.mode === 'night') {
       var syncD = window.DATA;
@@ -166,6 +180,7 @@ import { computeAlerts } from './alerts.js';
       }
 
       var parsed = parseIcs(icsText);
+      await applyGoogleColors(parsed);
       window.DATA.events = parsed;
       window.DATA.sync.calendar = Date.now();
       if (window.App) {
