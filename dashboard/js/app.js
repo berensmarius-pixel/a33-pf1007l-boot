@@ -109,6 +109,14 @@
     if (App.calWho) list = list.filter(function (e) { return e.people.indexOf(App.calWho) > -1; });
     return list;
   };
+  // Geburtstag (Torte) oder Jahrestag (Ring): ganztägige Termine mit passendem Titel oder jährlicher Wiederholung
+  var BDAY_RE = /geburtstag|\bgebi\b|birthday|bday|🎂|🎈/i, ANNIV_RE = /jahrestag|hochzeit|anniversary|💍|❤/i;
+  App.occasionKind = function (e) {
+    if (!e.allDay) return null;
+    if (ANNIV_RE.test(e.title)) return 'anniv';
+    if (BDAY_RE.test(e.title) || e.yearly) return 'bday';
+    return null;
+  };
   App.isFamily = function (e) { return e.people.length >= D.people.length; };
   // Google-Terminfarbe als Farbobjekt (nur in der Einzelansicht eines Kalenders, sonst Personenfarbe)
   var gcCache = {};

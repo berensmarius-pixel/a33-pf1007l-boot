@@ -211,3 +211,9 @@
 .cal-head { height: 64px; }
 .cal-title { flex-direction: column-reverse; align-items: flex-start; gap: 3px; min-width: 300px; }
 .cal-title .serif { font-size: 40px; line-height: .95; }
+
+/* Geburtstag/Jahrestag: Symbol vor dem Titel */
+.occ { display: inline-flex; vertical-align: -3px; margin-right: 6px; }
+.occ svg { display: block; }
+.wk-ad, .ad { display: flex; align-items: center; }
+.mo-ev .occ { margin-right: 4px; vertical-align: -2px; }

@@ -53,3 +53,23 @@
   opacity: 0;
 }
 
+/* Zweite Seite: Morgen-Wetter und erster Termin (Standby und Nacht) */
+.amb-right.is-fade, .nt-tomorrow.is-fade, .nt-line.is-fade { animation: amb-fade .9s ease both; }
+@keyframes amb-fade { from { opacity: 0; } to { opacity: 1; } }
+.amb-tm-label { font-size: 20px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+.amb-wx--tm b { font-size: 72px; line-height: .8; }
+.amb-wx--tm span { font-size: 34px; opacity: .65; }
+.amb-wx--tm small { font-family: var(--serif); font-size: 26px; font-style: italic; }
+.amb-next--tm b { margin: 0 4px; }
+.amb-next--tm i { background: none; box-shadow: none; width: auto; height: auto; font-style: normal; opacity: .7; margin-left: 6px; }
+.nt-time--small { font-size: 96px; line-height: .9; }
+.nt-tomorrow { margin-top: 26px; display: flex; flex-direction: column; align-items: center; gap: 14px; color: #731C13; }
+.nt-tm-label { font-size: 20px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.nt-tm-wx { display: flex; align-items: center; gap: 12px; }
+.nt-tm-wx b { font-size: 64px; line-height: .85; color: #9E2619; }
+.nt-tm-wx span { font-size: 30px; }
+.nt-tm-wx small { font-family: var(--serif); font-size: 24px; font-style: italic; }
+.nt-tm-ev { font-size: 26px; }
+.nt-tm-ev b { color: #9E2619; font-weight: 700; margin: 0 4px; }
+.nt-tm-ev i { font-style: normal; opacity: .7; }
+.night.is-ultra-dim .nt-tomorrow { opacity: 0; }

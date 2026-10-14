@@ -41,6 +41,12 @@
     return out;
   }
 
+  // kleine Markierung vor dem Titel (Torte = Geburtstag, Ring = Jahrestag)
+  function occ(e, size) {
+    var k = App.occasionKind(e);
+    return k ? '<span class="occ occ--' + k + '">' + App.icon(k === 'anniv' ? 'ring' : 'cake', size || 16) + '</span>' : '';
+  }
+
   function evBlock(e, style, opts) {
     opts = opts || {};
     var now = App.now();
@@ -94,7 +100,7 @@
       var col = fam2 ? '1 / -1' : (idx + 1) + ' / span 1';
       var s = App.dayStart(day), spanDays = Math.round((e.end - e.start) / 864e5), dayN = Math.round((s - e.start) / 864e5) + 1;
       return '<button class="ad' + (e.start < s ? ' ad--cont' : '') + '" data-ev="' + e.id + '" style="grid-column:' + col + ';' + App.pstyle(App.evColor(e)) + '">' +
-        (e.start < s ? App.icon('left', 16) : '') + App.esc(e.title) + (spanDays > 1 ? ' <small>Tag ' + dayN + ' von ' + spanDays + '</small>' : '') + '</button>';
+        (e.start < s ? App.icon('left', 16) : '') + occ(e, 18) + App.esc(e.title) + (spanDays > 1 ? ' <small>Tag ' + dayN + ' von ' + spanDays + '</small>' : '') + '</button>';
     }).join('') + '</div></div>' : '';
     var grid = '<div class="grid-scroll"><div class="grid" style="height:' + (END - START) * PX + 'px">' +
       '<div class="hours">' + hoursCol() + '</div>' +
@@ -132,7 +138,7 @@
       ad = '<div class="allday"><div class="gutter label">Ganztägig</div><div class="allday-grid allday-grid--3">' + list.map(function (e) {
         var a = Math.max(0, Math.round((e.start - s0) / 864e5)), b = Math.min(3, Math.round((e.end - s0) / 864e5));
         return '<button class="ad' + (e.start < s0 ? ' ad--cont' : '') + '" data-ev="' + e.id + '" style="grid-column:' + (a + 1) + ' / ' + (b + 1) + ';' + App.pstyle(App.evColor(e)) + '">' +
-          (e.start < s0 ? App.icon('left', 16) : '') + App.esc(e.title) + (e.end > s3 ? App.icon('right', 16) : '') + '</button>';
+          (e.start < s0 ? App.icon('left', 16) : '') + occ(e, 18) + App.esc(e.title) + (e.end > s3 ? App.icon('right', 16) : '') + '</button>';
       }).join('') + '</div></div>';
     }
     var grid = '<div class="grid-scroll"><div class="grid" style="height:' + (END - START) * PX + 'px">' +
@@ -156,7 +162,7 @@
       var ad = App.allDayOn(d), list = App.timedOn(d), max = 7 - ad.length, more = list.length - max;
       return '<div class="wk-col' + (today ? ' is-today' : '') + '" data-day="' + (+d) + '">' +
         '<div class="wk-head"><b>' + App.fmt.dayShort(d) + '</b><span class="num">' + d.getDate() + '</span></div>' +
-        ad.map(function (e) { return '<button class="wk-ad" data-ev="' + e.id + '" style="' + App.pstyle(App.evColor(e)) + '">' + App.esc(e.title) + '</button>'; }).join('') +
+        ad.map(function (e) { return '<button class="wk-ad" data-ev="' + e.id + '" style="' + App.pstyle(App.evColor(e)) + '">' + occ(e, 18) + App.esc(e.title) + '</button>'; }).join('') +
         list.slice(0, max).map(function (e) {
           return '<button class="wk-ev' + (e.end <= now ? ' is-past' : '') + '" data-ev="' + e.id + '" style="' + App.pstyle(App.evColor(e)) + '">' +
             '<span class="wk-t">' + App.fmt.time(e.start, false) + '</span><span class="wk-n">' + App.esc(e.title) + '</span></button>';
@@ -182,7 +188,7 @@
       var shown = evs.length > 3 ? 2 : evs.length;
       var chips = evs.slice(0, shown).map(function (e) {
         return '<span class="mo-ev' + (e.allDay ? ' is-allday' : '') + '" style="' + App.pstyle(App.evColor(e)) + '">' +
-          (e.allDay ? '' : '<b>' + App.fmt.time(e.start, false) + '</b>') + App.esc(e.title) + '</span>';
+          (e.allDay ? occ(e, 14) : '<b>' + App.fmt.time(e.start, false) + '</b>') + App.esc(e.title) + '</span>';
       }).join('');
       var more = evs.length > 3 ? '<span class="mo-more">+' + (evs.length - 2) + ' weitere</span>' : '';
       cells += '<button class="mo-cell' + (d.getMonth() !== first.getMonth() ? ' is-out' : '') + (App.sameDay(d, now) ? ' is-today' : '') + '" data-day="' + (+d) + '">' +

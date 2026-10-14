@@ -230,17 +230,16 @@
   }
 
   // Banner: Geburtstage/Jahrestage (ganztägige Termine, nächste 14 Tage) und Wetterwarnungen
-  var BDAY_RE = /geburtstag|\bgebi\b|birthday|bday|🎂|🎈/i, ANNIV_RE = /jahrestag|hochzeit|anniversary|💍|❤/i;
   function occasions() {
     var now = App.now(), today = App.dayStart(now), out = [];
     App.events().forEach(function (e) {
       if (!e.allDay) return;
-      var isB = BDAY_RE.test(e.title), isA = ANNIV_RE.test(e.title);
-      if (!isB && !isA && !e.yearly) return;
+      var kind = App.occasionKind(e);
+      if (!kind) return;
       var days = Math.round((App.dayStart(e.start) - today) / 86400000);
       if (days < 0 || days > 14) return;
       var years = e.origYear ? e.start.getFullYear() - e.origYear : 0;
-      out.push({ e: e, days: days, kind: isA ? 'anniv' : 'bday', years: years >= 1 && e.origYear >= 1900 ? years : 0 });
+      out.push({ e: e, days: days, kind: kind, years: years >= 1 && e.origYear >= 1900 ? years : 0 });
     });
     out.sort(function (a, b) { return a.days - b.days; });
     return out.slice(0, 2);
