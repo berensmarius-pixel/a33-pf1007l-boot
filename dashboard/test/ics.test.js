@@ -135,3 +135,14 @@ test('Datumsformate', () => {
   assert.equal(parseIcsDate('20261015T090000').allDay, false);
   assert.equal(parseIcsDate(''), null);
 });
+
+test('#countdown im Titel markiert den Termin und verschwindet aus dem Titel', () => {
+  const r = parseIcs(ics(
+    ['DTSTART;VALUE=DATE:20261201', 'DTEND;VALUE=DATE:20261208', 'SUMMARY:Italien #Countdown'],
+    ['DTSTART;VALUE=DATE:20261203', 'DTEND;VALUE=DATE:20261204', 'SUMMARY:Normal']
+  ), NOW);
+  const it = r.find((e) => e.title === 'Italien');
+  assert.ok(it, 'Titel ohne Marker');
+  assert.equal(it.countdown, true);
+  assert.equal(r.find((e) => e.title === 'Normal').countdown, undefined);
+});

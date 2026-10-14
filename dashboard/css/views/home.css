@@ -269,3 +269,14 @@
 .h-fuel-row { justify-content: flex-start; gap: 12px; margin-top: 4px; }
 .h-fuel-line { margin-top: 6px; font-size: 14px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .h-fuel-line b { color: var(--ink); font-weight: 700; }
+
+/* Countdown-Marke oben links im Foto */
+.h-cd-slot { position: absolute; top: 16px; left: 16px; right: 16px; z-index: 2; pointer-events: none; }
+.h-cd { display: inline-flex; align-items: center; gap: 12px; max-width: 100%; box-sizing: border-box; padding: 8px 18px 8px 14px; border-radius: 999px; background: rgba(17, 17, 17, .78); color: #fff; pointer-events: auto; }
+.h-cd:active { transform: scale(.97); }
+.h-cd-n { font-size: 40px; line-height: .9; min-width: 8px; }
+.h-cd-n:empty { display: none; }
+.h-cd-t { display: flex; flex-direction: column; min-width: 0; text-align: left; }
+.h-cd-t small { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; opacity: .75; }
+.h-cd-t b { font-size: 19px; font-weight: 800; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.h-cd-more { font-size: 13px; font-weight: 800; background: rgba(255, 255, 255, .2); border-radius: 999px; padding: 2px 8px; }

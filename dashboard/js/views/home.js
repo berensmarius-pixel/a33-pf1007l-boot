@@ -303,8 +303,44 @@
     return items.slice(0, 2).map(function (i) { return i.html; }).join('');
   }
 
+  // Countdowns: Kalendertermine mit "#countdown" im Titel (z. B. "Italien #countdown")
+  function countdowns() {
+    var now = App.now(), today = App.dayStart(now);
+    return App.events().filter(function (e) { return e.countdown && e.end > now; }).map(function (e) {
+      var days = Math.round((App.dayStart(e.start) - today) / 86400000);
+      var total = Math.max(1, Math.round((App.dayStart(e.end) - App.dayStart(e.start)) / 86400000));
+      return { e: e, days: days, running: days <= 0 && e.allDay && total > 1, day: 1 - days, total: total };
+    }).sort(function (a, b) { return a.e.start - b.e.start; });
+  }
+  function cdLabel(c) {
+    if (c.running) return { big: c.day, small: 'Tag ' + c.day + ' von ' + c.total };
+    if (c.days <= 0) return { big: '0', small: 'Heute' };
+    return { big: c.days, small: c.days === 1 ? 'Tag bis' : 'Tage bis' };
+  }
+  function countdownBadge() {
+    var list = countdowns();
+    if (!list.length) return '';
+    var c = list[0], l = cdLabel(c);
+    return '<div class="h-cd" data-action="countdown">' +
+      '<span class="h-cd-n num">' + (c.days <= 0 && !c.running ? '' : l.big) + '</span>' +
+      '<span class="h-cd-t"><small>' + (c.days <= 0 && !c.running ? 'Heute' : l.small) + '</small><b>' + App.esc(c.e.title) + '</b></span>' +
+      (list.length > 1 ? '<span class="h-cd-more">+' + (list.length - 1) + '</span>' : '') + '</div>';
+  }
+  function openCountdowns() {
+    var list = countdowns(), now = App.now();
+    var html = '<div class="fuel-sheet"><div class="t-sheet-head"><div><b>Countdowns</b><small>Termine mit #countdown im Titel</small></div></div>' +
+      '<div class="f-list">' + (list.map(function (c, i) {
+        var l = cdLabel(c);
+        return '<div class="f-item' + (i === 0 ? ' is-best' : '') + '"><div class="f-pos num">' + (c.days <= 0 && !c.running ? '0' : l.big) + '</div>' +
+          '<div class="f-name"><b>' + App.esc(c.e.title) + '</b><span>' + App.fmt.day(c.e.start) + ', ' + c.e.start.getDate() + '. ' + App.fmt.month(c.e.start) + (c.running ? ' · läuft gerade' : '') + '</span></div>' +
+          '<div class="f-price">' + (c.running ? l.small : c.days <= 0 ? 'Heute' : c.days === 1 ? 'Morgen' : c.days + ' Tage') + '</div></div>';
+      }).join('') || '<div class="f-hint">Noch kein Countdown. Hänge im Google Kalender <b>#countdown</b> an den Titel eines Termins, z. B. „Italien #countdown“.</div>') + '</div></div>';
+    App.sheet(html);
+  }
+
   function paint() {
     var el = V.el;
+    if (el.querySelector('.h-cd-slot')) el.querySelector('.h-cd-slot').innerHTML = countdownBadge();
     el.querySelector('.h-clock').innerHTML = clock();
     el.querySelector('.h-weather').innerHTML = weather();
     el.querySelector('.h-hero-slot').innerHTML = hero();
@@ -331,7 +367,7 @@
           '  <div class="h-extra-row"><button class="h-fuel card"></button><div class="h-timer card" data-action="timer"></div></div>' +
           '</div>' +
           '<div class="h-side">' +
-          '  <button class="h-photo" data-go="photos"><div class="h-photo-stage"></div><div class="h-photo-cap"></div></button>' +
+          '  <button class="h-photo" data-go="photos"><div class="h-photo-stage"></div><div class="h-cd-slot"></div><div class="h-photo-cap"></div></button>' +
           '</div></div>';
         el.addEventListener('click', function (e) {
           var trk = e.target.closest('[data-action="livetrack"]');
@@ -343,6 +379,7 @@
             }
             return;
           }
+          if (e.target.closest('[data-action="countdown"]')) { openCountdowns(); return; }
           var rad = e.target.closest('[data-action="radar"]');
           if (rad) { App.openWeather('radar'); return; }
           if (e.target.closest('.h-weather')) { App.openWeather('now'); return; }
@@ -387,6 +424,7 @@
     V.el.querySelector('.h-clock').innerHTML = clock();
     V.el.querySelector('.h-hero-slot').innerHTML = hero();
     V.el.querySelector('.h-notices').innerHTML = notices();
+    if (V.el.querySelector('.h-cd-slot') && n.getMinutes() % 10 === 0) V.el.querySelector('.h-cd-slot').innerHTML = countdownBadge();
     if (n.getMinutes() === 0) { V.el.querySelector('.h-weather').innerHTML = weather(); }
   });
   App.on('data', function () { if (App.current === 'home') paint(); });

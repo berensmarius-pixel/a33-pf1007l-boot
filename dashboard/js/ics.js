@@ -181,11 +181,13 @@ export function parseIcs(icsText, nowOverride) {
   function push(e, start, end, yearlyInfo) {
     if (e.cancelled) return;
     if (end < minDate || start > maxDate) return;
+    var cd = /#countdown\b/i.test(e.title || '');
     var ev = {
       id: 'gcal_' + Math.random().toString(36).substr(2, 9),
-      title: e.title, start: start, end: end, allDay: !!e.allDay,
+      title: cd ? e.title.replace(/\s*#countdown\b/ig, '').trim() : e.title, start: start, end: end, allDay: !!e.allDay,
       loc: e.loc, notes: e.notes, people: assignPeople(e.title), uid: e.uid, occ: e.recId != null ? e.recId : start.getTime()
     };
+    if (cd) ev.countdown = true;
     if (yearlyInfo) { ev.yearly = true; ev.origYear = yearlyInfo; }
     expanded.push(ev);
   }
