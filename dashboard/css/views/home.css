@@ -231,3 +231,14 @@
 .h-wx-top .h-wx-rain-pill { margin: 0 0 0 auto; max-width: 330px; white-space: normal; text-align: left; line-height: 1.2; }
 .h-note--meal .h-note-txt b { max-width: none; flex: 0 1 auto; }
 .h-note--meal .h-note-txt span { flex: 1 1 0; min-width: 0; }
+
+/* Sprit- und Timer-Kachel immer gleich breit; lange Tankstellennamen werden gekürzt */
+.h-extra-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.h-fuel-row, .h-fuel-main, .h-fuel-stat { min-width: 0; }
+.h-fuel-stat b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px; }
+.h-fuel-stat span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px; }
+.h-fuel-badge { flex: none; }
+.h-t-chip { padding: 8px 2px; font-size: 13px; white-space: nowrap; }
+.h-fuel-row { justify-content: flex-start; gap: 12px; margin-top: 4px; }
+.h-fuel-line { margin-top: 6px; font-size: 14px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.h-fuel-line b { color: var(--ink); font-weight: 700; }

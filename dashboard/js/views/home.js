@@ -110,12 +110,10 @@
 
     return '<div class="label">Super E5 · Kaiserslautern</div>' +
       '<div class="h-fuel-row">' +
-      '  <div class="h-fuel-main">' +
-      '    <div class="h-fuel-price num">' + c.price.toFixed(3).replace('.', ',') + '<small>€</small></div>' +
-      '    <div class="h-fuel-stat"><b>' + App.esc(c.name) + '</b><span>' + App.esc(c.street) + ' · ' + c.dist + ' km</span></div>' +
-      '  </div>' +
+      '  <div class="h-fuel-price num">' + c.price.toFixed(3).replace('.', ',') + '<small>€</small></div>' +
       '  <div class="h-fuel-badge ' + badgeClass + '">' + badgeText + '</div>' +
-      '</div>';
+      '</div>' +
+      '<div class="h-fuel-line"><b>' + App.esc(c.name) + '</b> · ' + App.esc(c.street) + ' · ' + c.dist + ' km</div>';
   }
 
   function timerCard() {
@@ -129,7 +127,7 @@
         '  <button class="h-timer-btn" data-action="timer">Öffnen</button>' +
         '</div>';
     }
-    return '<div class="label">Küchen-Timer · Schnellstart</div>' +
+    return '<div class="label">Küchen-Timer</div>' +
       '<div class="h-timer-presets">' +
       '  <button class="h-t-chip" data-timer-pre="0">☕ 4m</button>' +
       '  <button class="h-t-chip" data-timer-pre="1">🐣 6m</button>' +
