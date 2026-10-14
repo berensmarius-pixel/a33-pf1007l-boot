@@ -167,21 +167,29 @@
     }).join('') + '</div>';
   }
 
-  // ------------------------------------------------------------ month (dots only)
+  // ------------------------------------------------------------ month (bis zu 3 Termine als Mini-Karten)
   function monthView() {
     var now = App.now();
     var first = new Date(V.date.getFullYear(), V.date.getMonth(), 1);
-    var start = App.addDays(first, -((first.getDay() + 6) % 7)); // Monday start
+    var offset = (first.getDay() + 6) % 7; // Monday start
+    var start = App.addDays(first, -offset);
+    var daysIn = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+    var weeks = Math.ceil((offset + daysIn) / 7);
     var cells = '';
-    for (var i = 0; i < 42; i++) {
+    for (var i = 0; i < weeks * 7; i++) {
       var d = App.addDays(start, i);
       var evs = App.allDayOn(d).concat(App.timedOn(d));
-      var dots = evs.slice(0, 5).map(function (e) { return '<i style="' + App.pstyle(App.evColor(e)) + '"></i>'; }).join('');
+      var shown = evs.length > 3 ? 2 : evs.length;
+      var chips = evs.slice(0, shown).map(function (e) {
+        return '<span class="mo-ev' + (e.allDay ? ' is-allday' : '') + '" style="' + App.pstyle(App.evColor(e)) + '">' +
+          (e.allDay ? '' : '<b>' + App.fmt.time(e.start, false) + '</b>') + App.esc(e.title) + '</span>';
+      }).join('');
+      var more = evs.length > 3 ? '<span class="mo-more">+' + (evs.length - 2) + ' weitere</span>' : '';
       cells += '<button class="mo-cell' + (d.getMonth() !== first.getMonth() ? ' is-out' : '') + (App.sameDay(d, now) ? ' is-today' : '') + '" data-day="' + (+d) + '">' +
-        '<span class="num">' + d.getDate() + '</span><span class="mo-dots">' + dots + (evs.length > 5 ? '<em>+' + (evs.length - 5) + '</em>' : '') + '</span></button>';
+        '<span class="num">' + d.getDate() + '</span><span class="mo-evs">' + chips + more + '</span></button>';
     }
     return '<div class="month"><div class="mo-dow">' + ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(function (d) { return '<span class="label">' + d + '</span>'; }).join('') + '</div>' +
-      '<div class="mo-grid">' + cells + '</div></div>';
+      '<div class="mo-grid" style="grid-template-rows:repeat(' + weeks + ',1fr)">' + cells + '</div></div>';
   }
 
   // ------------------------------------------------------------ header

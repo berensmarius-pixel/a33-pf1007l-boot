@@ -261,7 +261,7 @@ export default {
     // 3. Foto-Upload API & Storage (KV / R2)
     // ------------------------------------------------------------
     if (url.pathname === '/api/version') {
-      return json({ ok: true, version: '2026-10-14-22-50' }, 200, {
+      return json({ ok: true, version: '2026-10-14-23-05' }, 200, {
         'Cache-Control': 'no-store',
         'Access-Control-Allow-Origin': '*'
       });

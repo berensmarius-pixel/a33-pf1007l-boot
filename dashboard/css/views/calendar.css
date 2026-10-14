@@ -190,3 +190,19 @@
 .lanes-head--2 { grid-template-columns: 64px repeat(2, 1fr); }
 .allday-grid { grid-template-columns: repeat(2, 1fr); }
 .allday-grid--3 { grid-template-columns: repeat(3, 1fr); }
+
+/* 3-Tage-Ansicht: die Zwei-Spalten-Regel der Tagesansicht darf hier nicht greifen */
+.lanes.lanes--3 { grid-template-columns: repeat(3, 1fr); }
+
+/* Monat: Mini-Karten statt Punkte */
+.mo-grid { grid-template-rows: none; min-height: 0; }
+.mo-cell { padding: 5px 6px 4px; justify-content: flex-start; gap: 2px; min-width: 0; min-height: 0; overflow: hidden; text-align: left; }
+.mo-cell .num { font-size: 17px; font-weight: 800; line-height: 1; padding-left: 3px; }
+.mo-evs { display: flex; flex-direction: column; gap: 2px; min-width: 0; min-height: 0; }
+.mo-ev { display: block; font-size: 13px; font-weight: 600; line-height: 1.25; padding: 1px 5px; border-radius: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: rgb(var(--c-rgb) / .16); border-left: 3px solid var(--c); color: var(--ink); }
+.mo-ev b { font-weight: 800; margin-right: 4px; font-variant-numeric: tabular-nums; }
+.mo-ev.is-allday { background: var(--c); color: var(--c-ink); border-left-color: transparent; font-weight: 700; }
+.mo-more { font-size: 11px; font-weight: 800; color: var(--mute); padding-left: 4px; }
+.mo-cell.is-today .mo-ev { background: rgb(255 255 255 / .16); color: var(--paper); }
+.mo-cell.is-today .mo-ev.is-allday { background: var(--c); color: var(--c-ink); }
+.mo-cell.is-today .mo-more { color: var(--paper); opacity: .8; }
