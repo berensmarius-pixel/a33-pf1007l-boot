@@ -116,7 +116,7 @@
   }
 
 
-  var EMOJIS = ['✅', '🧹', '🍽️', '🗑️', '🧺', '🛒', '🪴', '🐾', '🪟', '🧽', '☕', '🔐'];
+  var EMOJIS = ['✅', '☕', '🍳', '🍽️', '🗑️', '🛏️', '👕', '🚿', '🐾', '🌱', '🔑', '🛠️'];
   function choreSheet(c) {
     var editing = !!c;
     var cur = c || { r: App.currentRoutine().id, who: 'marius', title: '', emoji: '✅' };
@@ -149,6 +149,7 @@
         pick('data-who', sh.querySelector('.ch-who'), 'who');
         pick('data-when', sh.querySelector('.ch-when'), 'r');
         pick('data-emoji', sh.querySelector('.ch-emojis'), 'emoji');
+        input.addEventListener('keydown', function (e) { if (e.key === 'Enter') sh.querySelector('[data-save]').click(); });
         sh.querySelector('[data-save]').addEventListener('click', function () {
           var title = input.value.trim();
           if (!title) { input.focus(); return; }

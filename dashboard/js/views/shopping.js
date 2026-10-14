@@ -35,7 +35,7 @@
       '  <button class="s-m-btn" data-rcp-action="browse">📖 Rezepte stöbern</button>' +
       '  <button class="s-m-btn" data-rcp-action="dice">🎲 Schnelle Idee</button>' +
       '  <button class="s-m-btn s-m-btn--ai" data-rcp-action="ai">✨ KI-Rezept</button>' +
-      (isStandalone ? '  <button class="s-m-btn s-m-btn--cart" data-go="shopping">🛒 Einkaufsliste</button>' : '  <button class="s-m-btn s-m-btn--cart" data-subtab="groceries">🛒 Einkaufsliste</button>') +
+      (isStandalone ? '  <button class="s-m-btn s-m-btn--cart" data-go="shopping">' + App.icon('cart', 16) + ' Einkaufsliste</button>' : '  <button class="s-m-btn s-m-btn--cart" data-subtab="groceries">' + App.icon('cart', 16) + ' Einkaufsliste</button>') +
       '</div></header>' +
       '<div class="s-meals-wrap">' + DAYS.map(function (dayName, idx) {
       var m = mealsMap[idx] || { id: 'm_' + idx, day: idx, title: '', ingredients: '' };
@@ -49,7 +49,7 @@
         '<div class="s-meal-foot">' +
         '  <button class="s-meal-btn" data-edit-meal="' + idx + '">' + (m.title ? 'Bearbeiten' : 'Planen') + '</button>' +
         '  <button class="s-meal-btn s-meal-btn--rcp" data-pick-rcp="' + idx + '">💡 Rezept</button>' +
-        (m.ingredients ? '  <button class="s-meal-btn s-meal-btn--cart" data-cart-meal="' + idx + '">🛒 Auf Liste</button>' : '') +
+        (m.ingredients ? '  <button class="s-meal-btn s-meal-btn--cart" data-cart-meal="' + idx + '">' + App.icon('cart', 16) + ' Auf Liste</button>' : '') +
         '</div>' +
         '</div>';
     }).join('') + '</div>' +
@@ -240,7 +240,7 @@
               '  <div class="rcp-card-actions">' +
               '    <button class="rcp-act-btn" data-toggle-steps="' + r.id + '">📖 Zubereitung</button>' +
               '    <button class="rcp-act-btn rcp-act-btn--primary" data-apply-rcp="' + r.id + '">📅 Für ' + targetDayName + '</button>' +
-              '    <button class="rcp-act-btn rcp-act-btn--cart" data-cart-rcp="' + r.id + '">🛒 Auf Liste</button>' +
+              '    <button class="rcp-act-btn rcp-act-btn--cart" data-cart-rcp="' + r.id + '">' + App.icon('cart', 16) + ' Auf Liste</button>' +
               '  </div>' +
               '</div>';
           }).join('');
@@ -316,7 +316,7 @@
             '  </div>' +
             '  <div style="display:flex;gap:8px;margin-top:6px">' +
             '    <button class="rcp-act-btn rcp-act-btn--primary" id="aiApply">📅 Für ' + targetDayName + ' übernehmen</button>' +
-            '    <button class="rcp-act-btn rcp-act-btn--cart" id="aiCart">🛒 Zutaten auf Liste</button>' +
+            '    <button class="rcp-act-btn rcp-act-btn--cart" id="aiCart">' + App.icon('cart', 16) + ' Zutaten auf Liste</button>' +
             '  </div>' +
             '</div>';
 
@@ -367,7 +367,7 @@
     if (!ingString) return;
     var items = ingString.split(/[,;\n]+/).map(function (s) { return s.trim(); }).filter(Boolean);
     items.forEach(function (name) { add(name); });
-    App.toast(items.length + ' Zutaten zur Einkaufsliste hinzugefügt! 🛒', { icon: 'cart' });
+    App.toast(items.length + ' Zutaten zur Einkaufsliste hinzugefügt!', { icon: 'cart' });
   }
 
   function row(g) {

@@ -536,4 +536,10 @@ button.card:active, .h-hero:active, .h-photo:active { transform: scale(.985); }
   display: block;
 }
 
-
+/* ---- Bildschirmtastatur offen: Bühne oben anlegen, Dialoge nach oben */
+body.kb-open .stage { top: 0; margin-top: 0; transform-origin: 50% 0; }
+body.kb-open .sheet-layer.is-open .sheet {
+  top: 10px; transform: translate(-50%, 0);
+  height: auto; max-height: calc(100vh - 20px);
+}
+body.kb-open .sheet .sheet-h { font-size: 34px; margin-bottom: 12px; }

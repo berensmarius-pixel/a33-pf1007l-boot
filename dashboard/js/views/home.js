@@ -24,9 +24,9 @@
       '<span class="h-wx-icon">' + App.icon(w.cond, 60) + '</span>' +
       '<span class="h-wx-temp num">' + w.temp + '°</span>' +
       '<span class="h-wx-meta"><b>Kaiserslautern</b><span>H ' + w.hi + '°  T ' + w.lo + '°</span></span>' +
+      rainPill +
       '</div>' +
       '<div class="h-wx-say"><b>' + w.summary + '.</b> ' + w.advice + '.</div>' +
-      rainPill +
       '<div class="h-wx-hours">' + hours.map(function (h) {
         var lift = tmax === tmin ? 0 : Math.round((h.t - tmin) / (tmax - tmin) * 8);
         return '<div class="h-hr' + (h.p >= 50 ? ' is-wet' : '') + '"><span class="h-hr-l">' + h.label + '</span>' +
@@ -128,7 +128,7 @@
     return '<div class="label">Küchen-Timer · Schnellstart</div>' +
       '<div class="h-timer-presets">' +
       '  <button class="h-t-chip" data-timer-pre="0">☕ 4m</button>' +
-      '  <button class="h-t-chip" data-timer-pre="1">🥚 6m</button>' +
+      '  <button class="h-t-chip" data-timer-pre="1">🐣 6m</button>' +
       '  <button class="h-t-chip" data-timer-pre="3">🍝 9m</button>' +
       '  <button class="h-t-chip" data-timer-pre="4">🍕 13m</button>' +
       '</div>';

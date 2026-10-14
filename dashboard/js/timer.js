@@ -5,11 +5,11 @@
 
   var PRESETS = [
     { label: 'Tee', emoji: '☕', sec: 240, desc: '4 Min' },
-    { label: 'Ei weich', emoji: '🥚', sec: 360, desc: '6 Min' },
+    { label: 'Ei weich', emoji: '🐣', sec: 360, desc: '6 Min' },
     { label: 'Ei hart', emoji: '🍳', sec: 480, desc: '8 Min' },
     { label: 'Pasta', emoji: '🍝', sec: 540, desc: '9 Min' },
     { label: 'Pizza', emoji: '🍕', sec: 780, desc: '13 Min' },
-    { label: 'Backofen', emoji: '🥐', sec: 900, desc: '15 Min' }
+    { label: 'Backofen', emoji: '🔥', sec: 900, desc: '15 Min' }
   ];
 
   var timers = [];

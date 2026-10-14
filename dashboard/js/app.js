@@ -349,10 +349,21 @@
   });
 
   // ------------------------------------------------------------ stage scaling (desktop preview only)
+  // Öffnet sich die Bildschirmtastatur, wird der Viewport niedrig. Dann nicht verkleinern, sondern bei
+  // Maßstab 1 oben anlegen (CSS: body.kb-open), damit Eingabefeld und Dialog sichtbar bleiben.
+  function typing() {
+    var el = document.activeElement;
+    return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+  }
   function fit() {
-    var s = Math.min(window.innerWidth / 1280, window.innerHeight / 800);
+    var w = window.innerWidth, h = window.innerHeight;
+    var kb = typing() && w >= 900 && h < 600;
+    document.body.classList.toggle('kb-open', kb);
+    var s = kb ? Math.min(w / 1280, 1) : Math.min(w / 1280, h / 800);
     $('#stage').style.transform = Math.abs(s - 1) < 0.01 ? '' : 'scale(' + s + ')';
   }
+  document.addEventListener('focusin', function () { setTimeout(fit, 50); setTimeout(fit, 400); });
+  document.addEventListener('focusout', function () { setTimeout(fit, 50); setTimeout(fit, 400); });
 
   // ------------------------------------------------------------ clock tick
   var lastMin = -1;

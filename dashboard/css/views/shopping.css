@@ -345,3 +345,20 @@
   gap: 10px;
 }
 
+/* ---- Layout-Korrekturen für 1280x800 */
+.shop { grid-template-columns: minmax(0, 1fr) 440px; }
+.s-usuals { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.s-tile { min-width: 0; overflow: hidden; }
+.s-tile { padding: 12px 10px; }
+.s-tile b { font-size: 16px; letter-spacing: 0; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
+.s-tile span { line-height: 1.15; font-size: 12px; letter-spacing: .03em; }
+.s-meal-btn { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.s-meal-btn svg, .s-m-btn svg { flex: none; }
+
+/* Wochenplan: Titel und Zutaten bekommen den freien Platz, nichts wird mitten in der Zeile abgeschnitten */
+.s-meal-col > div:first-child { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.s-meal-title { flex: none; min-height: 0; -webkit-line-clamp: 4; }
+.s-meal-ing {
+  flex: 1; min-height: 0; max-height: none; overflow: hidden; margin-bottom: 8px;
+  -webkit-mask-image: -webkit-linear-gradient(top, #000 88%, transparent 100%);
+}

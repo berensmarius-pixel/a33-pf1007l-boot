@@ -226,3 +226,8 @@
   from { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
   to { box-shadow: 0 0 0 5px rgba(37, 99, 235, 0); }
 }
+
+/* Radar-Hinweis rechts neben der Temperatur (spart eine Zeile) */
+.h-wx-top .h-wx-rain-pill { margin: 0 0 0 auto; max-width: 330px; white-space: normal; text-align: left; line-height: 1.2; }
+.h-note--meal .h-note-txt b { max-width: none; flex: 0 1 auto; }
+.h-note--meal .h-note-txt span { flex: 1 1 0; min-width: 0; }
