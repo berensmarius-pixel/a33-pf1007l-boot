@@ -66,3 +66,20 @@
 .ag-legend span { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: rgba(255, 255, 255, .8); }
 .ag-legend i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
 .ag-legend span[style*="#111111"] i { background: #F2EEE6; }
+
+/* ---- Zusatzkarten (Termine, Wochenplan, Aufgaben) */
+.ag-info { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: hidden; }
+.ag-info-body { display: flex; flex-direction: column; gap: 4px; min-height: 0; flex: 1; overflow: hidden; }
+.ag-row { display: flex; align-items: baseline; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 17px; }
+.ag-row:last-child { border-bottom: 0; }
+.ag-row-day { flex: none; width: 74px; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+.ag-row-main { flex: 1; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ag-row-main.is-none { color: var(--mute); font-weight: 400; font-style: italic; }
+.ag-row-time { flex: none; font-size: 15px; color: var(--mute); }
+.ag-row.is-today .ag-row-day { color: #2D5BFF; }
+.ag-row.is-today .ag-row-main { color: #2D5BFF; }
+.ag-chores-stat .num { font-size: 44px; line-height: .85; }
+.ag-chores-stat small { color: var(--mute); }
+.ag-empty { color: var(--mute); font-size: 22px; padding: 12px 0; }
+.ag-row.is-best .ag-row-main, .ag-row.is-best .ag-row-time { color: #00A36C; font-weight: 800; }
+.ag-note { margin-top: auto; padding-top: 8px; font-size: 14px; color: var(--mute); }

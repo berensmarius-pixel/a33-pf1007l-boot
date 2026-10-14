@@ -1,38 +1,10 @@
 import listeHtml from './liste.html';
 import uploadHtml from './upload.html';
+import { json, isAuthorized, safeEqual, readCookie, gate } from './access.js';
 
 const LIST_NAMES = ['groceries', 'chores', 'meals', 'recipes'];
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp', 'avif']; // HEIC kann das Tablet nicht anzeigen
-
-function json(body, status = 200, extra = {}) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json', ...extra }
-  });
-}
-
-// Schreibzugriff (Upload/Löschen) nur mit PIN, sobald UPLOAD_PIN als Secret gesetzt ist.
-function isAuthorized(request, env) {
-  if (!env.UPLOAD_PIN) return true;
-  return request.headers.get('X-Pin') === env.UPLOAD_PIN;
-}
-
-function safeEqual(a, b) {
-  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
-  let r = 0;
-  for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return r === 0;
-}
-
-function readCookie(request, name) {
-  const part = (request.headers.get('Cookie') || '').split(/;\s*/).find((c) => c.startsWith(name + '='));
-  return part ? part.slice(name.length + 1) : '';
-}
-
-const LOCKED_HTML = '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gesperrt</title>' +
-  '<style>body{font-family:system-ui,sans-serif;background:#121214;color:#F4F4F6;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center;padding:24px}p{color:#A0A0AB;max-width:320px}</style></head>' +
-  '<body><div><h1>🔒 Gesperrt</h1><p>Diese Seite ist privat. Öffne sie über den persönlichen Link mit Schlüssel.</p></div></body></html>';
 
 // In-Memory-Caches im Worker-Isolate zur drastischen Reduzierung der Cloudflare KV Free-Tier Zugriffe
 // (Cloudflare Free Limit: 1.000 Lists / 1.000 Writes / 100.000 Reads pro Tag)
@@ -53,42 +25,6 @@ function simpleHash(str) {
     hash |= 0;
   }
   return hash;
-}
-
-// Zugangsschutz: nur mit Cookie (oder einmaligem ?k=...) kommt man an Seite und Daten.
-// Ausnahmen: Symbole/Manifest und der Nutzungs-Upload des PCs (hat ein eigenes Token).
-function gate(request, url, env) {
-  const key = env.ACCESS_KEY;
-  if (!key) return null;
-  const p = url.pathname;
-  if (p === '/manifest.webmanifest' || /^\/icon-\d+\.png$/.test(p)) return null;
-  if (p === '/api/usage' && request.method === 'POST') return null;
-  if (p.startsWith('/api/livetrack')) return null;
-  if (p === '/api/version') return null;
-  if (p.startsWith('/session/')) return null;
-  if (p.startsWith('/_next/')) return null;
-  if (p.startsWith('/api/sessions/') || p.startsWith('/api/v1/sessions/') || p.startsWith('/api/v2/sessions/')) return null;
-  if (p.startsWith('/api/user/') || p.startsWith('/api/v1/user/') || p.startsWith('/api/v2/user/')) return null;
-  if (p.startsWith('/api/device/')) return null;
-  if (p.startsWith('/api/personal-url/')) return null;
-  if (p.startsWith('/api/messages/')) return null;
-
-  const given = url.searchParams.get('k');
-  if (given && safeEqual(given, key)) {
-    url.searchParams.delete('k');
-    return new Response(null, {
-      status: 302,
-      headers: {
-        Location: url.pathname + url.search,
-        'Set-Cookie': 'hk=' + key + '; Path=/; Max-Age=31536000; HttpOnly; Secure; SameSite=Lax',
-        'Cache-Control': 'no-store'
-      }
-    });
-  }
-  if (safeEqual(readCookie(request, 'hk'), key)) return null;
-
-  if (p.startsWith('/api/')) return json({ error: 'Zugriff nur mit Schlüssel' }, 401, { 'Cache-Control': 'no-store' });
-  return new Response(LOCKED_HTML, { status: 401, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
 }
 
 // Ortsname zu Koordinaten (OpenStreetMap Nominatim). Es werden nur auf ~1 km gerundete Werte gesendet,
@@ -259,17 +195,30 @@ export default {
               const sorted = openStations.sort((a, b) => a.price - b.price);
               const best = sorted[0];
 
+              // Trend: Tagesbestpreis der letzten 30 Tage in KV, verglichen mit dem Schnitt der Vortage
               let trend = 'normal';
               let trendText = 'Durchschnittlicher Preis';
+              let avg = null;
               if (best) {
-                const thresholdLow = fuelType === 'diesel' ? 1.58 : (fuelType === 'e10' ? 1.68 : 1.73);
-                const thresholdHigh = fuelType === 'diesel' ? 1.69 : (fuelType === 'e10' ? 1.79 : 1.84);
-                if (best.price <= thresholdLow) {
-                  trend = 'cheap';
-                  trendText = 'Günstiger Zeitpunkt · Jetzt tanken!';
-                } else if (best.price >= thresholdHigh) {
-                  trend = 'high';
-                  trendText = 'Eher teuer · Wenn möglich warten';
+                const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' });
+                const histKey = 'fuel_hist_' + fuelType;
+                let hist = [];
+                if (env.PHOTOS_KV) {
+                  try { hist = (await env.PHOTOS_KV.get(histKey, { type: 'json' })) || []; } catch (e) { hist = []; }
+                }
+                const prev = hist.filter((h) => h.d !== today);
+                if (prev.length >= 3) {
+                  avg = prev.reduce((sum, h) => sum + h.min, 0) / prev.length;
+                  if (best.price <= avg - 0.03) { trend = 'cheap'; trendText = 'Günstiger als sonst · Jetzt tanken!'; }
+                  else if (best.price >= avg + 0.03) { trend = 'high'; trendText = 'Teurer als sonst · Wenn möglich warten'; }
+                } else {
+                  trendText = 'Sammle Preisverlauf (' + prev.length + ' von 3 Tagen)';
+                }
+                // heutigen Bestpreis nur schreiben, wenn er sich ändert (spart KV-Schreibzugriffe)
+                const todayEntry = hist.find((h) => h.d === today);
+                if (env.PHOTOS_KV && (!todayEntry || best.price < todayEntry.min)) {
+                  const next = hist.filter((h) => h.d !== today).concat([{ d: today, min: best.price }]).slice(-30);
+                  try { await env.PHOTOS_KV.put(histKey, JSON.stringify(next)); } catch (e) { /* Verlauf ist optional */ }
                 }
               }
 
@@ -287,6 +236,7 @@ export default {
                 } : null,
                 trend: trend,
                 trendText: trendText,
+                avg: avg === null ? null : Math.round(avg * 1000) / 1000,
                 stations: sorted.slice(0, 5).map(s => ({
                   name: s.brand || s.name,
                   street: s.street,
@@ -303,33 +253,8 @@ export default {
         }
       }
 
-      // Fallback / Demo-Modus für Kaiserslautern
-      const baseE5 = 1.719;
-      return new Response(JSON.stringify({
-        ok: true,
-        live: false,
-        demo: true,
-        fuelType: fuelType,
-        cheapest: {
-          name: 'JET',
-          station: 'JET Tankstelle',
-          street: 'Pariser Str. 123',
-          dist: 1.4,
-          price: baseE5,
-          isOpen: true
-        },
-        trend: 'cheap',
-        trendText: 'Günstiger Zeitpunkt · Jetzt tanken!',
-        stations: [
-          { name: 'JET', street: 'Pariser Str. 123', dist: 1.4, price: baseE5 },
-          { name: 'ED', street: 'Mainzer Str. 104', dist: 2.1, price: baseE5 + 0.02 },
-          { name: 'TotalEnergies', street: 'Donnersberger Str. 1', dist: 2.5, price: baseE5 + 0.04 },
-          { name: 'Aral', street: 'Ludwigshafener Str. 8', dist: 3.2, price: baseE5 + 0.07 }
-        ],
-        hint: 'Kostenlosen API-Key auf creativecommons.tankerkoenig.de anfordern'
-      }), {
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=300' }
-      });
+      // Keine Preise verfügbar (Key fehlt oder Tankerkönig nicht erreichbar): ehrlich melden, nichts erfinden
+      return json({ ok: false, live: false, error: apiKey ? 'Tankerkönig nicht erreichbar' : 'Kein API-Key gesetzt' }, 503, { 'Cache-Control': 'no-store' });
     }
 
     // ------------------------------------------------------------

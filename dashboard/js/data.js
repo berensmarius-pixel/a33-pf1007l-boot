@@ -69,50 +69,6 @@ window.DATA = (function () {
   ];
   var usuals = ['Milch 3,8%', 'Eier', 'Bananen', 'Brot', 'Äpfel', 'Kaffeebohnen', 'Griechischer Joghurt', 'Gouda', 'Butter', 'Babyspinat', 'Hähnchenbrust', 'Küchenrolle'];
 
-  // ---------------------------------------------------------------- home control
-  var rooms = [
-    { id: 'kitchen', name: 'Küche' },
-    { id: 'living', name: 'Wohnzimmer' },
-    { id: 'entry', name: 'Flur & Eingang' },
-    { id: 'upstairs', name: 'Schlafzimmer' },
-    { id: 'yard', name: 'Garten & Terrasse' }
-  ];
-  var devices = [
-    { id: 'k-pend', room: 'kitchen', type: 'light', name: 'Esstischlampe', on: true, level: 80 },
-    { id: 'k-under', room: 'kitchen', type: 'light', name: 'Arbeitsplatte', on: true, level: 55 },
-    { id: 'k-island', room: 'kitchen', type: 'light', name: 'Kücheninsel', on: false, level: 100 },
-    { id: 'k-speaker', room: 'kitchen', type: 'blind', name: 'Küchenrollo', pos: 100 },
-    { id: 'l-lamp', room: 'living', type: 'light', name: 'Stehlampe', on: true, level: 45 },
-    { id: 'l-ceil', room: 'living', type: 'light', name: 'Deckenleuchte', on: false, level: 100 },
-    { id: 'l-blinds', room: 'living', type: 'blind', name: 'Jalousie', pos: 60 },
-    { id: 'l-fire', room: 'living', type: 'light', name: 'Ambientelicht', on: false, level: 70 },
-    { id: 'e-door', room: 'entry', type: 'lock', name: 'Haustür', locked: true },
-    { id: 'e-porch', room: 'entry', type: 'light', name: 'Eingang außen', on: true, level: 100 },
-    { id: 'g-door', room: 'entry', type: 'garage', name: 'Garagentor', state: 'closed' },
-    { id: 'g-side', room: 'entry', type: 'lock', name: 'Nebeneingang', locked: true },
-    { id: 'u-maya', room: 'upstairs', type: 'light', name: 'Nachttisch links', on: true, level: 30 },
-    { id: 'u-otto', room: 'upstairs', type: 'light', name: 'Nachttisch rechts', on: false, level: 15 },
-    { id: 'u-hall', room: 'upstairs', type: 'light', name: 'Flurlicht', on: false, level: 60 },
-    { id: 'u-bath', room: 'upstairs', type: 'light', name: 'Badezimmer', on: false, level: 100 },
-    { id: 'y-string', room: 'yard', type: 'light', name: 'Lichterkette', on: false, level: 100, flaky: true },
-    { id: 'y-back', room: 'yard', type: 'lock', name: 'Terrassentür', locked: true },
-    { id: 'y-flood', room: 'yard', type: 'light', name: 'Flutlicht', on: false, level: 100 }
-  ];
-  var climate = { current: 20.5, set: 21.5, mode: 'heat', humidity: 42, outside: 14 };
-  var media = { room: 'Küche', title: 'Harvest Moon', artist: 'Neil Young', playing: true, volume: 35, seed: 'harvest-vinyl' };
-  var cameras = [
-    { id: 'c-front', name: 'Hauseingang', seed: 'porch-steps' },
-    { id: 'c-drive', name: 'Einfahrt', seed: 'driveway-maple' },
-    { id: 'c-yard', name: 'Garten', seed: 'garden-yard' }
-  ];
-  var scenes = [
-    { id: 'morning', name: 'Guten Morgen', icon: 'sunrise', set: { 'k-pend': 100, 'k-under': 80, 'l-blinds': 100, 'l-lamp': 0, 'u-hall': 60 } },
-    { id: 'dinner', name: 'Abendessen', icon: 'utensils', set: { 'k-pend': 55, 'k-under': 30, 'k-island': 70, 'l-lamp': 40, 'l-ceil': 0 } },
-    { id: 'movie', name: 'Filmabend', icon: 'film', set: { 'k-pend': 0, 'k-under': 15, 'k-island': 0, 'l-lamp': 15, 'l-ceil': 0, 'l-blinds': 0, 'l-fire': 30 } },
-    { id: 'away', name: 'Unterwegs', icon: 'away', set: { 'k-pend': 0, 'k-under': 0, 'k-island': 0, 'l-lamp': 0, 'l-ceil': 0, 'l-fire': 0, 'u-maya': 0, 'u-hall': 0, 'e-porch': 100 } },
-    { id: 'night', name: 'Gute Nacht', icon: 'moon', set: { 'k-pend': 0, 'k-under': 10, 'k-island': 0, 'l-lamp': 0, 'l-ceil': 0, 'l-fire': 0, 'u-hall': 10, 'u-otto': 15, 'e-porch': 0 } }
-  ];
-
   // ---------------------------------------------------------------- weather (index = hour of day)
   var weather = {
     hi: 17, lo: 8, feels: -2, humidity: 71, wind: 18,
@@ -159,18 +115,8 @@ window.DATA = (function () {
     events: events, busyExtras: busyExtras,
     routines: routines, chores: chores, stars: stars, week: week,
     stores: stores, catOrder: catOrder, groceries: groceries, catalog: catalog, usuals: usuals, meals: [],
-    rooms: rooms, devices: devices, climate: climate, media: media, cameras: cameras, scenes: scenes,
     weather: weather, photos: photos, agents: agents,
-    fuel: {
-      cheapest: { name: 'JET', street: 'Pariser Str. 123', dist: 1.4, price: 1.719 },
-      trend: 'cheap',
-      trendText: 'Günstiger Zeitpunkt · Jetzt tanken!',
-      stations: [
-        { name: 'JET', street: 'Pariser Str. 123', dist: 1.4, price: 1.719 },
-        { name: 'ED', street: 'Mainzer Str. 104', dist: 2.1, price: 1.739 },
-        { name: 'TotalEnergies', street: 'Donnersberger Str. 1', dist: 2.5, price: 1.759 }
-      ]
-    },
+    fuel: null,   // kommt live vom Worker (/api/fuel)
     _gid: function () { return 'g' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4); },
     _eid: function () { return 'e' + (++n); }
   };

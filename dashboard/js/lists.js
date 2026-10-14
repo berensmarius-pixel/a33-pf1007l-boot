@@ -1,4 +1,5 @@
 // Geteilte Listen (Einkaufsliste, Aufgaben): Server (Worker/KV) ist die Quelle der Wahrheit.
+import { dateStr, inflateChores } from './chore-days.js';
 // Änderungen gehen als Einzeloperationen raus (hintereinander), danach gilt der Serverstand.
 (function () {
   'use strict';
@@ -6,18 +7,11 @@
   var NAMES = ['groceries', 'chores', 'meals', 'recipes'];
   var state = { rev: {}, queue: Promise.resolve(), pending: 0, failed: {}, day: '' };
 
-  function pad(n) { return (n < 10 ? '0' : '') + n; }
-  function todayStr() { var n = new Date(); return n.getFullYear() + '-' + pad(n.getMonth() + 1) + '-' + pad(n.getDate()); }
+  function todayStr() { return dateStr(new Date()); }
 
   // Aufgaben wiederholen sich täglich: "erledigt" gilt nur für den Tag, an dem es abgehakt wurde.
   function inflate(name, items) {
-    if (name === 'chores') {
-      var t = todayStr();
-      items.forEach(function (c) {
-        c.done = c.doneOn === t;
-        if (!c.done) delete c.doneBy;
-      });
-    }
+    if (name === 'chores') inflateChores(items, todayStr());
     return items;
   }
 

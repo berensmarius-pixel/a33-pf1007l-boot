@@ -98,7 +98,11 @@
 
   function fuelCard() {
     var f = D.fuel || {};
-    var c = f.cheapest || { name: 'JET', street: 'Pariser Str. 123', dist: 1.4, price: 1.719 };
+    var c = f.cheapest;
+    if (!c) {
+      return '<div class="label">Super E5 · Kaiserslautern</div>' +
+        '<div class="h-fuel-row"><div class="h-fuel-main"><div class="h-fuel-stat"><b>Keine Preise</b><span>Wird geladen …</span></div></div></div>';
+    }
     var isCheap = f.trend === 'cheap';
     var isHigh = f.trend === 'high';
     var badgeClass = isCheap ? 'badge-cheap' : (isHigh ? 'badge-high' : 'badge-norm');
@@ -136,12 +140,7 @@
 
   function openFuelSheet() {
     var f = D.fuel || {};
-    var stations = f.stations || [
-      { name: 'JET', street: 'Pariser Str. 123', dist: 1.4, price: 1.719 },
-      { name: 'ED', street: 'Mainzer Str. 104', dist: 2.1, price: 1.739 },
-      { name: 'TotalEnergies', street: 'Donnersberger Str. 1', dist: 2.5, price: 1.759 },
-      { name: 'Aral', street: 'Ludwigshafener Str. 8', dist: 3.2, price: 1.789 }
-    ];
+    var stations = f.stations || [];
     var sheet = App.sheet(
       '<div class="fuel-sheet">' +
       '<div class="t-sheet-head">' +
@@ -154,7 +153,8 @@
           '<div class="f-price num">' + s.price.toFixed(3).replace('.', ',') + ' €</div>' +
           '</div>';
       }).join('') + '</div>' +
-      (f.demo ? '<div class="f-hint">💡 Für minutengenaue Live-Preise: Kostenlosen API-Key auf <u>creativecommons.tankerkoenig.de</u> anfordern.</div>' : '<div class="f-hint">✅ Live-Preise der Markttransparenzstelle für Kraftstoffe (MTS-K)</div>') +
+      (stations.length ? '' : '<div class="f-hint">Noch keine Preise geladen.</div>') +
+      '<div class="f-hint">' + (f.trendText ? App.esc(f.trendText) + (f.avg ? ' · Schnitt ' + f.avg.toFixed(3).replace('.', ',') + ' €' : '') + '<br>' : '') + 'Live-Preise der Markttransparenzstelle für Kraftstoffe (MTS-K)</div>' +
       '</div>'
     );
   }

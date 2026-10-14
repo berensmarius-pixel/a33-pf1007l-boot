@@ -1,4 +1,5 @@
 // Agents: AI plan usage at a glance (inspired by CodexBar). Display only.
+import { isDue } from '../chore-days.js';
 (function () {
   'use strict';
   var D = window.DATA;
@@ -35,7 +36,7 @@
   }
 
   function spark(vals) {
-    var w = 112, h = 34, max = Math.max.apply(null, vals);
+    var w = 112, h = 34, max = Math.max.apply(null, vals) || 1;
     var pts = vals.map(function (v, i) { return (i / (vals.length - 1) * w).toFixed(1) + ',' + (h - 3 - v / max * (h - 6)).toFixed(1); });
     var last = pts[pts.length - 1].split(',');
     return '<svg class="ag-spark" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' +
@@ -55,6 +56,55 @@
       '<div><span class="num">' + (a.cost ? '$' + a.cost.toFixed(2) : 'Im Abo') + '</span><small>' + (a.cost ? 'API-Kosten' : 'im Plan') + '</small></div>' +
       spark(a.week) + '</footer>' +
       '</section>';
+  }
+
+  // ------------------------------------------------------------ Karten für den freien Platz
+  function plainCard(title, sub, body) {
+    return '<section class="ag-card ag-info"><header class="ag-head"><div class="ag-id"><b>' + title + '</b><span class="ag-plan">' + sub + '</span></div></header>' +
+      '<div class="ag-info-body">' + body + '</div></section>';
+  }
+  function upcomingCard() {
+    var now = App.now();
+    var list = App.events().filter(function (e) { return e.end > now; }).sort(function (a, b) { return a.start - b.start; }).slice(0, 6);
+    var rows = list.map(function (e) {
+      var when = e.allDay ? 'ganztägig' : App.fmt.time(e.start);
+      var days = Math.round((App.dayStart(e.start) - App.dayStart(now)) / 864e5);
+      var label = days > 6 ? e.start.getDate() + '.' + (e.start.getMonth() + 1) + '.' : App.fmt.rel(e.start);
+      return '<div class="ag-row"><span class="ag-row-day">' + label + '</span><span class="ag-row-main">' + App.esc(e.title) + '</span><span class="ag-row-time num">' + when + '</span></div>';
+    }).join('');
+    return plainCard('Nächste Termine', 'Kalender', rows || '<div class="ag-empty serif">Keine Termine in Sicht.</div>');
+  }
+  var MEAL_DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+  function mealsCard() {
+    var today = (App.now().getDay() + 6) % 7, byDay = {};
+    (D.meals || []).forEach(function (m) { byDay[m.day] = m; });
+    var rows = MEAL_DAYS.map(function (d, i) {
+      var m = byDay[i];
+      return '<div class="ag-row' + (i === today ? ' is-today' : '') + '"><span class="ag-row-day">' + d + '</span><span class="ag-row-main' + (m && m.title ? '' : ' is-none') + '">' + (m && m.title ? App.esc(m.title) : 'noch offen') + '</span></div>';
+    }).join('');
+    return plainCard('Wochenplan', 'Essen diese Woche', rows);
+  }
+  function fuelInfoCard() {
+    var f = D.fuel;
+    if (!f || !f.stations || !f.stations.length) return plainCard('Sprit', 'Super E5', '<div class="ag-empty serif">Noch keine Preise.</div>');
+    var rows = f.stations.slice(0, 4).map(function (st, i) {
+      return '<div class="ag-row' + (i === 0 ? ' is-best' : '') + '"><span class="ag-row-main">' + App.esc(st.name) + '</span><span class="ag-row-time num">' + st.price.toFixed(3).replace('.', ',') + ' €</span></div>';
+    }).join('');
+    var note = f.trendText ? '<div class="ag-note">' + App.esc(f.trendText) + '</div>' : '';
+    return plainCard('Sprit', 'Super E5 · 5 km', rows + note);
+  }
+
+  function choresCard() {
+    var now = App.now();
+    var due = D.chores.filter(function (c) { return isDue(c, now); });
+    var done = due.filter(function (c) { return c.done; }).length;
+    var open = due.filter(function (c) { return !c.done; }).slice(0, 5);
+    var body = '<div class="ag-sum-stats ag-chores-stat"><div><span class="num">' + done + '<small>/' + due.length + '</small></span><small>heute erledigt</small></div></div>' +
+      (open.map(function (c) {
+        var who = c.who === 'any' ? 'Offen' : App.person(c.who).name;
+        return '<div class="ag-row"><span class="ag-row-day">' + who + '</span><span class="ag-row-main">' + App.esc(c.title) + '</span></div>';
+      }).join('') || (due.length ? '<div class="ag-empty serif">Alles erledigt.</div>' : '<div class="ag-empty serif">Heute ist nichts fällig.</div>'));
+    return plainCard('Aufgaben', 'Heute', body);
   }
 
   function summary() {
@@ -115,7 +165,7 @@
       '<div class="ag-sync"><span class="label">' + synced() + '</span>' +
       '<button class="icon-btn" data-hard-reload aria-label="Dashboard neu laden" title="Dashboard neu laden" style="margin-right:6px">🔄</button>' +
       '<button class="icon-btn" data-refresh aria-label="Aktualisieren">' + App.icon('undo', 26) + '</button></div></header>' +
-      '<div class="ag-grid">' + D.agents.map(card).join('') + summary() + '</div>' +
+      '<div class="ag-grid">' + D.agents.map(card).join('') + summary() + upcomingCard() + mealsCard() + choresCard() + fuelInfoCard() + '</div>' +
       '</div>';
   }
 
@@ -137,4 +187,7 @@
     }
   });
   App.on('minute', tick);
+  // Termine, Wochenplan und Aufgaben ändern sich im Hintergrund (Abgleich, Mitternacht)
+  App.on('lists', function () { if (App.current === 'agents' && V.el && V.el.firstChild) render(); });
+  App.on('data', function () { if (App.current === 'agents' && V.el && V.el.firstChild) render(); });
 })();

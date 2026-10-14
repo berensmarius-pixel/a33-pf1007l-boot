@@ -109,7 +109,11 @@
       nowLine([day]) + '</div>' +
       '</div></div>';
     var empty = !App.timedOn(day).length ? '<div class="cal-empty serif">Keine Termine im Kalender.<br><i>Ein herrlich ruhiger Tag.</i></div>' : '';
-    return '<div class="cal-day">' + ad + grid + empty + '</div>';
+    var head = '<div class="lanes-head lanes-head--2"><div class="gutter"></div>' + D.people.map(function (p) {
+      var n = App.timedOn(day, p.id).filter(function (e) { return !App.isFamily(e); }).length + allDay.filter(function (e) { return e.people.indexOf(p.id) > -1 && !App.isFamily(e); }).length;
+      return '<div class="lane-head" style="' + App.pstyle(p) + '">' + App.avatar(p, 30) + '<b>' + p.name + '</b><small>' + (n ? n + (n === 1 ? ' Termin' : ' Termine') : 'Frei') + '</small></div>';
+    }).join('') + '</div>';
+    return '<div class="cal-day">' + head + ad + grid + empty + '</div>';
   }
 
   // ------------------------------------------------------------ 3 day

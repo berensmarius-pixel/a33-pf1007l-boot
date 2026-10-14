@@ -77,3 +77,30 @@
 .ch-emojis button { width: 56px; height: 56px; font-size: 28px; border-radius: 14px; border: 2px solid transparent; background: var(--paper-2); }
 .ch-emojis button.is-on { border-color: var(--ink); background: var(--card); }
 .ch-actions { display: flex; gap: 12px; justify-content: flex-end; }
+
+/* ---- Wochentage */
+.t-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.t-actions .t-add { margin-left: 0; }
+.t-all { font-size: 16px; }
+.ch.is-off { opacity: .5; }
+.ch-days-tag { display: block; font-size: 13px; color: var(--mute); font-weight: 700; letter-spacing: .04em; }
+.ch-days { display: flex; gap: 8px; margin-bottom: 18px; }
+.ch-days button { flex: 1; height: 50px; border-radius: 12px; border: 2px solid transparent; background: var(--paper-2); font-size: 16px; font-weight: 800; letter-spacing: .04em; color: var(--mute); }
+.ch-days button.is-on { background: var(--ink); color: var(--paper); }
+
+/* Kopfzeile mit Tage-Umschalter: passt in eine Zeile */
+.t-head { gap: 16px; }
+.t-title .label { white-space: nowrap; }
+.t-bar { width: 80px; }
+.t-progress .label { display: none; }
+
+/* Aufgaben-Dialog kompakter, damit "Speichern" ohne Scrollen sichtbar bleibt (800 px Höhe) */
+.ch-form.sheet-pad { padding: 24px 32px 22px; }
+.ch-form .sheet-h { font-size: 40px; margin: 2px 0 12px; }
+.ch-form .ch-title { padding: 10px 16px; margin-bottom: 12px; font-size: 24px; }
+.ch-form .seg { margin-bottom: 10px; }
+.ch-form .seg button { padding: 10px 18px; }
+.ch-days { margin-bottom: 10px; }
+.ch-days button { height: 42px; }
+.ch-emojis { gap: 6px; margin-bottom: 12px; }
+.ch-emojis button { width: 46px; height: 46px; font-size: 24px; }
