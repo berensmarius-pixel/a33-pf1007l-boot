@@ -643,28 +643,28 @@ function playBreakCompleteChime() {
       '  <div class="pomo-dur-grid">' +
       '    <button class="p-dur-btn is-sel" data-work="25">' +
       '      <span class="p-dur-emoji">🍅</span>' +
-      '      <div class="p-dur-text"><b>25 Min</b><small>Standard Pomodoro</small></div>' +
+      '      <div class="p-dur-text"><b>25 Min</b><small>Standard</small></div>' +
       '    </button>' +
       '    <button class="p-dur-btn" data-work="45">' +
       '      <span class="p-dur-emoji">🎓</span>' +
-      '      <div class="p-dur-text"><b>45 Min</b><small>Schule / Uni-Stunde</small></div>' +
+      '      <div class="p-dur-text"><b>45 Min</b><small>Uni / Schule</small></div>' +
       '    </button>' +
       '    <button class="p-dur-btn" data-work="50">' +
       '      <span class="p-dur-emoji">⚡</span>' +
-      '      <div class="p-dur-text"><b>50 Min</b><small>Deep Work Intensiv</small></div>' +
+      '      <div class="p-dur-text"><b>50 Min</b><small>Deep Work</small></div>' +
       '    </button>' +
       '    <button class="p-dur-btn" data-work="15">' +
       '      <span class="p-dur-emoji">⏱️</span>' +
-      '      <div class="p-dur-text"><b>15 Min</b><small>Kurzer Sprint</small></div>' +
+      '      <div class="p-dur-text"><b>15 Min</b><small>Sprint</small></div>' +
       '    </button>' +
       '  </div>' +
 
       '  <div class="pomo-sec-title">☕ Pausen-Länge</div>' +
       '  <div class="pomo-break-wrap">' +
       '    <div class="pomo-break-row">' +
-      '      <button class="p-brk-btn is-sel" data-brk="5">☕ 5 Min Kurze Pause</button>' +
-      '      <button class="p-brk-btn" data-brk="10">🌿 10 Min Entspannung</button>' +
-      '      <span class="pomo-brk-hint">Nach 4 Einheiten: 15 Min Pause 🎉</span>' +
+      '      <button class="p-brk-btn is-sel" data-brk="5">☕ 5 Min Kurz</button>' +
+      '      <button class="p-brk-btn" data-brk="10">🌿 10 Min Erholung</button>' +
+      '      <span class="pomo-brk-hint">Nach 4: 15m 🎉</span>' +
       '    </div>' +
       '  </div>' +
 

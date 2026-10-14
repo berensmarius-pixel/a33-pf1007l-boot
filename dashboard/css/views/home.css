@@ -111,7 +111,7 @@
 
 /* ---- fuel & kitchen timer cards in main column ---- */
 .h-extra-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
-.h-fuel, .h-timer { padding: 16px 20px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; }
+.h-fuel, .h-timer { padding: 16px 20px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; cursor: pointer; }
 .h-fuel-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
 .h-fuel-main { display: flex; align-items: baseline; gap: 10px; }
 .h-fuel-price { font-size: 38px; line-height: .95; font-weight: 900; }
@@ -124,15 +124,55 @@
 .badge-norm { background: #fef3c7; color: #b45309; }
 .badge-high { background: #fee2e2; color: #b91c1c; }
 
-.h-timer-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
-.h-t-chip { padding: 8px 4px; border-radius: 10px; background: var(--paper-2); border: 1px solid var(--line); font-size: 13px; font-weight: 700; color: var(--ink); cursor: pointer; text-align: center; }
-.h-t-chip:active { background: var(--ink); color: #fff; }
-.h-timer-active { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
-.h-timer-emoji { font-size: 28px; }
-.h-timer-info { flex: 1; }
-.h-timer-info b { font-size: 16px; display: block; }
-.h-timer-info small { font-size: 14px; color: var(--mute); font-family: monospace; font-weight: 700; }
-.h-timer-btn { padding: 6px 14px; border-radius: 8px; background: var(--ink); color: var(--paper); border: none; font-size: 13px; font-weight: 700; cursor: pointer; }
+/* ---- kitchen timer in home column ---- */
+.h-timer { position: relative; }
+.h-timer:active { transform: scale(.985); }
+.h-timer-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 6px; }
+.h-timer-time { font-size: 38px; line-height: .95; font-weight: 900; }
+.h-timer-badge {
+  font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 5px 10px; border-radius: 999px;
+  background: rgba(255, 149, 0, 0.16); color: var(--ink);
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.h-timer-badge.badge--work { background: rgba(229, 38, 30, 0.16); color: var(--alert); }
+.h-timer-badge.badge--break { background: rgba(0, 163, 108, 0.16); color: var(--ok); }
+
+.h-timer-bar {
+  height: 5px; background: var(--line); border-radius: 3px;
+  overflow: hidden; width: 100%; margin: 8px 0 6px;
+}
+.h-timer-bar-fill {
+  height: 100%; background: var(--amber); border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.h-timer-presets { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 8px 0 4px; }
+.h-t-chip {
+  padding: 8px 2px; border-radius: var(--r-s);
+  background: var(--paper-2); border: 1px solid var(--line);
+  font-size: 13px; font-weight: 700; color: var(--ink);
+  cursor: pointer; text-align: center;
+  display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+  transition: transform .1s, background .1s, color .1s;
+}
+.h-t-chip b { font-variant-numeric: tabular-nums; }
+.h-t-chip:active { background: var(--ink); color: var(--paper); border-color: var(--ink); transform: scale(.96); }
+.h-t-chip--pomo { background: rgba(229, 38, 30, 0.1); border-color: rgba(229, 38, 30, 0.25); color: var(--alert); }
+.h-t-chip--pomo:active { background: var(--alert); color: #fff; border-color: var(--alert); }
+
+.h-timer-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; font-size: 13px; color: var(--mute);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-top: 2px;
+}
+.h-timer-foot b { color: var(--ink-2); font-weight: 700; }
+.h-timer-more {
+  font-weight: 700; color: var(--ink); font-size: 12px;
+  text-transform: uppercase; letter-spacing: .05em;
+  opacity: .75;
+}
 
 
 /* ---- Banner: Wetterwarnung + Geburtstage */

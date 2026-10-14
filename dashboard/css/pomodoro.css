@@ -1,24 +1,42 @@
 /* ---------------------------------------------------------------- Pomodoro & Study Timer */
 /* Target: Android WebView 106 — no nesting, no color-mix(), no oklch(), no dvh */
 
+/* Sheet override for timer sheet */
+.sheet-pad.timer-sheet {
+  padding: 22px 28px 20px;
+}
+.timer-sheet .t-sheet-top {
+  margin-bottom: 6px;
+}
+.timer-sheet .sheet-h {
+  font-size: 32px;
+  line-height: 1.1;
+  margin: 2px 0 10px;
+}
+.timer-sheet .label#tSheetKicker {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  margin-bottom: 2px;
+}
+
 /* Tab bar in Timer Sheet */
 .timer-tabs {
   width: 100%;
   display: flex;
-  gap: 8px;
+  gap: 6px;
   background: var(--paper-2);
-  padding: 6px;
-  border-radius: 16px;
-  margin-bottom: 20px;
+  padding: 4px;
+  border-radius: 14px;
+  margin-bottom: 14px;
 }
 .timer-tabs button {
   flex: 1;
-  padding: 12px 16px;
+  padding: 9px 12px;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   background: transparent;
   color: var(--mute);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -30,34 +48,34 @@
 .timer-tabs button.is-on {
   background: var(--card);
   color: var(--ink);
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 /* Pomodoro Sheet Container */
 .pomo-sheet {
   display: flex;
   flex-direction: column;
-  padding-bottom: 8px;
 }
 
 /* Daily Stats Grid */
 .pomo-stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 .pomo-stat-card {
   background: var(--card);
   border: 1px solid var(--line);
-  padding: 12px 16px;
-  border-radius: 14px;
+  padding: 9px 14px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
 }
 .pomo-stat-icon {
-  font-size: 26px;
+  font-size: 22px;
   line-height: 1;
 }
 .pomo-stat-info {
@@ -65,26 +83,26 @@
   flex-direction: column;
 }
 .pomo-stat-num {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--ink);
   line-height: 1.1;
 }
 .pomo-stat-sub {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--mute);
   font-weight: 600;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 /* Section Kickers */
 .pomo-sec-title {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--mute);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -92,17 +110,17 @@
 
 /* Topic Input & Chips */
 .pomo-topic-wrap {
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 .pomo-input-box {
   display: flex;
   align-items: center;
   background: var(--card);
   border: 1.5px solid var(--line);
-  border-radius: 14px;
-  padding: 4px 14px;
-  gap: 10px;
-  margin-bottom: 10px;
+  border-radius: 12px;
+  padding: 2px 12px;
+  gap: 8px;
+  margin-bottom: 8px;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .pomo-input-box:focus-within {
@@ -110,32 +128,32 @@
   box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
 }
 .pomo-input-icon {
-  font-size: 20px;
+  font-size: 17px;
   opacity: 0.8;
 }
 .pomo-input {
   flex: 1;
-  padding: 10px 0;
+  padding: 7px 0;
   border: none;
   background: transparent;
   color: var(--ink);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   font-family: inherit;
   outline: none;
 }
 .pomo-topic-chips {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 .p-chip {
-  padding: 8px 14px;
+  padding: 5px 12px;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--paper-2);
   color: var(--ink);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -144,73 +162,77 @@
   background: var(--ink);
   color: #fff;
   border-color: var(--ink);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 .p-chip:active {
   transform: scale(0.96);
 }
 
-/* Durations Grid */
+/* Durations Grid - 4 Columns */
 .pomo-dur-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-bottom: 18px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
 }
 .p-dur-btn {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
   background: var(--card);
-  padding: 14px 16px;
-  border-radius: 16px;
+  padding: 10px 6px;
+  border-radius: 12px;
   border: 2px solid transparent;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-  text-align: left;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  text-align: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
 }
 .p-dur-btn.is-sel {
   border-color: #ea580c;
   background: #fff;
-  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.18);
+  box-shadow: 0 3px 12px rgba(234, 88, 12, 0.18);
   transform: translateY(-1px);
 }
 .p-dur-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 .p-dur-emoji {
-  font-size: 28px;
+  font-size: 22px;
   line-height: 1;
+  margin-bottom: 3px;
 }
 .p-dur-text b {
-  font-size: 18px;
+  font-size: 15px;
   display: block;
   font-weight: 800;
   color: var(--ink);
+  line-height: 1.1;
 }
 .p-dur-text small {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--mute);
   font-weight: 600;
+  margin-top: 2px;
+  display: block;
 }
 
 /* Breaks Selector */
 .pomo-break-wrap {
-  margin-bottom: 22px;
+  margin-bottom: 14px;
 }
 .pomo-break-row {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
-  flex-wrap: wrap;
 }
 .p-brk-btn {
-  padding: 10px 16px;
-  border-radius: 12px;
+  padding: 8px 14px;
+  border-radius: 10px;
   background: var(--card);
   border: 1.5px solid var(--line);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--ink);
   cursor: pointer;
@@ -220,49 +242,50 @@
   background: #059669;
   color: #fff;
   border-color: #059669;
-  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
 }
 .pomo-brk-hint {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--mute);
   font-weight: 600;
+  margin-left: auto;
 }
 
 /* Start Button Row */
 .pomo-start-row {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 .pomo-start-btn {
   width: 100%;
-  padding: 18px 24px;
-  border-radius: 16px;
+  padding: 13px 20px;
+  border-radius: 14px;
   background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
   color: #fff;
   border: none;
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.35);
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   transition: transform 0.15s, box-shadow 0.15s;
 }
 .pomo-start-btn:active {
   transform: scale(0.98);
-  box-shadow: 0 2px 10px rgba(234, 88, 12, 0.3);
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
 }
 .pomo-zen-start-btn {
   width: 100%;
-  padding: 14px;
-  border-radius: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
   background: var(--card);
   color: var(--ink);
   border: 1.5px solid var(--line);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   display: flex;

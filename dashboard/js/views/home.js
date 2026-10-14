@@ -123,30 +123,45 @@
       var icon = isWork ? '🍅' : '☕';
       var title = isWork ? ('Fokus: ' + (p.topic || 'Lernen')) : (p.phase === 'longBreak' ? 'Lange Pause' : 'Kurze Pause');
       var sub = 'Runde ' + p.round + '/' + p.totalRounds + (p.isPaused ? ' · Pausiert' : ' · Läuft');
-      return '<div class="label">Pomodoro · ' + (isWork ? 'Lernen' : 'Pause') + '</div>' +
-        '<div class="h-timer-active h-timer-active--pomo ' + (isWork ? 'is-work' : 'is-break') + '">' +
-        '  <span class="h-timer-emoji">' + icon + '</span>' +
-        '  <div class="h-timer-info"><b>' + App.esc(title) + '</b><small>' + App.Timer.fmt(p.remSec) + ' (' + sub + ')</small></div>' +
-        '  <button class="h-timer-btn" data-action="pomodoro">Öffnen</button>' +
+      var pct = p.totalSec > 0 ? Math.max(0, Math.min(100, Math.round((p.remSec / p.totalSec) * 100))) : 0;
+      return '<div class="label"><i class="pulse" style="background:' + (isWork ? 'var(--alert)' : 'var(--ok)') + ';"></i> Pomodoro · ' + (isWork ? 'Fokus' : 'Pause') + '</div>' +
+        '<div class="h-timer-row">' +
+        '  <div class="h-timer-time num">' + App.Timer.fmt(p.remSec) + '</div>' +
+        '  <div class="h-timer-badge ' + (isWork ? 'badge--work' : 'badge--break') + '">' + icon + ' ' + App.esc(title) + '</div>' +
+        '</div>' +
+        '<div class="h-timer-bar"><div class="h-timer-bar-fill ' + (isWork ? 'fill--pomo-work' : 'fill--pomo-break') + '" style="width:' + pct + '%;"></div></div>' +
+        '<div class="h-timer-foot">' +
+        '  <span><b>' + sub + '</b></span>' +
+        '  <span class="h-timer-more">Öffnen →</span>' +
         '</div>';
     }
     var active = App.Timer ? App.Timer.list() : [];
     if (active.length) {
       var t = active[0];
-      return '<div class="label">Küchen-Timer · Läuft</div>' +
-        '<div class="h-timer-active">' +
-        '  <span class="h-timer-emoji">' + t.emoji + '</span>' +
-        '  <div class="h-timer-info"><b>' + App.esc(t.label) + '</b><small>' + App.Timer.fmt(t.remSec) + ' übrig</small></div>' +
-        '  <button class="h-timer-btn" data-action="timer">Öffnen</button>' +
+      var pct = t.totalSec ? Math.max(0, Math.min(100, Math.round((t.remSec / t.totalSec) * 100))) : 0;
+      var moreText = active.length > 1 ? '+' + (active.length - 1) + ' weiterer' : 'von ' + App.Timer.fmt(t.totalSec);
+      return '<div class="label"><i class="pulse" style="background:var(--amber);"></i> Küchen-Timer · Läuft</div>' +
+        '<div class="h-timer-row">' +
+        '  <div class="h-timer-time num">' + App.Timer.fmt(t.remSec) + '</div>' +
+        '  <div class="h-timer-badge">' + t.emoji + ' ' + App.esc(t.label) + '</div>' +
+        '</div>' +
+        '<div class="h-timer-bar"><div class="h-timer-bar-fill" style="width:' + pct + '%;"></div></div>' +
+        '<div class="h-timer-foot">' +
+        '  <span><b>' + App.esc(t.label) + '</b> · ' + moreText + '</span>' +
+        '  <span class="h-timer-more">Öffnen →</span>' +
         '</div>';
     }
-    return '<div class="label">Timer & Fokus</div>' +
+    return '<div class="label">Küchen-Timer &amp; Fokus</div>' +
       '<div class="h-timer-presets">' +
-      '  <button class="h-t-chip h-t-chip--pomo" data-action="pomo-quick">🍅 25m Lernen</button>' +
-      '  <button class="h-t-chip" data-timer-pre="0">☕ 4m</button>' +
-      '  <button class="h-t-chip" data-timer-pre="1">🐣 6m</button>' +
-      '  <button class="h-t-chip" data-timer-pre="3">🍝 9m</button>' +
-      '  <button class="h-t-chip" data-timer-pre="4">🍕 13m</button>' +
+      '  <button class="h-t-chip" data-timer-pre="0"><span class="h-t-emoji">☕</span> <b>4m</b></button>' +
+      '  <button class="h-t-chip" data-timer-pre="1"><span class="h-t-emoji">🐣</span> <b>6m</b></button>' +
+      '  <button class="h-t-chip" data-timer-pre="3"><span class="h-t-emoji">🍝</span> <b>9m</b></button>' +
+      '  <button class="h-t-chip" data-timer-pre="4"><span class="h-t-emoji">🍕</span> <b>13m</b></button>' +
+      '  <button class="h-t-chip h-t-chip--pomo" data-action="pomo-quick"><span class="h-t-emoji">🍅</span> <b>25m</b></button>' +
+      '</div>' +
+      '<div class="h-timer-foot">' +
+      '  <span>Schnellstart · Tippen zum Starten</span>' +
+      '  <span class="h-timer-more">Eigene Zeit →</span>' +
       '</div>';
   }
 
@@ -314,7 +329,7 @@
           '<div class="h-main">' +
           '  <div class="h-hero-slot"></div>' +
           '  <div class="h-notices"></div>' +
-          '  <div class="h-extra-row"><button class="h-fuel card"></button><button class="h-timer card"></button></div>' +
+          '  <div class="h-extra-row"><button class="h-fuel card"></button><div class="h-timer card" data-action="timer"></div></div>' +
           '</div>' +
           '<div class="h-side">' +
           '  <button class="h-photo" data-go="photos"><div class="h-photo-stage"></div><div class="h-photo-cap"></div></button>' +
