@@ -163,7 +163,7 @@ import { isDue } from '../chore-days.js';
     V.el.innerHTML = '<div class="agents">' +
       '<header class="ag-top"><div><div class="label">KI-Pläne · Verbrauchslimits</div><h1 class="serif">System</h1></div>' +
       '<div class="ag-sync"><span class="label">' + synced() + '</span>' +
-      '<button class="icon-btn" data-hard-reload aria-label="Dashboard neu laden" title="Dashboard neu laden" style="margin-right:6px">🔄</button>' +
+      '<button class="icon-btn" data-hard-reload aria-label="Dashboard neu laden" title="Dashboard neu laden" style="margin-right:6px">' + App.icon('refresh', 26) + '</button>' +
       '<button class="icon-btn" data-refresh aria-label="Aktualisieren">' + App.icon('undo', 26) + '</button></div></header>' +
       '<div class="ag-grid">' + D.agents.map(card).join('') + summary() + upcomingCard() + mealsCard() + choresCard() + fuelInfoCard() + '</div>' +
       '</div>';

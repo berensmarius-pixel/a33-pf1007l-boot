@@ -206,3 +206,8 @@
 .mo-cell.is-today .mo-ev { background: rgb(255 255 255 / .16); color: var(--paper); }
 .mo-cell.is-today .mo-ev.is-allday { background: var(--c); color: var(--c-ink); }
 .mo-cell.is-today .mo-more { color: var(--paper); opacity: .8; }
+
+/* Kopfzeile wie in den anderen Ansichten: kleine Beschriftung über dem Serifen-Titel */
+.cal-head { height: 64px; }
+.cal-title { flex-direction: column-reverse; align-items: flex-start; gap: 3px; min-width: 300px; }
+.cal-title .serif { font-size: 40px; line-height: .95; }

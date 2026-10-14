@@ -32,9 +32,9 @@
     return '<div class="meals-view">' +
       '<header class="meals-head"><div><div class="label">Kochen &amp; Planen</div><h1 class="serif">Wochen-Essensplan</h1></div>' +
       '<div class="meals-actions">' +
-      '  <button class="s-m-btn" data-rcp-action="browse">📖 Rezepte stöbern</button>' +
-      '  <button class="s-m-btn" data-rcp-action="dice">🎲 Schnelle Idee</button>' +
-      '  <button class="s-m-btn s-m-btn--ai" data-rcp-action="ai">✨ KI-Rezept</button>' +
+      '  <button class="s-m-btn" data-rcp-action="browse">' + App.icon('book', 20) + ' Rezepte</button>' +
+      '  <button class="s-m-btn" data-rcp-action="dice">' + App.icon('dice', 20) + ' Schnelle Idee</button>' +
+      '  <button class="s-m-btn" data-rcp-action="ai">' + App.icon('spark', 20) + ' KI-Rezept</button>' +
       (isStandalone ? '  <button class="s-m-btn s-m-btn--cart" data-go="shopping">' + App.icon('cart', 16) + ' Einkaufsliste</button>' : '  <button class="s-m-btn s-m-btn--cart" data-subtab="groceries">' + App.icon('cart', 16) + ' Einkaufsliste</button>') +
       '</div></header>' +
       '<div class="s-meals-wrap">' + DAYS.map(function (dayName, idx) {
@@ -48,7 +48,7 @@
         '</div>' +
         '<div class="s-meal-foot">' +
         '  <button class="s-meal-btn" data-edit-meal="' + idx + '">' + (m.title ? 'Bearbeiten' : 'Planen') + '</button>' +
-        '  <button class="s-meal-btn s-meal-btn--rcp" data-pick-rcp="' + idx + '">💡 Rezept</button>' +
+        '  <button class="s-meal-btn s-meal-btn--rcp" data-pick-rcp="' + idx + '">' + App.icon('bulb', 16) + ' Rezept</button>' +
         (m.ingredients ? '  <button class="s-meal-btn s-meal-btn--cart" data-cart-meal="' + idx + '">' + App.icon('cart', 16) + ' Auf Liste</button>' : '') +
         '</div>' +
         '</div>';
@@ -61,7 +61,7 @@
     var m = (D.meals || []).filter(function (x) { return x.day === dayIdx; })[0] || { id: 'm_' + dayIdx, day: dayIdx, title: '', ingredients: '' };
     var html = '<div class="t-sheet-head"><div><b>' + App.esc(dayName) + '</b><small>Gericht &amp; Zutaten planen</small></div></div>' +
       '<div style="padding:16px 0;display:flex;flex-direction:column;gap:12px">' +
-      '<button id="mPickRcp" class="btn btn--ghost" style="border:1px solid #3b82f6;color:#3b82f6;margin-bottom:6px">💡 Aus Rezept-Datenbank wählen</button>' +
+      '<button id="mPickRcp" class="btn btn--ghost" style="margin-bottom:6px">' + App.icon('bulb', 22) + ' Aus Rezept-Datenbank wählen</button>' +
       '<label class="label">Gericht</label>' +
       '<input id="mDish" class="s-input" style="height:56px;padding:0 16px;background:var(--paper-2);border-radius:12px;border:1px solid var(--line);font-size:20px" placeholder="z. B. Pasta Carbonara, Ofengemüse..." value="' + App.esc(m.title) + '">' +
       '<label class="label">Zutaten (durch Komma getrennt)</label>' +

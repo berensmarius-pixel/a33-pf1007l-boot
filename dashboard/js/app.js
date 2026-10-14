@@ -166,7 +166,7 @@
       advice = 'Regenjacke einpacken';
     } else {
       summary = W.t[h] < 12 ? 'Klar und kühl' : 'Trocken und angenehm';
-      advice = W.t[h] < 12 ? 'Warme Jacke anziehen' : 'Angenehmes Wetter';
+      advice = W.t[h] < 12 ? 'Warme Jacke anziehen' : (W.t[h] < 20 ? 'Leichte Jacke reicht' : 'Luftig anziehen');
     }
     var labels = { sun: 'Sonnig', moon: 'Klar', partly: 'Teils wolkig', cloud: 'Bewölkt', rain: 'Regnerisch', snow: 'Schnee' };
     return { temp: W.t[h], cond: W.c[h], label: labels[W.c[h]] || 'Heiter', hi: W.hi, lo: W.lo, summary: summary, advice: advice, hour: h };
