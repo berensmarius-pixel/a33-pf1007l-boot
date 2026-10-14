@@ -105,6 +105,8 @@
     var today = App.dayStart(App.now());
     if (App.calMode === 'busy') list = list.concat(D.busyExtras);
     if (App.calMode === 'empty') list = list.filter(function (e) { return e.allDay || !App.sameDay(e.start, today); });
+    // Kalender-Filter (nur während des Zeichnens einer Kalender-Ansicht gesetzt)
+    if (App.calWho) list = list.filter(function (e) { return e.people.indexOf(App.calWho) > -1; });
     return list;
   };
   App.isFamily = function (e) { return e.people.length >= D.people.length; };

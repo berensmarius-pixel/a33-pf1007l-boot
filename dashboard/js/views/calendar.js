@@ -3,7 +3,7 @@
   'use strict';
   var D = window.DATA;
   var PX = 72, START = 6, END = 23; // 72px per hour, 6 AM → 11 PM
-  var V = { mode: 'day', date: null, el: null, scroll: null };
+  var V = { mode: 'day', date: null, el: null, scroll: null, who: 'all' };
   var MODES = [['day', 'Heute'], ['3day', '3 Tage'], ['week', 'Woche'], ['month', 'Monat']];
 
   function y(d) { return ((d.getHours() + d.getMinutes() / 60) - START) * PX; }
@@ -208,13 +208,18 @@
       '<div class="cal-title"><div class="serif">' + t.t + '</div><div class="label">' + t.k + '</div></div>' +
       '<button class="icon-btn" data-nav="1" aria-label="Weiter">' + App.icon('right', 24) + '</button>' +
       '<button class="btn btn--ghost' + (isToday ? ' is-hidden' : '') + '" data-today>Heute</button>' +
+      (V.mode === 'day' ? '' : '<div class="seg seg--who">' + [['all', 'Beide']].concat(D.people.map(function (p) { return [p.id, p.name]; })).map(function (w) {
+        return '<button class="' + (V.who === w[0] ? 'is-on' : '') + '" data-who="' + w[0] + '">' + w[1] + '</button>';
+      }).join('') + '</div>') +
       '<div class="seg">' + MODES.map(function (m) { return '<button class="' + (V.mode === m[0] ? 'is-on' : '') + '" data-mode="' + m[0] + '">' + m[1] + '</button>'; }).join('') + '</div>' +
-      '<button class="fab" data-add aria-label="Termin hinzufügen">' + App.icon('plus', 26) + '</button>' +
       '</header>';
   }
 
   function render() {
-    var body = { day: dayView, '3day': threeDay, week: weekView, month: monthView }[V.mode]();
+    // Tag zeigt immer beide nebeneinander; die anderen Ansichten lassen sich auf eine Person filtern
+    App.calWho = (V.mode !== 'day' && V.who !== 'all') ? V.who : null;
+    var body;
+    try { body = { day: dayView, '3day': threeDay, week: weekView, month: monthView }[V.mode](); } finally { App.calWho = null; }
     V.el.innerHTML = '<div class="cal cal--' + V.mode + '">' + header() + '<div class="cal-body">' + body + '</div></div>';
     var sc = V.el.querySelector('.grid-scroll');
     if (sc) {
@@ -233,6 +238,7 @@
 
   function onClick(e) {
     var t;
+    if ((t = e.target.closest('[data-who]'))) { V.who = t.dataset.who; return render(); }
     if ((t = e.target.closest('[data-ev]'))) return App.eventSheet(App.findEvent(t.dataset.ev));
     if ((t = e.target.closest('[data-more]'))) return moreSheet(t.dataset.more.split(','));
     if ((t = e.target.closest('[data-nav]'))) return nav(+t.dataset.nav);
@@ -244,7 +250,6 @@
       return render();
     }
     if ((t = e.target.closest('[data-day]'))) { V.mode = 'day'; V.date = new Date(+t.dataset.day); V.scroll = null; return render(); }
-    if ((t = e.target.closest('[data-add]'))) return addSheet();
   }
 
   // Swipe left/right to change day (the only swipe gesture in the app)
