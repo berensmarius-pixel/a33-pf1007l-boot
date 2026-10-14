@@ -218,8 +218,10 @@
   function render() {
     // Tag zeigt immer beide nebeneinander; die anderen Ansichten lassen sich auf eine Person filtern
     App.calWho = (V.mode !== 'day' && V.who !== 'all') ? V.who : null;
+    // Google-Farben: Tag (die Personen sind dort ohnehin getrennt) und Einzelansicht; bei "Beide" gelten die Personenfarben
+    App.calColors = V.mode === 'day' || App.calWho;
     var body;
-    try { body = { day: dayView, '3day': threeDay, week: weekView, month: monthView }[V.mode](); } finally { App.calWho = null; }
+    try { body = { day: dayView, '3day': threeDay, week: weekView, month: monthView }[V.mode](); } finally { App.calWho = null; App.calColors = false; }
     V.el.innerHTML = '<div class="cal cal--' + V.mode + '">' + header() + '<div class="cal-body">' + body + '</div></div>';
     var sc = V.el.querySelector('.grid-scroll');
     if (sc) {

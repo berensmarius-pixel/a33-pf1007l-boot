@@ -119,7 +119,7 @@
     return (gcCache[hex] = { color: hex, rgb: r + ' ' + g + ' ' + b, ink: lum > 0.6 ? '#111111' : '#FFFFFF' });
   }
   App.evColor = function (e) {
-    if (App.calWho && e.gcolor) return gcColor(e.gcolor);
+    if (App.calColors && e.gcolor) return gcColor(e.gcolor);
     return App.isFamily(e) ? D.family : App.person(e.people[0]);
   };
   App.timedOn = function (day, pid) {
