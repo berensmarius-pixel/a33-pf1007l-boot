@@ -157,41 +157,6 @@
     );
   }
 
-  function openRadarSheet() {
-    var r15 = D.weather && D.weather.rain15;
-    var slots = (r15 && r15.slots) || [];
-    var maxMm = Math.max(0.5, Math.max.apply(null, slots.map(function (s) { return s.mm; })));
-    var chartHtml = slots.length ? '<div class="radar-chart-title">Niederschlag nächste 2 Stunden (15-Min.-Schritte)</div>' +
-      '<div class="radar-bars">' + slots.map(function (s) {
-        var hPct = Math.round((s.mm / maxMm) * 44);
-        return '<div class="r-bar-col"><div class="r-bar-track"><div class="r-bar-fill" style="height:' + Math.max(3, hPct) + 'px;' + (s.mm > 0.05 ? 'background:#3b82f6' : 'background:var(--line)') + '"></div></div>' +
-          '<span class="r-bar-mm">' + (s.mm > 0 ? s.mm : '–') + '</span>' +
-          '<span class="r-bar-t">' + s.time + '</span></div>';
-      }).join('') + '</div>' : '';
-
-    App.sheet(
-      '<div class="radar-sheet">' +
-      '<div class="t-sheet-head">' +
-      '  <div><b>Regenradar &amp; Kurzzeit-Vorschau</b><small>Kaiserslautern · RainViewer Live-Radar</small></div>' +
-      '</div>' +
-      '<div class="radar-frame-box">' +
-      '  <iframe class="radar-iframe" id="radarIframe" src="https://www.rainviewer.com/map.html?loc=49.4447,7.7690,9&oColor=1&c=1&o=85&layer=radar&sm=1&sn=1" loading="lazy"></iframe>' +
-      '</div>' +
-      chartHtml +
-      '<div class="radar-hint">💡 Live-Radar mit Wolkenzugbahn der letzten 90 Minuten und 30-Minuten-Nowcast.</div>' +
-      '</div>',
-      {
-        onClose: function () {
-          var ifr = document.getElementById('radarIframe');
-          if (ifr) {
-            ifr.src = 'about:blank';
-            ifr.remove();
-          }
-        }
-      }
-    );
-  }
-
   function openLiveTrackSheet() {
     var tr = D.livetrack || {};
     App.sheet(
@@ -350,8 +315,9 @@
             }
             return;
           }
-          var rad = e.target.closest('[data-action="radar"], .h-weather');
-          if (rad) { openRadarSheet(); return; }
+          var rad = e.target.closest('[data-action="radar"]');
+          if (rad) { App.openWeather('radar'); return; }
+          if (e.target.closest('.h-weather')) { App.openWeather('now'); return; }
           var fc = e.target.closest('.h-fuel');
           if (fc) { openFuelSheet(); return; }
           var tc = e.target.closest('[data-timer-pre]');

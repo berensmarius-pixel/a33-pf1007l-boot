@@ -27,11 +27,11 @@ import { computeAlerts } from './alerts.js';
     try {
       var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + KAISERSLAUTERN_LAT +
         '&longitude=' + KAISERSLAUTERN_LON +
-        '&current=temperature_2m,weather_code' +
-        '&hourly=temperature_2m,precipitation_probability,weather_code,wind_gusts_10m' +
+        '&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_gusts_10m,weather_code' +
+        '&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_gusts_10m' +
         '&minutely_15=precipitation,weather_code' +
-        '&daily=weather_code,temperature_2m_max,temperature_2m_min' +
-        '&timezone=Europe%2FBerlin&forecast_days=2';
+        '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,uv_index_max,sunrise,sunset' +
+        '&timezone=Europe%2FBerlin&forecast_days=6';
 
       var resp = await fetch(url);
       if (!resp.ok) return;
@@ -93,6 +93,40 @@ import { computeAlerts } from './alerts.js';
           hasRain: totalMm > 0.05
         };
       }
+
+      // Detailansicht: nächste 24 Stunden, 5 Tage, Wind/Gefühlt/UV/Sonne
+      try {
+        var H = data.hourly, cur = data.current || {}, dly = data.daily || {};
+        var hrs = [];
+        for (var q = 0; q < 24 && (currentHour + q) < H.time.length; q++) {
+          var qi = currentHour + q, qh = (currentHour + q) % 24;
+          hrs.push({
+            h: qh, t: Math.round(H.temperature_2m[qi]), p: Math.round(H.precipitation_probability[qi] || 0),
+            mm: Math.round((H.precipitation[qi] || 0) * 10) / 10,
+            c: mapWmoToCondition(H.weather_code[qi] != null ? H.weather_code[qi] : 0, qh)
+          });
+        }
+        var days = [];
+        if (dly.time) {
+          for (var d = 0; d < dly.time.length; d++) {
+            days.push({
+              date: dly.time[d], c: mapWmoToCondition(dly.weather_code[d] != null ? dly.weather_code[d] : 0, 12),
+              hi: Math.round(dly.temperature_2m_max[d]), lo: Math.round(dly.temperature_2m_min[d]),
+              p: Math.round(dly.precipitation_probability_max[d] || 0), mm: Math.round((dly.precipitation_sum[d] || 0) * 10) / 10
+            });
+          }
+        }
+        D.weather.detail = {
+          feels: cur.apparent_temperature != null ? Math.round(cur.apparent_temperature) : null,
+          wind: cur.wind_speed_10m != null ? Math.round(cur.wind_speed_10m) : null,
+          gust: cur.wind_gusts_10m != null ? Math.round(cur.wind_gusts_10m) : null,
+          humidity: cur.relative_humidity_2m != null ? Math.round(cur.relative_humidity_2m) : null,
+          uv: dly.uv_index_max ? Math.round(dly.uv_index_max[0] * 10) / 10 : null,
+          sunrise: dly.sunrise ? dly.sunrise[0].slice(11, 16) : null,
+          sunset: dly.sunset ? dly.sunset[0].slice(11, 16) : null,
+          hours: hrs, days: days
+        };
+      } catch (e2) { console.warn('[LiveSync] Wetter-Details:', e2); }
 
       D.weather.alerts = computeAlerts(data, currentHour);
       D.weather.t = t;

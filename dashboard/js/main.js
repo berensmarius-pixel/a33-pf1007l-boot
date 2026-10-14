@@ -8,6 +8,7 @@ import './system.js';
 import './slideshow.js';
 import './timer.js';
 import './livetrack.js';
+import './weather-sheet.js';
 import './views/home.js';
 import './views/calendar.js';
 import './views/tasks.js';
