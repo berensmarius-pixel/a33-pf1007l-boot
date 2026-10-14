@@ -564,45 +564,86 @@ function playBreakCompleteChime() {
       var isWork = s.phase === 'work';
       var pct = s.totalSec > 0 ? Math.round((s.remSec / s.totalSec) * 100) : 0;
       return '<div class="pomo-sheet">' +
-        '<div class="pomo-stat-pill"><b>Heute geschafft:</b> ' + st.count + ' Lerneinheiten (' + st.mins + ' Min Fokus)</div>' +
-        '<div class="pomo-active-box ' + (isWork ? 'is-work' : 'is-break') + '">' +
-        '  <div class="pomo-ab-head">' +
-        '    <span class="pomo-ab-badge">' + (isWork ? '🎯 Fokus-Phase' : (s.phase === 'longBreak' ? '🌿 Lange Pause' : '☕ Kurze Pause')) + '</span>' +
-        '    <span class="pomo-ab-round">Runde ' + s.round + '/' + s.totalRounds + '</span>' +
+        '<div class="pomo-stats-grid">' +
+        '  <div class="pomo-stat-card">' +
+        '    <span class="pomo-stat-icon">🍅</span>' +
+        '    <div class="pomo-stat-info">' +
+        '      <span class="pomo-stat-num num">' + st.count + ' Einheiten</span>' +
+        '      <span class="pomo-stat-sub">Ziel: 4 Pomodoros</span>' +
+        '    </div>' +
         '  </div>' +
-        '  <div class="pomo-ab-topic">📖 ' + App.esc(s.topic) + '</div>' +
-        '  <div class="pomo-ab-time num">' + fmt(s.remSec) + (s.isPaused ? ' <small>(Pausiert)</small>' : '') + '</div>' +
-        '  <div class="t-bar"><div class="t-bar-fill ' + (isWork ? 'fill--pomo-work' : 'fill--pomo-break') + '" style="width:' + pct + '%"></div></div>' +
-        '  <div class="pomo-ab-dots">' + dots + '</div>' +
-        '  <div class="pomo-ab-controls">' +
-        '    <button class="p-btn p-btn--primary" id="pomoBtnPause">' + (s.isPaused ? '▶ Fortsetzen' : '⏸ Pause') + '</button>' +
-        '    <button class="p-btn" id="pomoBtnAdd">+5 Min</button>' +
-        '    <button class="p-btn" id="pomoBtnSkip">' + (isWork ? '☕ Pause' : '🍅 Fokus') + '</button>' +
-        '    <button class="p-btn p-btn--danger" id="pomoBtnReset">✕ Stop</button>' +
+        '  <div class="pomo-stat-card">' +
+        '    <span class="pomo-stat-icon">⚡</span>' +
+        '    <div class="pomo-stat-info">' +
+        '      <span class="pomo-stat-num num">' + st.mins + ' Min</span>' +
+        '      <span class="pomo-stat-sub">Fokuszeit heute</span>' +
+        '    </div>' +
         '  </div>' +
-        '  <button class="p-btn-zen" id="pomoBtnZen">↗ Vollbild Fokusmodus (1280×800)</button>' +
+        '</div>' +
+        '<div class="pomo-active-card ' + (isWork ? 'is-work' : 'is-break') + '">' +
+        '  <div class="pomo-ac-top">' +
+        '    <span class="pomo-status-tag">' + (isWork ? '🎯 Fokus-Phase' : (s.phase === 'longBreak' ? '🌿 Lange Pause' : '☕ Kurze Pause')) + '</span>' +
+        '    <span class="pomo-ac-rounds">' + dots + '</span>' +
+        '  </div>' +
+        '  <div class="pomo-ac-topic">📖 ' + App.esc(s.topic) + '</div>' +
+        '  <div class="pomo-ac-time-row">' +
+        '    <span class="pomo-ac-time num">' + fmt(s.remSec) + '</span>' +
+        '    <span class="pomo-ac-sub">' + (s.isPaused ? 'Pausiert' : ('Runde ' + s.round + '/' + s.totalRounds)) + '</span>' +
+        '  </div>' +
+        '  <div class="pomo-progress-track">' +
+        '    <div class="pomo-progress-fill" style="width:' + pct + '%"></div>' +
+        '  </div>' +
+        '  <div class="pomo-ac-actions">' +
+        '    <button class="pomo-btn-ctrl pomo-btn-ctrl--primary" id="pomoBtnPause">' + (s.isPaused ? '▶ Weiter' : '⏸ Pause') + '</button>' +
+        '    <button class="pomo-btn-ctrl" id="pomoBtnAdd">+5 Min</button>' +
+        '    <button class="pomo-btn-ctrl" id="pomoBtnSkip">' + (isWork ? '☕ Pause' : '🍅 Fokus') + '</button>' +
+        '    <button class="pomo-btn-ctrl pomo-btn-ctrl--danger" id="pomoBtnReset">✕ Stop</button>' +
+        '  </div>' +
+        '  <button class="pomo-btn-fullscreen" id="pomoBtnZen">↗ Vollbild Fokusmodus (1280×800)</button>' +
         '</div>' +
         '</div>';
     }
 
     // Idle setup
     return '<div class="pomo-sheet">' +
-      '<div class="pomo-stat-pill"><b>Heute geschafft:</b> ' + st.count + ' Lerneinheiten (' + st.mins + ' Min Fokus)</div>' +
-      '<div class="pomo-setup">' +
-      '  <div class="t-presets-title">Lern-Thema oder Fach</div>' +
-      '  <div class="pomo-topic-chips">' +
-      '    <button class="p-chip is-sel" data-topic="Lernen">📖 Freies Lernen</button>' +
-      '    <button class="p-chip" data-topic="Klausur">📝 Klausurvorbereitung</button>' +
-      '    <button class="p-chip" data-topic="Hausarbeit">📚 Hausarbeit / Recherche</button>' +
-      '    <button class="p-chip" data-topic="Programmieren">💻 Coden / Projekt</button>' +
-      '    <button class="p-chip" data-topic="Lesen">💡 Fachbuch lesen</button>' +
+      '<div class="pomo-stats-grid">' +
+      '  <div class="pomo-stat-card">' +
+      '    <span class="pomo-stat-icon">🍅</span>' +
+      '    <div class="pomo-stat-info">' +
+      '      <span class="pomo-stat-num num">' + st.count + ' Einheiten</span>' +
+      '      <span class="pomo-stat-sub">Ziel: 4 Pomodoros</span>' +
+      '    </div>' +
       '  </div>' +
-      '  <input type="text" class="pomo-input" id="pomoTopicInput" placeholder="Eigenes Thema eingeben…" value="' + App.esc(s.topic) + '">' +
-      '  <div class="t-presets-title" style="margin-top:16px;">Fokus-Dauer (Intervall)</div>' +
+      '  <div class="pomo-stat-card">' +
+      '    <span class="pomo-stat-icon">⚡</span>' +
+      '    <div class="pomo-stat-info">' +
+      '      <span class="pomo-stat-num num">' + st.mins + ' Min</span>' +
+      '      <span class="pomo-stat-sub">Fokuszeit heute</span>' +
+      '    </div>' +
+      '  </div>' +
+      '</div>' +
+
+      '<div class="pomo-setup">' +
+      '  <div class="pomo-sec-title">📖 Lern-Thema oder Fach</div>' +
+      '  <div class="pomo-topic-wrap">' +
+      '    <div class="pomo-input-box">' +
+      '      <span class="pomo-input-icon">✏️</span>' +
+      '      <input type="text" class="pomo-input" id="pomoTopicInput" placeholder="Was möchtest du lernen?..." value="' + App.esc(s.topic) + '">' +
+      '    </div>' +
+      '    <div class="pomo-topic-chips">' +
+      '      <button class="p-chip is-sel" data-topic="Lernen">Freies Lernen</button>' +
+      '      <button class="p-chip" data-topic="Klausur">Klausurvorbereitung</button>' +
+      '      <button class="p-chip" data-topic="Hausarbeit">Hausarbeit / Recherche</button>' +
+      '      <button class="p-chip" data-topic="Programmieren">Coden / Projekt</button>' +
+      '      <button class="p-chip" data-topic="Lesen">Fachbuch lesen</button>' +
+      '    </div>' +
+      '  </div>' +
+
+      '  <div class="pomo-sec-title">⏱️ Fokus-Dauer (Intervall)</div>' +
       '  <div class="pomo-dur-grid">' +
       '    <button class="p-dur-btn is-sel" data-work="25">' +
       '      <span class="p-dur-emoji">🍅</span>' +
-      '      <div class="p-dur-text"><b>25 Min</b><small>Klassisch Pomodoro</small></div>' +
+      '      <div class="p-dur-text"><b>25 Min</b><small>Standard Pomodoro</small></div>' +
       '    </button>' +
       '    <button class="p-dur-btn" data-work="45">' +
       '      <span class="p-dur-emoji">🎓</span>' +
@@ -617,15 +658,19 @@ function playBreakCompleteChime() {
       '      <div class="p-dur-text"><b>15 Min</b><small>Kurzer Sprint</small></div>' +
       '    </button>' +
       '  </div>' +
-      '  <div class="t-presets-title" style="margin-top:16px;">Pausen-Einstellung</div>' +
-      '  <div class="pomo-break-row">' +
-      '    <button class="p-brk-btn is-sel" data-brk="5">☕ 5 Min Kurze Pause</button>' +
-      '    <button class="p-brk-btn" data-brk="10">🌿 10 Min Entspannung</button>' +
-      '    <span class="pomo-brk-hint">Nach 4 Runden: 15 Min Pause</span>' +
+
+      '  <div class="pomo-sec-title">☕ Pausen-Länge</div>' +
+      '  <div class="pomo-break-wrap">' +
+      '    <div class="pomo-break-row">' +
+      '      <button class="p-brk-btn is-sel" data-brk="5">☕ 5 Min Kurze Pause</button>' +
+      '      <button class="p-brk-btn" data-brk="10">🌿 10 Min Entspannung</button>' +
+      '      <span class="pomo-brk-hint">Nach 4 Einheiten: 15 Min Pause 🎉</span>' +
+      '    </div>' +
       '  </div>' +
+
       '  <div class="pomo-start-row">' +
       '    <button class="pomo-start-btn" id="btnPomoStart">🍅 Lerneinheit starten</button>' +
-      '    <button class="pomo-zen-start-btn" id="btnPomoStartZen">↗ Direkt im Vollbild</button>' +
+      '    <button class="pomo-zen-start-btn" id="btnPomoStartZen">↗ Direkt im Vollbildmodus starten</button>' +
       '  </div>' +
       '</div>' +
       '</div>';
