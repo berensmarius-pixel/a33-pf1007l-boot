@@ -532,7 +532,7 @@ button.card:active, .h-hero:active, .h-photo:active { transform: scale(.985); }
 
 .takeover.is-open.takeover--livetrack {
   z-index: 100;
-  background: #0f172a;
+  background: var(--paper);
   color: #fff;
   display: flex !important;
   flex-direction: column;
@@ -546,115 +546,46 @@ button.card:active, .h-hero:active, .h-photo:active { transform: scale(.985); }
   flex-direction: column;
   width: 100%;
   height: 100%;
-  background: #0f172a;
+  background: var(--paper);
 }
 
+/* Kopfzeile im Look der übrigen Ansichten: Beschriftung über Serifen-Titel, Knöpfe wie im Kalender */
 .livetrack-bar {
-  height: 56px;
   flex: none;
-  background: #1e293b;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  gap: 16px;
+  padding: 14px 28px 12px;
+  height: 88px;
+  box-sizing: border-box;
+  background: var(--paper);
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
   user-select: none;
-  box-sizing: border-box;
 }
-
-.livetrack-bar-title {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-size: 19px;
-  font-weight: 700;
-  color: #f8fafc;
-}
-
+.livetrack-bar-title { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.livetrack-bar-title .label { display: flex; align-items: center; gap: 8px; }
+.livetrack-bar-title .serif { font-size: 38px; line-height: .95; white-space: nowrap; }
 .live-pulse-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-  animation: live-pulse 1.8s infinite;
-  flex-shrink: 0;
+  width: 10px; height: 10px; border-radius: 50%; flex: none;
+  background: var(--ok); animation: live-pulse 1.8s infinite;
 }
-
 @keyframes live-pulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(0, 163, 108, .55); }
+  70% { box-shadow: 0 0 0 8px rgba(0, 163, 108, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 163, 108, 0); }
 }
-
-.livetrack-badge {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  padding: 3px 12px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.livetrack-bar-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.lt-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 38px;
-  padding: 0 16px;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-  box-sizing: border-box;
-  transition: background 0.15s, transform 0.1s;
-}
-
-.lt-btn:active {
-  transform: scale(0.97);
-}
-
-.lt-btn--ghost {
-  background: rgba(255, 255, 255, 0.08);
-  color: #e2e8f0;
-}
-.lt-btn--ghost:hover, .lt-btn--ghost:active {
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.lt-btn--solid {
-  background: #3b82f6;
-  color: #ffffff;
-}
-.lt-btn--solid:active {
-  background: #2563eb;
-}
-
-.lt-btn--danger {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-.lt-btn--danger:active {
-  background: rgba(239, 68, 68, 0.3);
-}
+.livetrack-bar-actions { display: flex; align-items: center; gap: 10px; }
+.livetrack-bar .btn { min-height: 52px; padding: 0 22px; font-size: 15px; }
+.livetrack-bar .btn--stop { border-color: var(--line); color: var(--ink-2); }
+.livetrack-bar .btn--stop.is-armed { border-color: var(--alert); background: var(--alert); color: #fff; }
 
 .livetrack-frame-full {
   flex: 1;
-  width: 1280px;
-  height: 744px;
-  background: #0f172a;
+  min-height: 0;
+  width: 100%;
+  background: #fff;
   position: relative;
   overflow: hidden;
 }

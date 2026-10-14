@@ -23,18 +23,16 @@
     var startedAt = tr.startedAt || Date.now();
     var iframeSrc = (tr.sessionId && tr.token) ? ('/session/' + tr.sessionId + '/token/' + tr.token) : '/api/livetrack/view';
     var html = '<div class="livetrack-takeover">' +
-      '<div class="livetrack-bar">' +
+      '<header class="livetrack-bar">' +
       '  <div class="livetrack-bar-title">' +
-      '    <span class="live-pulse-dot"></span>' +
-      '    <b>Marius unterwegs · Garmin LiveTrack</b>' +
-      '    <span class="livetrack-badge" id="ltDuration">Seit ' + fmtDuration(startedAt) + '</span>' +
+      '    <div class="label"><span class="live-pulse-dot"></span>Live <span id="ltDuration">· seit ' + fmtDuration(startedAt) + '</span></div>' +
+      '    <div class="serif">Marius unterwegs</div>' +
       '  </div>' +
       '  <div class="livetrack-bar-actions">' +
-      '    <a href="' + (tr.url || '#') + '" target="_blank" rel="noopener noreferrer" class="lt-btn lt-btn--ghost">↗️ Im Browser</a>' +
-      '    <button class="lt-btn lt-btn--solid" id="ltBtnMinimize" data-close>Dashboard anzeigen</button>' +
-      '    <button class="lt-btn lt-btn--danger" id="ltBtnStop">Tracking beenden</button>' +
+      '    <button class="btn btn--ghost" id="ltBtnMinimize" data-close>' + App.icon('left', 20) + ' Dashboard</button>' +
+      '    <button class="btn btn--ghost btn--stop" id="ltBtnStop">Beenden</button>' +
       '  </div>' +
-      '</div>' +
+      '</header>' +
       '<div class="livetrack-frame-full">' +
       '  <iframe class="livetrack-iframe-full" id="livetrackFullIframe" src="' + iframeSrc + '" allow="geolocation"></iframe>' +
       '</div>' +
@@ -45,7 +43,7 @@
       onMount: function (box, close) {
         var timer = setInterval(function () {
           var durEl = box.querySelector('#ltDuration');
-          if (durEl) durEl.textContent = 'Seit ' + fmtDuration(startedAt);
+          if (durEl) durEl.textContent = '· seit ' + fmtDuration(startedAt);
         }, 30000);
 
         var minimizeBtn = box.querySelector('#ltBtnMinimize');
@@ -63,19 +61,26 @@
 
         var stopBtn = box.querySelector('#ltBtnStop');
         if (stopBtn) {
+          // Zweistufig statt Browser-Dialog: erst "Wirklich?", dann beenden
+          var armed = null;
           stopBtn.onclick = async function () {
-            if (confirm('Live-Tracking auf dem Tablet beenden?')) {
-              await fetch('/api/livetrack?action=stop', { method: 'POST' }).catch(function () {});
-              if (window.DATA) window.DATA.livetrack = null;
-              clearInterval(timer);
-              close();
-              if (window.App) {
-                window.App.go('home');
-                window.App.setMode('day');
-                window.App.emit('data');
-                window.App.rerender();
-                window.App.toast('Live-Tracking beendet', { icon: 'check' });
-              }
+            if (!armed) {
+              stopBtn.textContent = 'Wirklich beenden?';
+              stopBtn.classList.add('is-armed');
+              armed = setTimeout(function () { armed = null; stopBtn.textContent = 'Beenden'; stopBtn.classList.remove('is-armed'); }, 4000);
+              return;
+            }
+            clearTimeout(armed);
+            await fetch('/api/livetrack?action=stop', { method: 'POST' }).catch(function () {});
+            if (window.DATA) window.DATA.livetrack = null;
+            clearInterval(timer);
+            close();
+            if (window.App) {
+              window.App.go('home');
+              window.App.setMode('day');
+              window.App.emit('data');
+              window.App.rerender();
+              window.App.toast('Live-Tracking beendet', { icon: 'check' });
             }
           };
         }
