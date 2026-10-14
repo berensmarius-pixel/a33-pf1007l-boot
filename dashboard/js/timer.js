@@ -142,14 +142,24 @@
     return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
   }
 
-  function openTimerSheet() {
+  function openTimerSheet(initialTab) {
+    var activeTab = initialTab;
+    if (!activeTab) {
+      activeTab = (window.App && window.App.Pomodoro && window.App.Pomodoro.isActive()) ? 'pomodoro' : 'kitchen';
+    }
+
     App.sheet(
       '<div class="timer-sheet">' +
-      '<div class="t-sheet-head">' +
-      '  <div><b>Küchen-Timer & Wecker</b><small>Tippen zum Starten</small></div>' +
+      '<div class="timer-tab-bar">' +
+      '  <button class="timer-tab-btn ' + (activeTab === 'kitchen' ? 'is-active' : '') + '" data-timer-tab="kitchen">⏱️ Küchen-Timer</button>' +
+      '  <button class="timer-tab-btn ' + (activeTab === 'pomodoro' ? 'is-active' : '') + '" data-timer-tab="pomodoro">🍅 Pomodoro Lernen</button>' +
       '</div>' +
 
-      // Active Timers
+      // Tab 1: Kitchen Timer
+      '<div class="timer-tab-pane timer-tab-pane--kitchen" style="display:' + (activeTab === 'kitchen' ? 'block' : 'none') + ';">' +
+      '  <div class="t-sheet-head">' +
+      '    <div><b>Küchen-Timer & Wecker</b><small>Tippen zum Starten</small></div>' +
+      '  </div>' +
       (timers.length ? '<div class="t-active-list">' + timers.map(function (t) {
         var pct = Math.max(0, Math.min(100, Math.round((t.remSec / t.totalSec) * 100)));
         return '<div class="t-active-item">' +
@@ -159,29 +169,48 @@
           '<button class="t-btn-add" data-tid="' + t.id + '">+1m</button>' +
           '<button class="t-btn-del" data-tid="' + t.id + '">✕</button>' +
           '</div>';
-      }).join('') + '</div>' : '<div class="t-none">Gerade läuft kein Timer</div>') +
-
-      // Presets
-      '<div class="t-presets-title">Schnellstart</div>' +
-      '<div class="t-presets-grid">' + PRESETS.map(function (p, idx) {
+      }).join('') + '</div>' : '<div class="t-none">Gerade läuft kein Küchen-Timer</div>') +
+      '  <div class="t-presets-title">Schnellstart</div>' +
+      '  <div class="t-presets-grid">' + PRESETS.map(function (p, idx) {
         return '<button class="t-pre-btn" data-pre="' + idx + '">' +
           '<span class="t-pre-emoji">' + p.emoji + '</span>' +
           '<div class="t-pre-text"><b>' + p.label + '</b><small>' + p.desc + '</small></div>' +
           '</button>';
       }).join('') + '</div>' +
+      '  <div class="t-presets-title" style="margin-top:16px;">Eigene Zeit</div>' +
+      '  <div class="t-custom-row">' +
+      '    <button class="t-cust-btn" data-sec="60">+1 Min</button>' +
+      '    <button class="t-cust-btn" data-sec="180">+3 Min</button>' +
+      '    <button class="t-cust-btn" data-sec="300">+5 Min</button>' +
+      '    <button class="t-cust-btn" data-sec="600">+10 Min</button>' +
+      '    <button class="t-cust-btn" data-sec="1200">+20 Min</button>' +
+      '  </div>' +
+      '</div>' +
 
-      // Custom Minutes
-      '<div class="t-presets-title" style="margin-top:16px;">Eigene Zeit</div>' +
-      '<div class="t-custom-row">' +
-      '  <button class="t-cust-btn" data-sec="60">+1 Min</button>' +
-      '  <button class="t-cust-btn" data-sec="180">+3 Min</button>' +
-      '  <button class="t-cust-btn" data-sec="300">+5 Min</button>' +
-      '  <button class="t-cust-btn" data-sec="600">+10 Min</button>' +
-      '  <button class="t-cust-btn" data-sec="1200">+20 Min</button>' +
+      // Tab 2: Pomodoro Lernen
+      '<div class="timer-tab-pane timer-tab-pane--pomodoro" style="display:' + (activeTab === 'pomodoro' ? 'block' : 'none') + ';">' +
+      '  <div class="t-sheet-head">' +
+      '    <div><b>Pomodoro Fokus & Lernen</b><small>Effektiv lernen mit kurzen Pausen</small></div>' +
+      '  </div>' +
+      (window.App && window.App.Pomodoro ? window.App.Pomodoro.renderSheetHTML() : '') +
       '</div>' +
       '</div>',
       {
         onMount: function (el, close) {
+          // Tab switcher
+          el.querySelectorAll('[data-timer-tab]').forEach(function (tabBtn) {
+            tabBtn.onclick = function () {
+              var tab = tabBtn.dataset.timerTab;
+              el.querySelectorAll('[data-timer-tab]').forEach(function (b) { b.classList.remove('is-active'); });
+              tabBtn.classList.add('is-active');
+              var kitchenPane = el.querySelector('.timer-tab-pane--kitchen');
+              var pomoPane = el.querySelector('.timer-tab-pane--pomodoro');
+              if (kitchenPane) kitchenPane.style.display = tab === 'kitchen' ? 'block' : 'none';
+              if (pomoPane) pomoPane.style.display = tab === 'pomodoro' ? 'block' : 'none';
+            };
+          });
+
+          // Kitchen events
           el.querySelectorAll('[data-pre]').forEach(function (btn) {
             btn.onclick = function () {
               var p = PRESETS[parseInt(btn.dataset.pre, 10)];
@@ -202,16 +231,21 @@
           el.querySelectorAll('.t-btn-add').forEach(function (btn) {
             btn.onclick = function () {
               addMinutes(btn.dataset.tid, 1);
-              openTimerSheet();
+              openTimerSheet('kitchen');
             };
           });
 
           el.querySelectorAll('.t-btn-del').forEach(function (btn) {
             btn.onclick = function () {
               stopTimer(btn.dataset.tid);
-              openTimerSheet();
+              openTimerSheet('kitchen');
             };
           });
+
+          // Mount Pomodoro controls
+          if (window.App && window.App.Pomodoro && window.App.Pomodoro.mountSheet) {
+            window.App.Pomodoro.mountSheet(el, close);
+          }
         }
       }
     );
@@ -232,11 +266,20 @@
   App.on('timer-update', function () {
     var pill = $('#railTimer');
     if (pill) {
+      var p = window.App && window.App.Pomodoro && window.App.Pomodoro.isActive() ? window.App.Pomodoro.state() : null;
       if (timers.length) {
         var first = timers[0];
+        pill.className = 'rail-timer-pill' + (p ? ' has-pomo' : '');
         pill.innerHTML = '<span class="t-pulse"></span>' + first.emoji + ' <b class="num">' + fmtTime(first.remSec) + '</b>';
         pill.style.display = 'flex';
+      } else if (p) {
+        var isWork = p.phase === 'work';
+        var icon = isWork ? '🍅' : '☕';
+        pill.className = 'rail-timer-pill ' + (isWork ? 'is-pomo-work' : 'is-pomo-break');
+        pill.innerHTML = '<span class="t-pulse t-pulse--pomo"></span>' + icon + ' <b class="num">' + fmtTime(p.remSec) + '</b>';
+        pill.style.display = 'flex';
       } else {
+        pill.className = 'rail-timer-pill';
         pill.style.display = 'none';
       }
     }

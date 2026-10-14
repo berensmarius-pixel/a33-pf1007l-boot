@@ -7,6 +7,7 @@ import './lists.js';
 import './system.js';
 import './slideshow.js';
 import './timer.js';
+import './pomodoro.js';
 import './livetrack.js';
 import './weather-sheet.js';
 import './views/home.js';

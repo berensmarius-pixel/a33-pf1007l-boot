@@ -1,0 +1,577 @@
+/* ---------------------------------------------------------------- Pomodoro & Study Timer */
+/* Target: Android WebView 106 — no nesting, no color-mix(), no oklch(), no dvh */
+
+/* Tab bar in Timer Sheet */
+.timer-tab-bar {
+  display: flex;
+  gap: 8px;
+  background: var(--paper-2);
+  padding: 6px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+.timer-tab-btn {
+  flex: 1;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--mute);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.timer-tab-btn.is-active {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Pomodoro Sheet Content */
+.pomo-sheet {
+  display: flex;
+  flex-direction: column;
+}
+.pomo-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(234, 88, 12, 0.12);
+  color: #c2410c;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  align-self: flex-start;
+}
+.pomo-stat-pill b {
+  font-weight: 800;
+}
+
+/* Active Box inside Sheet */
+.pomo-active-box {
+  background: var(--paper-2);
+  border-radius: 18px;
+  padding: 20px 22px;
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pomo-active-box.is-work {
+  border-color: #ea580c;
+  background: rgba(234, 88, 12, 0.05);
+}
+.pomo-active-box.is-break {
+  border-color: #059669;
+  background: rgba(5, 150, 105, 0.05);
+}
+.pomo-ab-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pomo-ab-badge {
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--card);
+}
+.pomo-active-box.is-work .pomo-ab-badge {
+  color: #c2410c;
+}
+.pomo-active-box.is-break .pomo-ab-badge {
+  color: #059669;
+}
+.pomo-ab-round {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--mute);
+}
+.pomo-ab-topic {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.pomo-ab-time {
+  font-size: 44px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  margin: 4px 0;
+}
+.pomo-ab-time small {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mute);
+  margin-left: 8px;
+}
+.fill--pomo-work {
+  background: #ea580c !important;
+}
+.fill--pomo-break {
+  background: #059669 !important;
+}
+.pomo-ab-dots {
+  display: flex;
+  gap: 6px;
+  font-size: 18px;
+  margin-top: 4px;
+}
+.p-dot {
+  opacity: 0.35;
+  transition: opacity 0.2s;
+}
+.p-dot.is-done, .p-dot.is-cur {
+  opacity: 1;
+}
+.pomo-ab-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.p-btn {
+  flex: 1;
+  min-width: 80px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+.p-btn:active {
+  transform: scale(0.98);
+}
+.p-btn--primary {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+.p-btn--danger {
+  background: rgba(229, 38, 30, 0.1);
+  color: #dc2626;
+  border-color: rgba(229, 38, 30, 0.3);
+}
+.p-btn-zen {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: var(--ink);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+/* Idle Setup Screen inside Sheet */
+.pomo-topic-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.p-chip {
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--paper-2);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.p-chip.is-sel {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+.pomo-input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font-size: 15px;
+  font-family: inherit;
+  box-sizing: border-box;
+  margin-bottom: 14px;
+}
+.pomo-dur-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.p-dur-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--paper-2);
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  text-align: left;
+  cursor: pointer;
+}
+.p-dur-btn.is-sel {
+  border-color: #ea580c;
+  background: rgba(234, 88, 12, 0.12);
+}
+.p-dur-emoji {
+  font-size: 26px;
+}
+.p-dur-text b {
+  font-size: 16px;
+  display: block;
+}
+.p-dur-text small {
+  font-size: 13px;
+  color: var(--mute);
+}
+.pomo-break-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.p-brk-btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.p-brk-btn.is-sel {
+  background: #059669;
+  color: #fff;
+  border-color: #059669;
+}
+.pomo-brk-hint {
+  font-size: 13px;
+  color: var(--mute);
+  margin-left: 4px;
+}
+.pomo-start-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+.pomo-start-btn {
+  flex: 2;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: #ea580c;
+  color: #fff;
+  border: none;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+}
+.pomo-zen-start-btn {
+  flex: 1;
+  padding: 16px 14px;
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------- Transition Takeovers */
+.pomo-takeover {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+  z-index: 100;
+  color: #fff;
+}
+.pomo-takeover--work {
+  background: #7c2d12;
+  animation: pomo-glow-work 1.2s infinite alternate;
+}
+@keyframes pomo-glow-work {
+  from { background: #7c2d12; }
+  to { background: #9a3412; }
+}
+.pomo-takeover--break {
+  background: #064e3b;
+  animation: pomo-glow-break 1.2s infinite alternate;
+}
+@keyframes pomo-glow-break {
+  from { background: #064e3b; }
+  to { background: #047857; }
+}
+.pomo-t-badge {
+  font-size: 18px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+.pomo-t-emoji {
+  font-size: 100px;
+  line-height: 1;
+  margin-bottom: 16px;
+  animation: bounce 0.6s infinite alternate;
+}
+.pomo-t-title {
+  font-size: 52px;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+.pomo-t-sub {
+  font-size: 22px;
+  opacity: 0.9;
+  max-width: 680px;
+  margin-bottom: 24px;
+  line-height: 1.4;
+}
+.pomo-t-rounds {
+  margin-bottom: 32px;
+}
+.pomo-t-dots {
+  font-size: 32px;
+  letter-spacing: 6px;
+}
+.pomo-t-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.btn-pomo-break, .btn-pomo-work {
+  padding: 18px 42px;
+  border-radius: 999px;
+  background: #fff;
+  color: #111;
+  border: none;
+  font-size: 22px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
+}
+.btn-pomo-extend {
+  padding: 18px 32px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 2px solid #fff;
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.btn-pomo-dismiss {
+  padding: 18px 28px;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------- Fullscreen Zen Study View (1280x800) */
+.takeover.is-open.takeover--pomo-zen {
+  z-index: 100;
+  width: 1280px;
+  height: 800px;
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden;
+  background: #0f172a;
+}
+.pomo-zen-view {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 36px 48px;
+  box-sizing: border-box;
+  color: #fff;
+  position: relative;
+  user-select: none;
+}
+.pomo-zen-view.is-work {
+  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+}
+.pomo-zen-view.is-break {
+  background: radial-gradient(circle at center, #064e3b 0%, #022c22 100%);
+}
+.pomo-zen-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.pomo-zen-badge {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 6px 18px;
+  border-radius: 999px;
+}
+.pomo-zen-topic {
+  font-size: 28px;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
+}
+.pomo-zen-center {
+  position: relative;
+  width: 380px;
+  height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pomo-zen-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.pomo-zen-ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 12;
+}
+.pomo-zen-ring-fg {
+  fill: none;
+  stroke: #ea580c;
+  stroke-width: 12;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.4s ease;
+}
+.pomo-zen-view.is-break .pomo-zen-ring-fg {
+  stroke: #10b981;
+}
+.pomo-zen-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  z-index: 2;
+}
+.pomo-zen-time {
+  font-size: 82px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.pomo-zen-sub {
+  font-size: 18px;
+  font-weight: 600;
+  opacity: 0.8;
+  margin-top: 10px;
+}
+.pomo-zen-dots {
+  display: flex;
+  gap: 8px;
+  font-size: 24px;
+  margin-top: 14px;
+}
+.zen-dot {
+  opacity: 0.35;
+  transition: opacity 0.3s;
+}
+.zen-dot.is-done, .zen-dot.is-cur {
+  opacity: 1;
+}
+.pomo-zen-quote {
+  font-size: 16px;
+  font-style: italic;
+  opacity: 0.75;
+  text-align: center;
+}
+.pomo-zen-actions {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
+}
+.zen-btn {
+  padding: 14px 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.zen-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.zen-btn--pause {
+  background: #fff;
+  color: #0f172a;
+  border: none;
+  font-weight: 800;
+}
+.zen-btn--danger {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.15);
+}
+.zen-btn--mini {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ---------------------------------------------------------------- Rail Pill & Home Card Tweaks */
+.rail-timer-pill.is-pomo-work {
+  background: #ea580c !important;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.5) !important;
+}
+.rail-timer-pill.is-pomo-break {
+  background: #059669 !important;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.5) !important;
+}
+.h-t-chip--pomo {
+  background: rgba(234, 88, 12, 0.14) !important;
+  border-color: #ea580c !important;
+  color: #c2410c !important;
+  font-weight: 800 !important;
+}
+.h-timer-active--pomo.is-work {
+  border-left: 4px solid #ea580c;
+}
+.h-timer-active--pomo.is-break {
+  border-left: 4px solid #059669;
+}

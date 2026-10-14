@@ -117,6 +117,19 @@
   }
 
   function timerCard() {
+    if (window.App && window.App.Pomodoro && window.App.Pomodoro.isActive()) {
+      var p = window.App.Pomodoro.state();
+      var isWork = p.phase === 'work';
+      var icon = isWork ? '🍅' : '☕';
+      var title = isWork ? ('Fokus: ' + (p.topic || 'Lernen')) : (p.phase === 'longBreak' ? 'Lange Pause' : 'Kurze Pause');
+      var sub = 'Runde ' + p.round + '/' + p.totalRounds + (p.isPaused ? ' · Pausiert' : ' · Läuft');
+      return '<div class="label">Pomodoro · ' + (isWork ? 'Lernen' : 'Pause') + '</div>' +
+        '<div class="h-timer-active h-timer-active--pomo ' + (isWork ? 'is-work' : 'is-break') + '">' +
+        '  <span class="h-timer-emoji">' + icon + '</span>' +
+        '  <div class="h-timer-info"><b>' + App.esc(title) + '</b><small>' + App.Timer.fmt(p.remSec) + ' (' + sub + ')</small></div>' +
+        '  <button class="h-timer-btn" data-action="pomodoro">Öffnen</button>' +
+        '</div>';
+    }
     var active = App.Timer ? App.Timer.list() : [];
     if (active.length) {
       var t = active[0];
@@ -127,8 +140,9 @@
         '  <button class="h-timer-btn" data-action="timer">Öffnen</button>' +
         '</div>';
     }
-    return '<div class="label">Küchen-Timer</div>' +
+    return '<div class="label">Timer & Fokus</div>' +
       '<div class="h-timer-presets">' +
+      '  <button class="h-t-chip h-t-chip--pomo" data-action="pomo-quick">🍅 25m Lernen</button>' +
       '  <button class="h-t-chip" data-timer-pre="0">☕ 4m</button>' +
       '  <button class="h-t-chip" data-timer-pre="1">🐣 6m</button>' +
       '  <button class="h-t-chip" data-timer-pre="3">🍝 9m</button>' +
@@ -324,6 +338,17 @@
           if (tc && App.Timer) {
             var p = App.Timer.presets[parseInt(tc.dataset.timerPre, 10)];
             App.Timer.start(p.label, p.emoji, p.sec);
+            return;
+          }
+          var pq = e.target.closest('[data-action="pomo-quick"]');
+          if (pq && window.App && window.App.Pomodoro) {
+            window.App.Pomodoro.startWork(25, 'Lernen');
+            window.App.toast('🍅 25 Min Lerneinheit gestartet: «Lernen»');
+            return;
+          }
+          var pBtn = e.target.closest('[data-action="pomodoro"]');
+          if (pBtn && window.App && window.App.Pomodoro) {
+            window.App.Pomodoro.openSheet();
             return;
           }
           var tm = e.target.closest('[data-action="timer"], .h-timer');
